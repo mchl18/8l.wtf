@@ -1,5 +1,6 @@
 import HomeView from "@/views/home";
 import { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/react"
 
 export const metadata: Metadata = {
   title: "Fast & Secure URL Shortener | Shorten Your Links Instantly | No Bullshit, no ads, just short links.",
@@ -23,5 +24,10 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  return <HomeView />;
+  return (
+    <>
+      <HomeView />
+      <Analytics />
+    </>
+  );
 }
