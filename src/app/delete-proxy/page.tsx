@@ -69,7 +69,7 @@ function DeleteProxyPage() {
                 htmlFor="id"
                 className="block text-lg font-medium text-gray-700 mb-2"
               >
-                Enter Proxy ID:
+                Enter veryshort.me ID:
               </label>
               <input
                 type="text"
@@ -77,7 +77,7 @@ function DeleteProxyPage() {
                 value={id || ""}
                 onChange={(e) => setId(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                placeholder="Enter proxy ID"
+                placeholder="Enter veryshort.me ID"
                 required
               />
             </div>

@@ -18,7 +18,12 @@ export default function Home() {
       body: JSON.stringify({ url }),
     });
     const data = await response.json();
-    setShortUrl(`${window.location.origin}/${data.shortId}`);
+    const hostname = process.env.NEXT_PUBLIC_HOSTNAME || "";
+    const protocol =
+      hostname.startsWith("localhost") || hostname.startsWith("127.0.0.1")
+        ? "http"
+        : "https";
+    setShortUrl(`${protocol}://${hostname}/${data.shortId}`);
   };
 
   return (
