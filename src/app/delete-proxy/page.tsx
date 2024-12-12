@@ -1,23 +1,24 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
-export default function DeleteProxyPage() {
-  const { id: idFromParams } = useParams();
-  const [id, setId] = useState(idFromParams);
+function DeleteProxyPage() {
+  const searchParams = useSearchParams();
+  const idFromSearchParams = searchParams.get("id");
+  const [id, setId] = useState(idFromSearchParams);
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [responseData, setResponseData] = useState<any>(null);
 
   useEffect(() => {
-    if (idFromParams) {
+    if (idFromSearchParams) {
       handleSubmit();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idFromParams]);
+  }, [idFromSearchParams]);
 
   const handleSubmit = async () => {
     setStatus("loading");
@@ -30,7 +31,6 @@ export default function DeleteProxyPage() {
         },
         body: JSON.stringify({ id }),
       });
-      debugger;
       if (!response.ok) {
         throw new Error("Failed to fetch proxy data");
       }
@@ -74,7 +74,7 @@ export default function DeleteProxyPage() {
               <input
                 type="text"
                 id="id"
-                value={id}
+                value={id || ""}
                 onChange={(e) => setId(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
                 placeholder="Enter proxy ID"
@@ -145,5 +145,17 @@ export default function DeleteProxyPage() {
         </div>
       </div>
     </>
+  );
+}
+
+const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => {
+  return <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>;
+};
+
+export default function Page() {
+  return (
+    <SuspenseWrapper>
+      <DeleteProxyPage />
+    </SuspenseWrapper>
   );
 }

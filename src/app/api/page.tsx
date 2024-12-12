@@ -70,7 +70,7 @@ export default function ApiPage() {
                 {`{
   "shortId": "abc123xy",
   "fullUrl": "https://veryshort.me/abc123xy",
-  "deleteProxyUrl": "https://veryshort.me/api/delete-proxy/abc123xy"
+  "deleteProxyUrl": "https://veryshort.me/api/delete-proxy?id=abc123xy"
 }`}
               </pre>
             </div>

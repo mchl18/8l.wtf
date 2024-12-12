@@ -23,7 +23,7 @@ export default function Home() {
 
   return (
     <>
-      <main className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full text-center">
+      <main className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full text-center mt-24">
         <h1 className="text-4xl font-bold mb-6 text-gray-800">veryshort.me</h1>
         <form onSubmit={handleSubmit} className="mb-6">
           <div className="relative">
@@ -64,6 +64,12 @@ export default function Home() {
         className="bg-white hover:bg-gray-100 text-gray-800 font-medium py-2 px-4 rounded-md shadow transition duration-150 mt-4"
       >
         API Documentation
+      </Link>
+      <Link
+        href="/delete-proxy"
+        className="bg-white hover:bg-gray-100 text-gray-800 font-medium py-2 px-4 rounded-md shadow transition duration-150 mt-4"
+      >
+        Delete Proxy
       </Link>
     </>
   );

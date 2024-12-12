@@ -12,7 +12,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         shortId,
         fullUrl: `https://veryshort.me/${shortId}`,
-        deleteProxyUrl: `https://veryshort.me/api/delete-proxy/${shortId}`,
+        deleteProxyUrl: `https://veryshort.me/api/delete-proxy?id=${shortId}`,
       });
     }
   }
@@ -25,6 +25,6 @@ export async function POST(request: Request) {
   return NextResponse.json({
     shortId,
     fullUrl: `https://veryshort.me/${shortId}`,
-    deleteProxyUrl: `https://veryshort.me/api/delete-proxy/${shortId}`,
+    deleteProxyUrl: `https://veryshort.me/api/delete-proxy?id=${shortId}`,
   });
 }
