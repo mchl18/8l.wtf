@@ -12,6 +12,9 @@ export const getProtocol = (hostname = "") => {
 };
 
 export const getHostUrl = () => {
+  if (typeof window === "undefined") {
+    return process.env.NEXT_PUBLIC_HOSTNAME || "";
+  }
   const hostname = process.env.NEXT_PUBLIC_HOSTNAME || window.location.hostname;
   if (!process.env.NEXT_PUBLIC_HOSTNAME) {
     console.log("No NEXT_PUBLIC_HOSTNAME found, using window.location.origin");

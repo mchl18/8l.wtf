@@ -2,7 +2,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getHostUrl } from "@/lib/utils";
-import { Analytics } from "@vercel/analytics/react";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import {
