@@ -44,12 +44,18 @@ export default function DeleteProxyPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+    <>
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-extrabold text-gray-900 text-center mb-8">
-          Delete Proxy Status
+        <h1 className="text-4xl font-extrabold text-gray-900 text-center mb-8 text-white">
+          veryshort.me delete proxy
         </h1>
 
+        <div className="bg-white rounded-lg shadow-lg p-8 mb-3 text-center">
+          <p className="text-gray-600">
+            This is a proxy that allows you to call the DELETE method for a
+            veryshort.me url by using the browser.
+          </p>
+        </div>
         <div className="bg-white rounded-lg shadow-lg p-8">
           <form
             onSubmit={(e) => {
@@ -138,6 +144,6 @@ export default function DeleteProxyPage() {
           )}
         </div>
       </div>
-    </main>
+    </>
   );
 }

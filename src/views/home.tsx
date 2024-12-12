@@ -21,13 +21,8 @@ export default function HomeView() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-500 flex flex-col items-center justify-center">
-      <Head>
-        <title>URL Shortener</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
       <main className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full text-center">
-        <h1 className="text-4xl font-bold mb-6 text-gray-800">URL Shortener</h1>
+        <h1 className="text-4xl font-bold mb-6 text-gray-800">veryshort.me</h1>
         <form onSubmit={handleSubmit} className="mb-6">
           <div className="relative">
             <input

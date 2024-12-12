@@ -22,9 +22,9 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-500 flex flex-col items-center justify-center">
+    <>
       <main className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full text-center">
-        <h1 className="text-4xl font-bold mb-6 text-gray-800">URL Shortener</h1>
+        <h1 className="text-4xl font-bold mb-6 text-gray-800">veryshort.me</h1>
         <form onSubmit={handleSubmit} className="mb-6">
           <div className="relative">
             <input
@@ -33,7 +33,7 @@ export default function Home() {
               onChange={(e) => setUrl(e.target.value)}
               placeholder="Enter URL to shorten"
               required
-              className="w-full p-4 pr-12 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 transition-colors text-black"
+              className="w-full p-4 pr-24 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 transition-colors text-black"
             />
             <Button
               type="submit"
@@ -65,6 +65,6 @@ export default function Home() {
       >
         API Documentation
       </Link>
-    </div>
+    </>
   );
 }

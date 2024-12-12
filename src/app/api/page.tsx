@@ -38,10 +38,10 @@ export default function ApiPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+    <>
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-extrabold text-gray-900 text-center mb-8">
-          URL Shortener API
+        <h1 className="text-4xl font-extrabold text-gray-900 text-center mb-8 text-white">
+          veryshort.me API
         </h1>
 
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
@@ -178,6 +178,6 @@ export default function ApiPage() {
           )}
         </div>
       </div>
-    </main>
+    </>
   );
 }
