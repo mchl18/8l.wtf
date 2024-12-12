@@ -162,10 +162,11 @@ export default function ApiPage() {
                 Delete Proxy URL:
               </p>
               <p className="text-gray-700 text-sm mb-2">
-                Note: This URL requires a DELETE request.<br/> 
-                You can click below to
-                view the proxy URL, but be aware that this will not delete the
-                url itself but will call a DELETE request on the url. 
+                Note: This URL requires a DELETE request.
+                <br />
+                You can click below to view the proxy URL, but be aware that
+                this will not delete the url itself but will call a DELETE
+                request on the url.
                 <br />
                 Whatever happens after that is up to the API that consumes it.
               </p>

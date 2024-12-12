@@ -27,3 +27,12 @@ export const getHostUrl = () => {
   const protocol = getProtocol(hostname);
   return `${protocol}://${hostname}`;
 };
+
+export const generateToken = () => {
+  const randomBytes = new Uint8Array(64);
+  crypto.getRandomValues(randomBytes);
+  const token = Array.from(randomBytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  return token;
+};

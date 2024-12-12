@@ -3,6 +3,7 @@ import "./globals.css";
 import { Metadata } from "next";
 import { getHostUrl } from "@/lib/utils";
 import { Analytics } from "@vercel/analytics/react";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -40,6 +41,7 @@ export default function RootLayout({
         </div>
       </body>
       <Analytics />
+      <Toaster />
     </html>
   );
 }
