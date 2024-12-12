@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { nanoid } from "nanoid";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function ApiPage() {
   const [url, setUrl] = useState("");
@@ -66,7 +68,9 @@ export default function ApiPage() {
               <p className="text-gray-600 mt-3 mb-2">Response:</p>
               <pre className="bg-gray-50 p-4 rounded-md font-mono text-sm">
                 {`{
-  "shortId": "abc123xy"
+  "shortId": "abc123xy",
+  "fullUrl": "https://veryshort.me/abc123xy",
+  "deleteProxyUrl": "https://veryshort.me/api/delete-proxy/abc123xy"
 }`}
               </pre>
             </div>
@@ -101,7 +105,7 @@ export default function ApiPage() {
               >
                 Enter URL to shorten:
               </label>
-              <input
+              <Input
                 type="url"
                 id="url"
                 value={url}
@@ -112,12 +116,12 @@ export default function ApiPage() {
               />
             </div>
 
-            <button
+            <Button
               type="submit"
               className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150"
             >
               Shorten URL
-            </button>
+            </Button>
           </form>
 
           {error && (

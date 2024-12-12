@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button";
 import { Analytics } from "@vercel/analytics/react";
 import Link from "next/link";
 import { useState } from "react";
@@ -34,12 +35,12 @@ export default function Home() {
               required
               className="w-full p-4 pr-12 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 transition-colors text-black"
             />
-            <button
+            <Button
               type="submit"
-              className="absolute right-2 top-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
+              className="absolute right-2 top-3 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
             >
               Shorten
-            </button>
+            </Button>
           </div>
         </form>
         {shortUrl && (
@@ -58,12 +59,12 @@ export default function Home() {
 
         <Analytics />
       </main>
-        <Link
-          href="/api"
-          className="bg-white hover:bg-gray-100 text-gray-800 font-medium py-2 px-4 rounded-md shadow transition duration-150 mt-4"
-        >
-          API Documentation
-        </Link>
+      <Link
+        href="/api"
+        className="bg-white hover:bg-gray-100 text-gray-800 font-medium py-2 px-4 rounded-md shadow transition duration-150 mt-4"
+      >
+        API Documentation
+      </Link>
     </div>
   );
 }
