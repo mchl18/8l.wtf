@@ -55,22 +55,22 @@ export default function ApiPage() {
                 1. Shorten URL
               </h3>
               <p className="mb-3">
-                <code className="bg-gray-100 px-3 py-1 rounded-md text-sm font-mono">
+                <code className="bg-gray-100 px-3 py-1 rounded-md text-sm font-mono text-gray-800">
                   POST /api/shorten
                 </code>
               </p>
               <p className="text-gray-600 mb-2">Request body:</p>
-              <pre className="bg-gray-50 p-4 rounded-md font-mono text-sm overflow-x-auto">
+              <pre className="bg-gray-50 p-4 rounded-md font-mono text-sm overflow-x-auto text-gray-800">
                 {`{
   "url": "https://example.com"
 }`}
               </pre>
               <p className="text-gray-600 mt-3 mb-2">Response:</p>
-              <pre className="bg-gray-50 p-4 rounded-md font-mono text-sm overflow-x-auto">
+              <pre className="bg-gray-50 p-4 rounded-md font-mono text-sm overflow-x-auto text-gray-800">
                 {`{
   "shortId": "abc123xy",
   "fullUrl": "${hostUrlRef.current}/abc123xy",
-  "deleteProxyUrl": "${hostUrlRef.current}/api/delete-proxy?id=abc123xy"
+  "deleteProxyUrl": "${hostUrlRef.current}/delete-proxy?id=abc123xy"
 }`}
               </pre>
             </div>
@@ -157,14 +157,17 @@ export default function ApiPage() {
             </div>
           )}
           {deleteProxyUrl && (
-            <div className="mt-6 bg-green-50 border-l-4 border-green-500 p-4">
+            <div className="mt-6 bg-yellow-50 border-l-4 border-yellow-500 p-4">
               <p className="text-gray-700 font-medium mb-2">
                 Delete Proxy URL:
               </p>
               <p className="text-gray-700 text-sm mb-2">
-                Note: This URL requires a DELETE request. You can click below to
-                view the proxy URL, but to delete you&apos;ll need to make a
-                DELETE request to it.
+                Note: This URL requires a DELETE request.<br/> 
+                You can click below to
+                view the proxy URL, but be aware that this will not delete the
+                url itself but will call a DELETE request on the url. 
+                <br />
+                Whatever happens after that is up to the API that consumes it.
               </p>
               <a
                 href={deleteProxyUrl}

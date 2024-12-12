@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         shortId,
         fullUrl: `${hostUrl}/${shortId}`,
-        deleteProxyUrl: `${hostUrl}/api/delete-proxy?id=${shortId}`,
+        deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
       });
     }
   }
@@ -30,6 +30,6 @@ export async function POST(request: Request) {
   return NextResponse.json({
     shortId,
     fullUrl: `${hostUrl}/${shortId}`,
-    deleteProxyUrl: `${hostUrl}/api/delete-proxy?id=${shortId}`,
+    deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
   });
 }

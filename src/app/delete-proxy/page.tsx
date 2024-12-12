@@ -53,7 +53,8 @@ function DeleteProxyPage() {
         <div className="bg-white rounded-lg shadow-lg p-8 mb-3 text-center">
           <p className="text-gray-600">
             This is a proxy that allows you to call the DELETE method for a
-            veryshort.me url by using the browser.
+            veryshort.me url by using the browser. This can be useful e.g. for
+            an AWS signed delete url.
           </p>
         </div>
         <div className="bg-white rounded-lg shadow-lg p-8">

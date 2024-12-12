@@ -52,6 +52,7 @@ export default function Home() {
         setShortUrl(`${data.fullUrl}`);
       }
     } catch (error) {
+      console.error(error);
       setError("Something went wrong");
     }
   };
