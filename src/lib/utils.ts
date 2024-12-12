@@ -12,14 +12,17 @@ export const getProtocol = (hostname = "") => {
 };
 
 export const getHostUrl = () => {
+  let hostname =
+    process.env.NEXT_PUBLIC_HOSTNAME ||
+    process.env.VERCEL_URL ||
+    process.env.NEXT_PUBLIC_VERCEL_URL;
   if (typeof window === "undefined") {
-    const protocol = getProtocol(process.env.NEXT_PUBLIC_HOSTNAME || "");
-    return `${protocol}://${process.env.NEXT_PUBLIC_HOSTNAME}`;
+    const protocol = getProtocol(hostname);
+    return `${protocol}://${hostname}`;
   }
-  const hostname = process.env.NEXT_PUBLIC_HOSTNAME || window.location.hostname;
-  if (!process.env.NEXT_PUBLIC_HOSTNAME) {
+  if (!hostname) {
     console.log("No NEXT_PUBLIC_HOSTNAME found, using window.location.origin");
-    return window.location.origin;
+    hostname = window.location.hostname;
   }
   const protocol = getProtocol(hostname);
   return `${protocol}://${hostname}`;
