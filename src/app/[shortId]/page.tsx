@@ -8,9 +8,5 @@ export default async function RedirectPage({
 }) {
   const { shortId } = params;
   const url = await kv.get<string>(shortId);
-  return <Redirect url={url || ""} />;
-}
-
-const Redirect = ({ url }: { url: string }) => {
   return url ? redirect(url) : notFound();
-};
+}
