@@ -1,8 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import Link from "next/link";
+import { HomeIcon } from "lucide-react";
 
 function DeleteProxyPage() {
   const searchParams = useSearchParams();
@@ -45,105 +49,111 @@ function DeleteProxyPage() {
 
   return (
     <>
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-extrabold text-gray-900 text-center mb-8 text-white">
-          veryshort.me delete proxy
-        </h1>
-
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-3 text-center">
-          <p className="text-gray-600">
-            This is a proxy that allows you to call the DELETE method for a
-            veryshort.me url by using the browser. This can be useful e.g. for
-            an AWS signed delete url.
-          </p>
-        </div>
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit();
-            }}
-            className="space-y-6"
+      <div className="flex flex-col gap-4">
+        <Link className="mt-8" href="/">
+          <Button
+            variant="outline"
+            size="icon"
+            className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
           >
-            <div>
-              <label
-                htmlFor="id"
-                className="block text-lg font-medium text-gray-700 mb-2"
+            <HomeIcon className="w-4 h-4" />
+          </Button>
+        </Link>
+
+        <Card className="bg-black rounded-lg shadow-2xl max-w-md w-full text-center border-2 border-purple-600">
+          <CardHeader>
+            <CardTitle className="text-purple-600 text-2xl">
+              Delete Proxy
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-6">
+              <p className="text-purple-600">
+                This is a proxy that allows you to call the DELETE method for a
+                veryshort.me url by using the browser. This can be useful e.g. for
+                an AWS signed delete url.
+              </p>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSubmit();
+                }}
+                className="flex flex-col gap-4"
               >
-                Enter veryshort.me ID:
-              </label>
-              <input
-                type="text"
-                id="id"
-                value={id || ""}
-                onChange={(e) => setId(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                placeholder="Enter veryshort.me ID"
-                required
-              />
-            </div>
+                <Input
+                  type="text"
+                  value={id || ""}
+                  onChange={(e) => setId(e.target.value)}
+                  placeholder="Enter veryshort.me ID"
+                  required
+                  className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
+                />
 
-            <Button
-              type="submit"
-              disabled={status === "loading"}
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150"
-            >
-              {status === "loading" ? "Sending..." : "Send DELETE request"}
-            </Button>
-          </form>
-
-          {status === "loading" && (
-            <div className="mt-6 flex justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-            </div>
-          )}
-
-          {status === "success" && responseData && (
-            <div className="mt-6 bg-green-50 border-l-4 border-green-500 p-4">
-              <div className="flex items-center">
-                <svg
-                  className="h-6 w-6 text-green-500 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+                <Button
+                  type="submit"
+                  disabled={status === "loading"}
+                  variant="outline"
+                  className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                <p className="text-green-700">
-                  Status: {responseData.status} {responseData.statusText}
-                </p>
-              </div>
-              <p className="text-gray-600 mt-2">URL: {responseData.url}</p>
-              <p className="text-gray-600">ID: {responseData.id}</p>
-            </div>
-          )}
+                  {status === "loading" ? "Sending..." : "Send DELETE request"}
+                </Button>
+              </form>
 
-          {status === "error" && (
-            <div className="mt-6 bg-red-50 border-l-4 border-red-500 p-4">
-              <div className="flex items-center">
-                <svg
-                  className="h-6 w-6 text-red-500 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-                <p className="text-red-700">Failed to fetch proxy data</p>
-              </div>
+              {status === "loading" && (
+                <div className="flex justify-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+                </div>
+              )}
+
+              {status === "success" && responseData && (
+                <div className="border-2 border-purple-600 rounded-lg p-4">
+                  <div className="flex items-center justify-center gap-2">
+                    <svg
+                      className="h-6 w-6 text-purple-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <p className="text-purple-600">
+                      Status: {responseData.status} {responseData.statusText}
+                    </p>
+                  </div>
+                  <p className="text-purple-600 mt-2">URL: {responseData.url}</p>
+                  <p className="text-purple-600">ID: {responseData.id}</p>
+                </div>
+              )}
+
+              {status === "error" && (
+                <div className="border-2 border-red-500 rounded-lg p-4">
+                  <div className="flex items-center justify-center gap-2">
+                    <svg
+                      className="h-6 w-6 text-red-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                    <p className="text-red-500">Failed to fetch proxy data</p>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </>
   );

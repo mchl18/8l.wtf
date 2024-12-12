@@ -11,9 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
 import { CopyIcon, RefreshCcwIcon, TrashIcon } from "lucide-react";
-import { generateToken, isValidToken } from "@/lib/utils";
+import { copyToClipboard, generateToken, isValidToken } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 
 function Home() {
@@ -42,13 +41,8 @@ function Home() {
     const token = generateToken();
     setToken(token);
     localStorage.setItem("shortener_token", token);
-    copyToken(token);
+    copyToClipboard(token);
     router.push(`/?token=${token}`);
-  };
-
-  const copyToken = async (token: string) => {
-    await navigator.clipboard.writeText(token);
-    toast.success("Token copied to clipboard!");
   };
 
   useEffect(() => {
@@ -63,7 +57,6 @@ function Home() {
         setToken(queryToken);
         localStorage.setItem("shortener_token", queryToken);
       } else {
-        debugger;
         setError("Invalid token");
       }
     } else {
@@ -121,13 +114,10 @@ function Home() {
 
   return (
     <>
-      <Card className="bg-black rounded-lg shadow-2xl max-w-md w-full text-center mt-24 border-2 border-purple-600">
-        <CardHeader>
-          <CardTitle className="text-purple-600 text-2xl">
-            veryshort.me
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <h1 className="text-purple-600 text-2xl mt-24">veryshort.me</h1>
+      <Card className="bg-black rounded-lg shadow-2xl max-w-md w-full text-center mt-6 border-2 border-purple-600">
+        {/* <CardHeader></CardHeader> */}
+        <CardContent className="pt-6">
           <form onSubmit={handleSubmit}>
             <div className="flex flex-col gap-3">
               <Input
@@ -168,7 +158,7 @@ function Home() {
                       type="button"
                       size={"icon"}
                       variant="outline"
-                      onClick={() => copyToken(token)}
+                      onClick={() => copyToClipboard(token)}
                       className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
                     >
                       <CopyIcon className="w-4 h-4" />

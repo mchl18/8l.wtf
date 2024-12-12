@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect } from "react";
-import { isValidToken } from "@/lib/utils";
+import { isValidToken, copyToClipboard } from "@/lib/utils";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, TrashIcon } from "lucide-react";
+import { Loader2, TrashIcon, LinkIcon, HomeIcon } from "lucide-react";
 import Link from "next/link";
 
 type ShortenedUrl = {
@@ -151,9 +151,10 @@ export default function AdminPage({ params }: { params: { token: string } }) {
         <Link className="mt-8" href={`/?token=${token}`}>
           <Button
             variant="outline"
+            size="icon"
             className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
           >
-            Back to Home
+            <HomeIcon className="w-4 h-4" />
           </Button>
         </Link>
         <Card className="bg-black rounded-lg shadow-2xl lg:min-w-[600px] w-full text-center border-2 border-purple-600 mx-auto">
@@ -231,7 +232,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                           className="border-2 border-purple-600 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
                         />
                         <div className="text-left">
-                          <p className="text-purple-600">
+                          <p className="text-purple-600 flex items-center gap-2">
                             <span className="font-bold">Short URL:</span>{" "}
                             <a
                               href={url.fullUrl}
@@ -241,10 +242,26 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                             >
                               {url.fullUrl}
                             </a>
+                            <Button
+                              onClick={() => copyToClipboard(url.fullUrl)}
+                              variant="ghost"
+                              size="icon"
+                              className="text-purple-600 hover:text-purple-400"
+                            >
+                              <LinkIcon className="w-4 h-4" />
+                            </Button>
                           </p>
-                          <p className="text-purple-600">
+                          <p className="text-purple-600 flex items-center gap-2">
                             <span className="font-bold">Original URL:</span>{" "}
                             <span className="break-all">{url.url}</span>
+                            <Button
+                              onClick={() => copyToClipboard(url.url)}
+                              variant="ghost"
+                              size="icon"
+                              className="text-purple-600 hover:text-purple-400"
+                            >
+                              <LinkIcon className="w-4 h-4" />
+                            </Button>
                           </p>
                           {url.createdAt && (
                             <p className="text-purple-600">

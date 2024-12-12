@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
+import { toast } from "sonner";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -53,3 +54,8 @@ export const isValidToken = (token: unknown): boolean => {
   return hexRegex.test(token);
 };
 
+
+export const copyToClipboard = async (text: string) => {
+  await navigator.clipboard.writeText(text);
+  toast.success("Copied to clipboard!");
+};
