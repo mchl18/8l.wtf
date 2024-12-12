@@ -83,7 +83,7 @@ export default function Home() {
                 className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
               />
 
-              <div className="flex gap-1 justify-center items-center">
+              <div className="flex md:flex-row flex-col w-full gap-2 md:gap-1 justify-center md:items-center">
                 <Button
                   type="button"
                   variant={"outline"}
@@ -121,7 +121,7 @@ export default function Home() {
                   }}
                 >
                   <SelectTrigger
-                    className={`w-[180px] text-sm hover:text-black ${
+                    className={`md:w-[180px] w-full text-sm hover:text-black ${
                       selectedMode === "preset"
                         ? "text-purple-600 bg-purple-600 text-black ring-2 ring-purple-500 active:ring-2 active:ring-purple-500"
                         : "border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
