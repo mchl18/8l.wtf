@@ -1,18 +1,19 @@
+import { getHostUrl } from "@/lib/utils";
 import { kv } from "@vercel/kv";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const { url } = await request.json();
-
+  const hostUrl = getHostUrl();
   const existingEntries = await kv.smembers("urls");
   for (const entry of existingEntries) {
     const [shortId, storedUrl] = entry.split("::");
     if (storedUrl === url) {
       return NextResponse.json({
         shortId,
-        fullUrl: `https://veryshort.me/${shortId}`,
-        deleteProxyUrl: `https://veryshort.me/api/delete-proxy?id=${shortId}`,
+        fullUrl: `${hostUrl}/${shortId}`,
+        deleteProxyUrl: `${hostUrl}/api/delete-proxy?id=${shortId}`,
       });
     }
   }
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
   await kv.set(shortId, url);
   return NextResponse.json({
     shortId,
-    fullUrl: `https://veryshort.me/${shortId}`,
-    deleteProxyUrl: `https://veryshort.me/api/delete-proxy?id=${shortId}`,
+    fullUrl: `${hostUrl}/${shortId}`,
+    deleteProxyUrl: `${hostUrl}/api/delete-proxy?id=${shortId}`,
   });
 }

@@ -1,6 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Metadata } from "next";
+import { getHostUrl } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
     description:
       "Create short, custom URLs quickly and easily with our free URL shortener. Access our developer API for programmatic URL shortening. No Bullshit, no ads, just short links.",
     type: "website",
-    url: "https://veryshort.me",
+    url: getHostUrl(),
   },
   twitter: {
     card: "summary_large_image",

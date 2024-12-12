@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { nanoid } from "nanoid";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getHostUrl } from "@/lib/utils";
 
 export default function ApiPage() {
   const [url, setUrl] = useState("");
@@ -11,7 +11,7 @@ export default function ApiPage() {
   const [fullUrl, setFullUrl] = useState("");
   const [deleteProxyUrl, setDeleteProxyUrl] = useState("");
   const [error, setError] = useState("");
-
+  const hostUrlRef = useRef(getHostUrl());
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -69,8 +69,8 @@ export default function ApiPage() {
               <pre className="bg-gray-50 p-4 rounded-md font-mono text-sm">
                 {`{
   "shortId": "abc123xy",
-  "fullUrl": "https://veryshort.me/abc123xy",
-  "deleteProxyUrl": "https://veryshort.me/api/delete-proxy?id=abc123xy"
+  "fullUrl": "${hostUrlRef.current}/abc123xy",
+  "deleteProxyUrl": "${hostUrlRef.current}/api/delete-proxy?id=abc123xy"
 }`}
               </pre>
             </div>

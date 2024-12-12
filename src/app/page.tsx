@@ -1,5 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
+import { getHostUrl } from "@/lib/utils";
 import { Analytics } from "@vercel/analytics/react";
 import Link from "next/link";
 import { useState } from "react";
@@ -18,12 +19,8 @@ export default function Home() {
       body: JSON.stringify({ url }),
     });
     const data = await response.json();
-    const hostname = process.env.NEXT_PUBLIC_HOSTNAME || "";
-    const protocol =
-      hostname.startsWith("localhost") || hostname.startsWith("127.0.0.1")
-        ? "http"
-        : "https";
-    setShortUrl(`${protocol}://${hostname}/${data.shortId}`);
+    const hostUrl = getHostUrl();
+    setShortUrl(`${hostUrl}/${data.shortId}`);
   };
 
   return (
