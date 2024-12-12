@@ -1,7 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getHostUrl } from "@/lib/utils";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import {
@@ -18,12 +17,12 @@ export default function Home() {
   const [shortUrl, setShortUrl] = useState("");
   const [maxAge, setMaxAge] = useState<number | string>(0);
   const [presetValue, setPresetValue] = useState("");
+  const [error, setError] = useState("");
   const [selectedMode, setSelectedMode] = useState<
     "forever" | "custom" | "preset"
   >("forever");
 
   const presets = [
-    // { label: "Forever", value: 0 },
     { label: "1 hour", value: 3600 },
     { label: "1 day", value: 86400 },
     { label: "1 week", value: 604800 },
@@ -31,25 +30,30 @@ export default function Home() {
   ];
   console.log(selectedMode, maxAge);
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const response = await fetch("/api/shorten", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url,
-        maxAge:
-          selectedMode === "forever"
-            ? 0
-            : selectedMode === "custom"
-            ? maxAge
-            : presetValue,
-      }),
-    });
-    const data = await response.json();
-    const hostUrl = getHostUrl();
-    setShortUrl(`${hostUrl}/${data.shortId}`);
+    try {
+      e.preventDefault();
+      const response = await fetch("/api/shorten", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url,
+          maxAge:
+            selectedMode === "forever"
+              ? 0
+              : selectedMode === "custom"
+              ? maxAge
+              : presetValue,
+        }),
+      });
+      const data = await response.json();
+      if (data.fullUrl) {
+        setShortUrl(`${data.fullUrl}`);
+      }
+    } catch (error) {
+      setError("Something went wrong");
+    }
   };
 
   const setMode = useCallback(
@@ -185,6 +189,7 @@ export default function Home() {
               >
                 Shorten
               </Button>
+              {error && <p className="text-red-500">{error}</p>}
               {shortUrl && (
                 <div className="bg-transparent rounded-lg p-4 border-2 border-purple-600">
                   <p className="text-purple-600 mb-2">Shortened URL:</p>
