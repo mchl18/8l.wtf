@@ -36,3 +36,20 @@ export const generateToken = () => {
     .join("");
   return token;
 };
+
+export const isValidToken = (token: unknown): boolean => {
+  // Check if token is a string
+  if (typeof token !== 'string') {
+    return false;
+  }
+
+  // Check length (128 characters for 64 bytes in hex)
+  if (token.length !== 128) {
+    return false;
+  }
+
+  // Check if string only contains valid hexadecimal characters
+  const hexRegex = /^[0-9a-f]+$/;
+  return hexRegex.test(token);
+};
+
