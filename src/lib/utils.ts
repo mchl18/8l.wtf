@@ -13,7 +13,8 @@ export const getProtocol = (hostname = "") => {
 
 export const getHostUrl = () => {
   if (typeof window === "undefined") {
-    return process.env.NEXT_PUBLIC_HOSTNAME || "";
+    const protocol = getProtocol(process.env.NEXT_PUBLIC_HOSTNAME || "");
+    return `${protocol}://${process.env.NEXT_PUBLIC_HOSTNAME}`;
   }
   const hostname = process.env.NEXT_PUBLIC_HOSTNAME || window.location.hostname;
   if (!process.env.NEXT_PUBLIC_HOSTNAME) {
