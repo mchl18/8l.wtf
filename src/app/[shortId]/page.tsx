@@ -1,7 +1,5 @@
-// app/[shortId]/page.js
 import { kv } from "@vercel/kv";
-import { redirect } from "next/navigation";
-import { notFound } from "next/navigation";
+import { redirect, notFound } from "next/navigation";
 
 export default async function RedirectPage({
   params,
@@ -10,10 +8,9 @@ export default async function RedirectPage({
 }) {
   const { shortId } = params;
   const url = await kv.get<string>(shortId);
-
-  if (!url) {
-    notFound();
-  }
-
-  redirect(url);
+  return <Redirect url={url || ""} />;
 }
+
+const Redirect = ({ url }: { url: string }) => {
+  return url ? redirect(url) : notFound();
+};
