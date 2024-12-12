@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -12,9 +12,13 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { CopyIcon, DeleteIcon, RefreshCcwIcon, TrashIcon } from "lucide-react";
+import { CopyIcon, RefreshCcwIcon, TrashIcon } from "lucide-react";
+import { generateToken, isValidToken } from "@/lib/utils";
+import { useRouter, useSearchParams } from "next/navigation";
 
-export default function Home() {
+function Home() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [url, setUrl] = useState("");
   const [shortUrl, setShortUrl] = useState("");
   const [maxAge, setMaxAge] = useState<number | string>(0);
@@ -33,11 +37,13 @@ export default function Home() {
   ];
   console.log(selectedMode, maxAge);
 
-  const fetchToken = async () => {
-    const response = await fetch("/api/token");
-    const data = await response.json();
-    setToken(data.token);
-    copyToken(data.token);
+  const makeToken = async () => {
+    setError("");
+    const token = generateToken();
+    setToken(token);
+    localStorage.setItem("shortener_token", token);
+    copyToken(token);
+    router.push(`/?token=${token}`);
   };
 
   const copyToken = async (token: string) => {
@@ -45,7 +51,33 @@ export default function Home() {
     toast.success("Token copied to clipboard!");
   };
 
+  useEffect(() => {
+    setUrl(process.env.NEXT_PUBLIC_DEFAULT_URL || "");
+    if (searchParams.get("url")) {
+      setUrl(searchParams.get("url") || "");
+    }
+
+    const queryToken = searchParams.get("token");
+    if (queryToken) {
+      if (isValidToken(queryToken)) {
+        setToken(queryToken);
+        localStorage.setItem("shortener_token", queryToken);
+      } else {
+        debugger;
+        setError("Invalid token");
+      }
+    } else {
+      // Try to get token from localStorage if no query param
+      const storedToken = localStorage.getItem("shortener_token");
+      if (storedToken && isValidToken(storedToken)) {
+        setToken(storedToken);
+        router.push(`/?token=${storedToken}`);
+      }
+    }
+  }, [searchParams]);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    setError("");
     try {
       e.preventDefault();
       const opts: Record<string, number | string> = {
@@ -122,7 +154,10 @@ export default function Home() {
                       type="button"
                       size={"icon"}
                       variant="outline"
-                      onClick={() => setToken("")}
+                      onClick={() => {
+                        setToken("");
+                        localStorage.removeItem("shortener_token");
+                      }}
                       className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
                     >
                       <TrashIcon className="w-4 h-4" />
@@ -144,7 +179,7 @@ export default function Home() {
                     type="button"
                     variant="outline"
                     size={"icon"}
-                    onClick={fetchToken}
+                    onClick={makeToken}
                     className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
                   >
                     <RefreshCcwIcon className="w-4 h-4" />
@@ -269,6 +304,16 @@ export default function Home() {
                   </a>
                 </div>
               )}
+              {isValidToken(token) && (
+                <Link href={`/admin/${token}`}>
+                  <Button
+                    variant="outline"
+                    className="text-purple-600 hover:bg-purple-600 hover:text-black border-2 border-purple-600"
+                  >
+                    All URLs
+                  </Button>
+                </Link>
+              )}
             </div>
           </form>
         </CardContent>
@@ -285,6 +330,26 @@ export default function Home() {
       >
         Delete Proxy
       </Link>
+      <Link
+        href="https://github.com/mchl18/veryshort.me"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-purple-600 ring-1 ring-purple-500 font-medium py-2 px-4 rounded-md shadow transition duration-150 mt-4"
+      >
+        GitHub
+      </Link>
     </>
+  );
+}
+
+const SupsenseWrapper = ({ children }: { children: React.ReactNode }) => {
+  return <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>;
+};
+
+export default function Page() {
+  return (
+    <SupsenseWrapper>
+      <Home />
+    </SupsenseWrapper>
   );
 }

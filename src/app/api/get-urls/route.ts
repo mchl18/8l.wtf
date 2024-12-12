@@ -1,7 +1,7 @@
 import { kv } from "@vercel/kv";
 import { NextResponse } from "next/server";
 import { getHostUrl } from "@/lib/utils";
-
+import { createDecipheriv } from "crypto";
 export async function POST(request: Request) {
   const { token } = await request.json();
 
@@ -14,15 +14,26 @@ export async function POST(request: Request) {
   const urls = [];
 
   for (const shortId of shortIds) {
-    const url = await kv.get(shortId);
+    const encryptedUrl = await kv.get(shortId);
     const expiresAt = await kv.get(`${shortId}:expires`);
-    if (url) {
+    if (encryptedUrl) {
+      // Decrypt the URL using the token
+      const [urlIvHex, urlEncrypted] = (encryptedUrl as string).split(":");
+      const urlIv = Buffer.from(urlIvHex, "hex");
+      // Convert hex token to bytes for the key, matching the encryption
+      const key = Buffer.from(token, "hex");
+      const urlDecipher = createDecipheriv("aes-256-cbc", key, urlIv);
+      let decryptedUrl = urlDecipher.update(urlEncrypted, "hex", "utf8");
+      decryptedUrl += urlDecipher.final("utf8");
+
       urls.push({
         shortId,
-        url,
+        url: decryptedUrl,
         fullUrl: `${hostUrl}/${shortId}`,
         deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
-        expiresAt: expiresAt ? new Date(expiresAt as string).toISOString() : undefined,
+        expiresAt: expiresAt
+          ? new Date(expiresAt as string).toISOString()
+          : undefined,
       });
     }
   }

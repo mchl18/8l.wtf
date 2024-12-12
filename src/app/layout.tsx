@@ -6,17 +6,16 @@ import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
   title: "veryshort.me",
   description:
-    "Create short, custom URLs quickly and easily with our free URL shortener. Access our developer API for programmatic URL shortening. No Bullshit, no ads, just short links.",
+    "Open source, secure URL shortener with strong encryption. Create short links for free with our developer-friendly API. No tracking, no ads, fully transparent code. Github link included.",
   keywords:
-    "URL shortener, link shortener, custom URLs, link tracking, marketing tools, URL shortener API, developer API, No Bullshit, no ads, just short links.",
+    "URL shortener, open source, encryption, secure links, free URL shortener, developer API, transparent code, privacy focused, no tracking",
   openGraph: {
     title: "veryshort.me",
     description:
-      "Create short, custom URLs quickly and easily with our free URL shortener. Access our developer API for programmatic URL shortening. No Bullshit, no ads, just short links.",
+      "Open source, secure URL shortener with strong encryption. Create short links for free with our developer-friendly API. No tracking, no ads, fully transparent code. Github link included.",
     type: "website",
     url: getHostUrl(),
   },
@@ -24,8 +23,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "veryshort.me",
     description:
-      "Create short, custom URLs quickly and easily with our free URL shortener. Access our developer API for programmatic URL shortening. No Bullshit, no ads, just short links.",
+      "Open source, secure URL shortener with strong encryption. Create short links for free with our developer-friendly API. No tracking, no ads, fully transparent code. Github link included.",
   },
+  authors: [{ name: "Michael Gerullis", url: "https://mgerullis.com" }],
 };
 
 export default function RootLayout({

@@ -29,7 +29,7 @@ export const getHostUrl = () => {
 };
 
 export const generateToken = () => {
-  const randomBytes = new Uint8Array(64);
+  const randomBytes = new Uint8Array(32);
   crypto.getRandomValues(randomBytes);
   const token = Array.from(randomBytes)
     .map((b) => b.toString(16).padStart(2, "0"))
@@ -39,12 +39,12 @@ export const generateToken = () => {
 
 export const isValidToken = (token: unknown): boolean => {
   // Check if token is a string
-  if (typeof token !== 'string') {
+  if (typeof token !== "string") {
     return false;
   }
 
-  // Check length (128 characters for 64 bytes in hex)
-  if (token.length !== 128) {
+  // Check length (64 characters for 32 bytes in hex)
+  if (token.length !== 64) {
     return false;
   }
 

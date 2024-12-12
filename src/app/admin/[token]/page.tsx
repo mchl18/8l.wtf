@@ -7,6 +7,7 @@ import { isValidToken } from "@/lib/utils";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, TrashIcon } from "lucide-react";
+import Link from "next/link";
 
 type ShortenedUrl = {
   shortId: string;
@@ -20,6 +21,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
   const [token, setToken] = useState(params.token || "");
   const [urls, setUrls] = useState<ShortenedUrl[]>([]);
   const [error, setError] = useState("");
+  const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
@@ -42,6 +44,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
       const data = await response.json();
       setUrls(data.urls);
       setError("");
+      setLoaded(true);
     } catch (err) {
       console.error(err);
       setError("Failed to fetch URLs");
@@ -143,124 +146,144 @@ export default function AdminPage({ params }: { params: { token: string } }) {
   }, [token]);
 
   return (
-    <Card className="bg-black rounded-lg shadow-2xl max-w-4xl w-full text-center mt-24 border-2 border-purple-600 mx-auto">
-      <CardHeader>
-        <CardTitle className="text-purple-600 text-2xl">
-          URL Management Dashboard
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col gap-6">
-          <div className="flex gap-2">
-            <Input
-              type="text"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              placeholder="Enter your token"
-              className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
-            />
-            <Button
-              onClick={fetchUrls}
-              disabled={loading}
-              variant="outline"
-              className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
-            >
-              {loading ? "Loading..." : "Fetch URLs"}
-            </Button>
-          </div>
-
-          {error && <p className="text-red-500">{error}</p>}
-
-          {urls.length > 0 && (
-            <div className="border-2 border-purple-600 rounded-lg p-4">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-purple-600 text-xl">Your Shortened URLs</h3>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={toggleSelectAll}
-                    variant="outline"
-                    className="border-2 border-purple-600 text-purple-600"
-                  >
-                    {selectedUrls.size === urls.length
-                      ? "Deselect All"
-                      : "Select All"}
-                  </Button>
-                  {selectedUrls.size > 0 && (
-                    <Button
-                      onClick={() => handleDelete(Array.from(selectedUrls))}
-                      disabled={deleting}
-                      variant="destructive"
-                      size="icon"
-                    >
-                      {deleting ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <TrashIcon className="w-4 h-4" />
-                      )}
-                    </Button>
-                  )}
-                </div>
+    <>
+      <div className="flex flex-col gap-4">
+        <Link className="mt-8" href={`/?token=${token}`}>
+          <Button
+            variant="outline"
+            className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
+          >
+            Back to Home
+          </Button>
+        </Link>
+        <Card className="bg-black rounded-lg shadow-2xl lg:min-w-[600px] w-full text-center border-2 border-purple-600 mx-auto">
+          <CardHeader>
+            <CardTitle className="text-purple-600 text-2xl">
+              URL Management Dashboard
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col md:flex-row gap-2">
+                <Input
+                  type="text"
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                  placeholder="Enter your token"
+                  className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
+                />
+                <Button
+                  onClick={fetchUrls}
+                  disabled={loading}
+                  variant="outline"
+                  className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
+                >
+                  {loading ? "Loading..." : "Fetch URLs"}
+                </Button>
               </div>
-              <div className="space-y-4">
-                {urls.map((url) => (
-                  <div
-                    key={url.shortId}
-                    className="grid grid-cols-[auto,1fr,auto] gap-4 items-center border-b border-purple-600 last:border-b-0 pb-4"
-                  >
-                    <Checkbox
-                      id={`checkbox-${url.shortId}`}
-                      checked={selectedUrls.has(url.shortId)}
-                      onCheckedChange={() => toggleUrlSelection(url.shortId)}
-                      className="border-2 border-purple-600 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
-                    />
-                    <div className="text-left">
-                      <p className="text-purple-600">
-                        <span className="font-bold">Short URL:</span>{" "}
-                        <a
-                          href={url.fullUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hover:text-purple-400"
+
+              {error && <p className="text-red-500">{error}</p>}
+
+              {urls.length > 0 && (
+                <div className="border-2 border-purple-600 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-purple-600 text-xl">
+                      Your Shortened URLs
+                    </h3>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={toggleSelectAll}
+                        variant="outline"
+                        className="border-2 border-purple-600 text-purple-600"
+                      >
+                        {selectedUrls.size === urls.length
+                          ? "Deselect All"
+                          : "Select All"}
+                      </Button>
+                      {selectedUrls.size > 0 && (
+                        <Button
+                          onClick={() => handleDelete(Array.from(selectedUrls))}
+                          disabled={deleting}
+                          variant="destructive"
+                          size="icon"
                         >
-                          {url.fullUrl}
-                        </a>
-                      </p>
-                      <p className="text-purple-600">
-                        <span className="font-bold">Original URL:</span>{" "}
-                        <span className="break-all">{url.url}</span>
-                      </p>
-                      {url.createdAt && (
-                        <p className="text-purple-600">
-                          <span className="font-bold">Created:</span>{" "}
-                          {new Date(url.createdAt).toLocaleString()}
-                        </p>
-                      )}
-                      {url.expiresAt && (
-                        <p className="text-purple-600">
-                          <span className="font-bold">Expires:</span>{" "}
-                          {new Date(url.expiresAt).toLocaleString()}
-                        </p>
+                          {deleting ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <TrashIcon className="w-4 h-4" />
+                          )}
+                        </Button>
                       )}
                     </div>
-                    <Button
-                      onClick={() => handleDelete([url.shortId])}
-                      disabled={deleting}
-                      variant="destructive"
-                      size="icon"
-                    >
-                      {deleting ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <TrashIcon className="w-4 h-4" />
-                      )}
-                    </Button>
                   </div>
-                ))}
-              </div>
+                  <div className="space-y-4">
+                    {urls.map((url) => (
+                      <div
+                        key={url.shortId}
+                        className="grid grid-cols-[auto,1fr,auto] gap-4 items-center border-b border-purple-600 last:border-b-0 pb-4"
+                      >
+                        <Checkbox
+                          id={`checkbox-${url.shortId}`}
+                          checked={selectedUrls.has(url.shortId)}
+                          onCheckedChange={() =>
+                            toggleUrlSelection(url.shortId)
+                          }
+                          className="border-2 border-purple-600 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                        />
+                        <div className="text-left">
+                          <p className="text-purple-600">
+                            <span className="font-bold">Short URL:</span>{" "}
+                            <a
+                              href={url.fullUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:text-purple-400"
+                            >
+                              {url.fullUrl}
+                            </a>
+                          </p>
+                          <p className="text-purple-600">
+                            <span className="font-bold">Original URL:</span>{" "}
+                            <span className="break-all">{url.url}</span>
+                          </p>
+                          {url.createdAt && (
+                            <p className="text-purple-600">
+                              <span className="font-bold">Created:</span>{" "}
+                              {new Date(url.createdAt).toLocaleString()}
+                            </p>
+                          )}
+                          {url.expiresAt && (
+                            <p className="text-purple-600">
+                              <span className="font-bold">Expires:</span>{" "}
+                              {new Date(url.expiresAt).toLocaleString()}
+                            </p>
+                          )}
+                        </div>
+                        <Button
+                          onClick={() => handleDelete([url.shortId])}
+                          disabled={deleting}
+                          variant="destructive"
+                          size="icon"
+                        >
+                          {deleting ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <TrashIcon className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {loading && <p className="text-purple-600">Loading...</p>}
+              {loaded && !loading && urls.length === 0 && (
+                <p className="text-purple-600">No URLs found</p>
+              )}
             </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }

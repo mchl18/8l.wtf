@@ -2,6 +2,7 @@ import { getHostUrl, isValidToken } from "@/lib/utils";
 import { kv } from "@vercel/kv";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
+import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 
 export async function POST(request: Request) {
   const { url, maxAge, token } = await request.json();
@@ -21,7 +22,9 @@ export async function POST(request: Request) {
           shortId,
           fullUrl: `${hostUrl}/${shortId}`,
           deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
-          expiresAt: expiresAt ? new Date(expiresAt as string).toISOString() : undefined,
+          expiresAt: expiresAt
+            ? new Date(expiresAt as string).toISOString()
+            : undefined,
         });
       }
     }
@@ -31,37 +34,62 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }
 
-  const shortId = nanoid(8);
+  const originalShortId = nanoid(8);
+  let shortId = originalShortId;
+
+  // For authenticated URLs, encrypt both URL and shortId with the token as key
+  let storedUrl = url;
+  if (token) {
+    // Convert hex token to bytes for the key
+    const key = Buffer.from(token, "hex");
+
+    // Encrypt URL
+    const urlIv = randomBytes(16);
+    const urlCipher = createCipheriv("aes-256-cbc", key, urlIv);
+    let encryptedUrl = urlCipher.update(url, "utf8", "hex");
+    encryptedUrl += urlCipher.final("hex");
+    storedUrl = `${urlIv.toString("hex")}:${encryptedUrl}`;
+  }
 
   // Store metadata about whether the URL is authenticated
-  await kv.set(`url:${shortId}:meta`, { authenticated: !!token });
+  await kv.set(`url:${originalShortId}:meta`, { authenticated: !!token });
 
   // Store the new URL with its short ID in the appropriate set
-  await kv.sadd(urlsSet, `${shortId}::${url}`);
+  await kv.sadd(urlsSet, `${originalShortId}::${storedUrl}`);
 
   // Store URL with token reference if token provided
   if (token) {
-    await kv.sadd(`token:${token}:urls`, shortId);
+    await kv.sadd(`token:${token}:urls`, originalShortId);
   }
 
   let expiresAt;
   // Store the actual URL mapping with optional expiration
   if (maxAge && typeof maxAge === "number") {
     expiresAt = new Date(Date.now() + maxAge).toISOString();
-    await kv.set(shortId, url, { ex: Math.floor(maxAge / 1000) }); // Convert ms to seconds for Redis
-    await kv.set(`${shortId}:expires`, expiresAt);
+    console.log({
+      originalShortId,
+      storedUrl,
+      maxAge,
+      expiresAt,
+    });
+    await kv.set(originalShortId, storedUrl, { ex: Math.floor(maxAge / 1000) }); // Convert ms to seconds for Redis
+    await kv.set(`${originalShortId}:expires`, expiresAt);
   } else {
-    await kv.set(shortId, url);
+    await kv.set(originalShortId, storedUrl);
   }
-
+  console.log({
+    originalShortId,
+    storedUrl,
+    maxAge,
+    expiresAt,
+  });
   return NextResponse.json({
     shortId,
-    fullUrl: `${hostUrl}/${shortId}`,
-    deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
+    fullUrl: `${hostUrl}/${originalShortId}`,
+    deleteProxyUrl: `${hostUrl}/delete-proxy?id=${originalShortId}`,
     expiresAt,
   });
 }
-
 export async function DELETE(request: Request) {
   const { shortIds, token } = await request.json();
 
@@ -79,7 +107,7 @@ export async function DELETE(request: Request) {
   const results = [];
 
   for (const shortId of shortIds) {
-    // Check if URL belongs to this token
+    // Check if URL belongs to this token using the tracking set
     const isUrlOwnedByToken = await kv.sismember(
       `token:${token}:urls`,
       shortId
@@ -92,14 +120,14 @@ export async function DELETE(request: Request) {
 
     try {
       // Get URL to determine which set it's in
-      const url = await kv.get(shortId);
-      if (!url) {
+      const storedUrl = await kv.get(shortId);
+      if (!storedUrl) {
         results.push({ shortId, success: false, error: "URL not found" });
         continue;
       }
 
       // Delete from authenticated URLs set
-      await kv.srem("authenticated_urls", `${shortId}::${url}`);
+      await kv.srem("authenticated_urls", `${shortId}::${storedUrl}`);
 
       // Delete metadata
       await kv.del(`url:${shortId}:meta`);
