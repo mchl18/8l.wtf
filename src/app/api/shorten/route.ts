@@ -4,7 +4,7 @@ import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
-  const { url } = await request.json();
+  const { url, maxAge } = await request.json();
   const hostUrl = getHostUrl();
   const existingEntries = await kv.smembers("urls");
   for (const entry of existingEntries) {
@@ -22,7 +22,11 @@ export async function POST(request: Request) {
 
   // Store the new URL with its short ID
   await kv.sadd("urls", `${shortId}::${url}`);
-  await kv.set(shortId, url);
+  if (maxAge && typeof maxAge === "number") {
+    await kv.set(shortId, url, { ex: Math.floor(maxAge) }); // Convert ms to seconds for Redis
+  } else {
+    await kv.set(shortId, url);
+  }
   return NextResponse.json({
     shortId,
     fullUrl: `${hostUrl}/${shortId}`,
