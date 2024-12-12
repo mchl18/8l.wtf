@@ -1,12 +1,11 @@
-import { getProtocol } from "@/lib/utils";
+import { getHostUrl } from "@/lib/utils";
 import { MetadataRoute } from "next";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const hostname = process.env.NEXT_PUBLIC_HOSTNAME || window.location.hostname;
-  const protocol = getProtocol(hostname);
+  const hostUrl = getHostUrl();
 
   const routes = ["/", "/api", "/delete-proxy"].map((route) => ({
-    url: `${protocol}://${hostname}${route}`,
+    url: `${hostUrl}${route}`,
     lastModified: new Date().toISOString(),
     changeFrequency: "monthly" as const,
     priority: 1,

@@ -39,7 +39,7 @@ export default function ApiPage() {
 
   return (
     <>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-full mx-auto">
         <h1 className="text-4xl font-extrabold text-gray-900 text-center mb-8 text-white">
           veryshort.me API
         </h1>
@@ -60,13 +60,13 @@ export default function ApiPage() {
                 </code>
               </p>
               <p className="text-gray-600 mb-2">Request body:</p>
-              <pre className="bg-gray-50 p-4 rounded-md font-mono text-sm">
+              <pre className="bg-gray-50 p-4 rounded-md font-mono text-sm overflow-x-auto">
                 {`{
   "url": "https://example.com"
 }`}
               </pre>
               <p className="text-gray-600 mt-3 mb-2">Response:</p>
-              <pre className="bg-gray-50 p-4 rounded-md font-mono text-sm">
+              <pre className="bg-gray-50 p-4 rounded-md font-mono text-sm overflow-x-auto">
                 {`{
   "shortId": "abc123xy",
   "fullUrl": "${hostUrlRef.current}/abc123xy",
@@ -85,7 +85,7 @@ export default function ApiPage() {
                 </code>
               </p>
               <p className="text-gray-600 mb-2">Response:</p>
-              <pre className="bg-gray-50 p-4 rounded-md font-mono text-sm">
+              <pre className="bg-gray-50 p-4 rounded-md font-mono text-sm overflow-x-auto">
                 {`{
   "url": "https://example.com",
   "shortId": "abc123xy"
