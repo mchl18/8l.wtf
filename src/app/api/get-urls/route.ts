@@ -15,12 +15,14 @@ export async function POST(request: Request) {
 
   for (const shortId of shortIds) {
     const url = await kv.get(shortId);
+    const expiresAt = await kv.get(`${shortId}:expires`);
     if (url) {
       urls.push({
         shortId,
         url,
         fullUrl: `${hostUrl}/${shortId}`,
         deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
+        expiresAt: expiresAt ? new Date(expiresAt as string).toISOString() : undefined,
       });
     }
   }

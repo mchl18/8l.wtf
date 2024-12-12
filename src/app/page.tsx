@@ -54,8 +54,8 @@ export default function Home() {
           selectedMode === "forever"
             ? 0
             : selectedMode === "custom"
-            ? maxAge
-            : presetValue,
+            ? parseInt(`${maxAge}`)
+            : parseInt(`${presetValue}`),
       };
       if (token) {
         opts.token = token;

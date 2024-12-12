@@ -13,6 +13,7 @@ type ShortenedUrl = {
   url: string;
   fullUrl: string;
   createdAt?: string;
+  expiresAt?: string;
 };
 
 export default function AdminPage({ params }: { params: { token: string } }) {
@@ -232,6 +233,12 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                         <p className="text-purple-600">
                           <span className="font-bold">Created:</span>{" "}
                           {new Date(url.createdAt).toLocaleString()}
+                        </p>
+                      )}
+                      {url.expiresAt && (
+                        <p className="text-purple-600">
+                          <span className="font-bold">Expires:</span>{" "}
+                          {new Date(url.expiresAt).toLocaleString()}
                         </p>
                       )}
                     </div>

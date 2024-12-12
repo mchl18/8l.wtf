@@ -16,10 +16,12 @@ export async function POST(request: Request) {
     for (const entry of existingEntries) {
       const [shortId, storedUrl] = entry.split("::");
       if (storedUrl === url) {
+        const expiresAt = await kv.get(`${shortId}:expires`);
         return NextResponse.json({
           shortId,
           fullUrl: `${hostUrl}/${shortId}`,
           deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
+          expiresAt: expiresAt ? new Date(expiresAt as string).toISOString() : undefined,
         });
       }
     }
@@ -42,9 +44,12 @@ export async function POST(request: Request) {
     await kv.sadd(`token:${token}:urls`, shortId);
   }
 
+  let expiresAt;
   // Store the actual URL mapping with optional expiration
   if (maxAge && typeof maxAge === "number") {
-    await kv.set(shortId, url, { ex: Math.floor(maxAge) }); // Convert ms to seconds for Redis
+    expiresAt = new Date(Date.now() + maxAge).toISOString();
+    await kv.set(shortId, url, { ex: Math.floor(maxAge / 1000) }); // Convert ms to seconds for Redis
+    await kv.set(`${shortId}:expires`, expiresAt);
   } else {
     await kv.set(shortId, url);
   }
@@ -53,6 +58,7 @@ export async function POST(request: Request) {
     shortId,
     fullUrl: `${hostUrl}/${shortId}`,
     deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
+    expiresAt,
   });
 }
 
@@ -97,6 +103,7 @@ export async function DELETE(request: Request) {
 
       // Delete metadata
       await kv.del(`url:${shortId}:meta`);
+      await kv.del(`${shortId}:expires`);
 
       // Remove from token's URL set
       await kv.srem(`token:${token}:urls`, shortId);
