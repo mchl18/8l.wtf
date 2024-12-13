@@ -1,9 +1,9 @@
-import { createKvAdapter } from "@/lib/adapters/kv-adapter";
+import { getDatabase } from "@/lib/adapters";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const { id } = await request.json();
-  const db = createKvAdapter();
+  const db = getDatabase({ type: "kv" });
   const url = await db.get(id);
   if (!url) {
     return NextResponse.json({ error: "URL not found" }, { status: 404 });

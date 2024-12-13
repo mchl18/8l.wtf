@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getHostUrl } from "@/lib/utils";
 import { createDecipheriv } from "crypto";
-import { createKvAdapter } from "@/lib/adapters/kv-adapter";
+import { getDatabase } from "@/lib/adapters";
 export async function POST(request: Request) {
   const { token } = await request.json();
 
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   }
 
   const hostUrl = getHostUrl();
-  const db = createKvAdapter();
+  const db = getDatabase({ type: "kv" });
   const shortIds = await db.smembers(`token:${token}:urls`);
   const urls = [];
 

@@ -2,12 +2,12 @@ import { getHostUrl, isValidToken } from "@/lib/utils";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
 import { createCipheriv, randomBytes } from "crypto";
-import { createKvAdapter } from "@/lib/adapters/kv-adapter";
+import { getDatabase } from "@/lib/adapters";
 
 export async function POST(request: Request) {
   const { url, maxAge, token } = await request.json();
   const hostUrl = getHostUrl();
-  const db = createKvAdapter();
+  const db = getDatabase({ type: "kv" });
 
   const urlsSet = token ? "authenticated_urls" : "anonymous_urls";
 
@@ -84,7 +84,7 @@ export async function DELETE(request: Request) {
       { status: 400 }
     );
   }
-  const db = createKvAdapter();
+  const db = getDatabase({ type: "kv" });
   const results = [];
 
   for (const shortId of shortIds) {

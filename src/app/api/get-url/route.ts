@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getHostUrl, isValidToken } from "@/lib/utils";
 import { createDecipheriv } from "crypto";
-import { createKvAdapter } from "@/lib/adapters/kv-adapter";
+import { getDatabase } from "@/lib/adapters";
 
 export async function POST(request: Request) {
   const { token, shortId } = await request.json();
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "ShortId is required" }, { status: 400 });
   }
 
-  const db = createKvAdapter();
+  const db = getDatabase({ type: "kv" });
   const hostUrl = getHostUrl();
 
   // Check if URL is authenticated
