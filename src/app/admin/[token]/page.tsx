@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState, useEffect } from "react";
-import { isValidToken, copyToClipboard } from "@/lib/utils";
+import { isValidToken, copyToClipboard, cleanUrl } from "@/lib/utils";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -13,6 +13,7 @@ import {
   HomeIcon,
   LockIcon,
   QrCodeIcon,
+  UserPlusIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { SEED, encrypt } from "@/lib/crypto";
@@ -204,13 +205,13 @@ export default function AdminPage({ params }: { params: { token: string } }) {
 
               {error && <p className="text-red-500">{error.message}</p>}
 
-              {(urls?.length > 0 || isLoading) && (
+              {(urls?.length > 0 || isLoading || token) && (
                 <div className="border-2 border-purple-600 rounded-lg p-4">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-purple-600 text-xl">
                       Your Shortened URLs
                     </h3>
-                    {!isLoading && (
+                    {!isLoading && urls?.length > 0 && (
                       <div className="flex gap-2">
                         <Button
                           onClick={toggleSelectAll}
@@ -260,6 +261,27 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                             />
                             <div className="text-left">
                               <p className="text-purple-600 flex items-center gap-2">
+                                <span className="font-bold">Original URL:</span>{" "}
+                                {isPending ? (
+                                  <Skeleton className="h-4 w-64" />
+                                ) : (
+                                  <span className="break-all">
+                                    {cleanUrl(url.url)}
+                                  </span>
+                                )}
+                                {url.isEncrypted && (
+                                  <LockIcon className="w-4 h-4 text-purple-600" />
+                                )}
+                                <Button
+                                  onClick={() => copyToClipboard(url.url)}
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-purple-600 hover:text-purple-400"
+                                >
+                                  <LinkIcon className="w-4 h-4" />
+                                </Button>
+                              </p>
+                              <p className="text-purple-600 flex items-center gap-2">
                                 <span className="font-bold">Short URL:</span>{" "}
                                 {isPending ? (
                                   <Skeleton className="h-4 w-48" />
@@ -270,7 +292,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                                     rel="noopener noreferrer"
                                     className="hover:text-purple-400"
                                   >
-                                    {url.fullUrl}
+                                    {cleanUrl(url.fullUrl)}
                                   </a>
                                 )}
                                 {url.isEncrypted && (
@@ -298,25 +320,53 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                                   <QrCodeIcon className="w-4 h-4" />
                                 </Button>
                               </p>
-                              <p className="text-purple-600 flex items-center gap-2">
-                                <span className="font-bold">Original URL:</span>{" "}
-                                {isPending ? (
-                                  <Skeleton className="h-4 w-64" />
-                                ) : (
-                                  <span className="break-all">{url.url}</span>
-                                )}
-                                {url.isEncrypted && (
-                                  <LockIcon className="w-4 h-4 text-purple-600" />
-                                )}
-                                <Button
-                                  onClick={() => copyToClipboard(url.url)}
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-purple-600 hover:text-purple-400"
-                                >
-                                  <LinkIcon className="w-4 h-4" />
-                                </Button>
-                              </p>
+
+                              {token && (
+                                <div className="">
+                                  {/* <UserPlusIcon className="w-4 h-4 text-purple-600" /> */}
+
+                                  <p className="text-purple-600 flex items-center gap-2">
+                                    <span className="font-bold">
+                                      Invite URL:
+                                    </span>
+                                    <a
+                                      href={`/?token=${token}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="hover:text-purple-400 truncate max-w-[300px]"
+                                    >
+                                      {cleanUrl(
+                                        `${url.fullUrl}/?token=${token}`
+                                      )}
+                                    </a>
+                                    <Button
+                                      onClick={() =>
+                                        copyToClipboard(
+                                          `${url.fullUrl}/?token=${token}`
+                                        )
+                                      }
+                                      variant="ghost"
+                                      size="icon"
+                                      className="text-purple-600 hover:text-purple-400"
+                                    >
+                                      <LinkIcon className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      onClick={() =>
+                                        generateQRCode(
+                                          `${url.fullUrl}/?token=${token}`,
+                                          false
+                                        )
+                                      }
+                                      variant="ghost"
+                                      size="icon"
+                                      className="text-purple-600 hover:text-purple-400"
+                                    >
+                                      <QrCodeIcon className="w-4 h-4" />
+                                    </Button>
+                                  </p>
+                                </div>
+                              )}
                               {url.createdAt && (
                                 <p className="text-purple-600">
                                   <span className="font-bold">Created:</span>{" "}
