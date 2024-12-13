@@ -13,7 +13,7 @@ const getUrl = async (token: string, shortId: string) => {
     (url: { shortId: string }) => url.shortId === shortId
   );
 };
-
+const REDIRECT_DELAY = 5000;
 export default function RedirectPage({
   params,
 }: {
@@ -21,7 +21,7 @@ export default function RedirectPage({
 }) {
   const { shortId } = params;
   const [error, setError] = useState<string>("");
-  const [countdown, setCountdown] = useState(3);
+  const [countdown, setCountdown] = useState(REDIRECT_DELAY / 1000);
   const [startTime, setStartTime] = useState(0);
 
   useEffect(() => {
@@ -42,9 +42,11 @@ export default function RedirectPage({
         if (url) {
           const timer = setInterval(() => {
             const elapsed = Date.now() - start;
-            const remainingSeconds = Math.ceil((3000 - elapsed) / 1000);
+            const remainingSeconds = Math.ceil(
+              (REDIRECT_DELAY - elapsed) / 1000
+            );
 
-            if (elapsed >= 3000) {
+            if (elapsed >= REDIRECT_DELAY) {
               clearInterval(timer);
               window.location.href = url.url;
               return;
