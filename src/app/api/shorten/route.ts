@@ -33,30 +33,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid seed" }, { status: 401 });
   }
 
-  const originalShortId = nanoid(8);
-  let shortId = originalShortId;
+  const shortId = nanoid(parseInt(process.env.ID_LENGTH || "8"));
+  await db.set(`url:${shortId}:meta`, { authenticated: !!seed });
 
-  let storedUrl = url;
-  await db.set(`url:${originalShortId}:meta`, { authenticated: !!seed });
-
-  await db.sadd(urlsSet, `${originalShortId}::${storedUrl}`);
+  await db.sadd(urlsSet, `${shortId}::${url}`);
 
   if (seed) {
-    await db.sadd(`token:${seed}:urls`, originalShortId);
+    await db.sadd(`token:${seed}:urls`, shortId);
   }
 
   let expiresAt;
   if (maxAge && typeof maxAge === "number") {
     expiresAt = new Date(Date.now() + maxAge).toISOString();
-    await db.set(originalShortId, storedUrl, { ex: Math.floor(maxAge) });
-    await db.set(`${originalShortId}:expires`, expiresAt);
+    await db.set(shortId, url, { ex: Math.floor(maxAge) });
+    await db.set(`${shortId}:expires`, expiresAt);
   } else {
-    await db.set(originalShortId, storedUrl);
+    await db.set(shortId, url);
   }
   return NextResponse.json({
     shortId,
-    fullUrl: `${hostUrl}/${originalShortId}`,
-    deleteProxyUrl: `${hostUrl}/delete-proxy?id=${originalShortId}`,
+    fullUrl: `${hostUrl}/${shortId}`,
+    deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
     isEncrypted: !!seed,
     expiresAt,
   });
