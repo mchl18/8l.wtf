@@ -18,17 +18,28 @@ Visit [8l.wtf](https://8l.wtf) to try it out!
 - Secure token validation
 - URL expiration support
 - Separate storage for authenticated and anonymous URLs
-- Support for private URLs that can only be accessed by a token
+- Support for private URLs with zero-knowledge encryption - the server never sees the original URL
 - Support for inviting users to your account/token
 
 ## Security Features
 
 - AES-256-CBC encryption for authenticated URLs
-- Cryptographically secure tokens required for API access
+- Zero-knowledge encryption for private URLs - only token holders can decrypt
+- Cryptographically secure tokens required for API access 
 - URLs can be set to automatically expire
 - Deletion endpoints require token verification
 - Secure proxy system for DELETE requests
 - No access to other users' shortened URLs
+
+## How Private URLs Work
+
+When a URL is marked as private:
+1. The URL is encrypted client-side using the token as the encryption key
+2. Only the encrypted URL is stored on the server
+3. The server cannot decrypt or view the original URL
+4. When someone visits the shortened URL, they must provide the token. It can be in their localStorage or as a query parameter.
+5. The token is used client-side to decrypt and redirect to the original URL
+6. Without the token, the URL contents remain completely private
 
 ## API Documentation
 
@@ -51,9 +62,3 @@ The API allows you to:
 ## Development
 
 This is a Next.js project. To run it locally:
-
-```bash
-npm run dev
-# or
-yarn dev
-```
