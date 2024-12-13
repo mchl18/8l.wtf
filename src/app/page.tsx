@@ -11,7 +11,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { CopyIcon, RefreshCcwIcon, TrashIcon } from "lucide-react";
+import {
+  CopyIcon,
+  QrCodeIcon,
+  RefreshCcwIcon,
+  TrashIcon,
+  DownloadIcon,
+  LinkIcon,
+} from "lucide-react";
 import {
   cleanUrl,
   copyToClipboard,
@@ -23,6 +30,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SEED, encrypt } from "@/lib/crypto";
 import { useShortenUrl } from "@/lib/queries";
+import QRCode from "qrcode";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import Image from "next/image";
 
 function Home() {
   const searchParams = useSearchParams();
@@ -38,6 +53,9 @@ function Home() {
   const [token, setToken] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
   const [seed, setSeed] = useState<string | null>(null);
+  const [qrCode, setQrCode] = useState<string>("");
+  const [showQrModal, setShowQrModal] = useState(false);
+
   const {
     mutate: shortenUrl,
     data: shortenedUrl,
@@ -112,6 +130,28 @@ function Home() {
     },
     [setSelectedMode, setMaxAge]
   );
+
+  const generateQrCode = async (url: string) => {
+    try {
+      const qr = await QRCode.toDataURL(url, {
+        width: 300,
+        margin: 2,
+      });
+      setQrCode(qr);
+      setShowQrModal(true);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const downloadQrCode = () => {
+    const link = document.createElement("a");
+    link.download = "qrcode.png";
+    link.href = qrCode;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <>
@@ -304,17 +344,30 @@ function Home() {
                     >
                       {cleanUrl(shortenedUrl?.fullUrl || "")}
                     </a>
-                    <Button
-                      type="button"
-                      size={"icon"}
-                      variant="outline"
-                      onClick={() =>
-                        copyToClipboard(cleanUrl(shortenedUrl?.fullUrl || ""))
-                      }
-                      className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black flex-shrink-0"
-                    >
-                      <CopyIcon className="w-4 h-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size={"icon"}
+                        variant="outline"
+                        onClick={() =>
+                          copyToClipboard(cleanUrl(shortenedUrl?.fullUrl || ""))
+                        }
+                        className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black flex-shrink-0"
+                      >
+                        <CopyIcon className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        size={"icon"}
+                        variant="outline"
+                        onClick={() =>
+                          generateQrCode(shortenedUrl?.fullUrl || "")
+                        }
+                        className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black flex-shrink-0"
+                      >
+                        <QrCodeIcon className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -387,6 +440,46 @@ function Home() {
       >
         GitHub
       </Link>
+
+      <Dialog open={showQrModal} onOpenChange={setShowQrModal}>
+        <DialogContent className="bg-black border-2 border-purple-600">
+          <DialogHeader>
+            <DialogTitle className="text-purple-600">QR Code</DialogTitle>
+          </DialogHeader>
+          {qrCode && (
+            <div className="flex flex-col items-center gap-4">
+              <Image
+                src={qrCode}
+                alt="QR Code"
+                className="rounded-lg"
+                width={300}
+                height={300}
+              />
+              <Button
+                onClick={downloadQrCode}
+                variant="outline"
+                className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
+              >
+                <DownloadIcon className="w-4 h-4 mr-2" />
+                Download QR Code
+              </Button>
+              <Link
+                href={`/qr/${encodeURIComponent(shortenedUrl?.fullUrl || "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button
+                  variant="outline"
+                  className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
+                >
+                  <LinkIcon className="w-4 h-4 mr-2" />
+                  Link to QR Code
+                </Button>
+              </Link>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
