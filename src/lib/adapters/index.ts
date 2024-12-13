@@ -4,7 +4,6 @@ import { createMongoAdapter } from "./mongo-adapter";
 import { createMysqlAdapter } from "./mysql-adapter";
 import { createSqliteAdapter } from "./sqlite-adapter";
 import { createKvAdapter, createRedisAdapter } from "./redis-adapter";
-//
 let db: DbAdapter;
 export const getDatabase = async ({
   type,
@@ -83,5 +82,12 @@ export const getDatabase = async ({
     }
     throw new Error("Invalid database type");
   }
-  throw new Error("Invalid database type");
+  if (!type) {
+    console.log(
+      "No database type set, creating database adapter for Vercel KV"
+    );
+    db = createKvAdapter();
+    return db;
+  }
+  throw new Error("Database type not set");
 };
