@@ -84,3 +84,21 @@ export const useShortenUrl = (
     },
   });
 };
+
+export const useDeleteUrls = (seed: string) => {
+  return useMutation({
+    mutationFn: async (shortIds: string[]) => {
+      const response = await fetch("/api/shorten", {
+        method: "DELETE",
+        body: JSON.stringify({ shortIds, seed }),
+      });
+      return (await response.json()) as {
+        results: {
+          shortId: string;
+          success: boolean;
+          error?: string;
+        }[];
+      };
+    },
+  });
+};

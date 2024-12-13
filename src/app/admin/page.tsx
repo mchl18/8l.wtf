@@ -18,7 +18,7 @@ import Link from "next/link";
 import { SEED, encrypt } from "@/lib/crypto";
 import QRCode from "qrcode";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useUrlsBySeed } from "@/lib/queries";
+import { useDeleteUrls, useUrlsBySeed } from "@/lib/queries";
 
 const UrlSkeleton = () => (
   <div className="grid grid-cols-[auto,1fr,auto] gap-2 sm:gap-4 items-center border-b border-purple-600 last:border-b-0 pb-4">
@@ -61,6 +61,7 @@ export default function AdminPage() {
     refetch,
     isSuccess,
   } = useUrlsBySeed(seed, token);
+  const { mutate: deleteUrls, data: deleteData } = useDeleteUrls(seed);
 
   useEffect(() => {
     const token = localStorage.getItem("8lwtf_token");
@@ -77,7 +78,7 @@ export default function AdminPage() {
       // Create temporary link to download QR code
       const link = document.createElement("a");
       link.href = qrDataUrl;
-      link.download = "qrcode.png";
+      link.download = `8l.wtf QR Code - ${new Date().toISOString()}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -96,43 +97,7 @@ export default function AdminPage() {
 
     try {
       setDeleting(true);
-      const response = await fetch("/api/shorten", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ shortIds, seed }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete URLs");
-      }
-
-      const data = await response.json();
-
-      const successfulDeletions = (
-        data.results as { shortId: string; success: boolean; error: string }[]
-      )
-        .filter((result) => result.success)
-        .map((result) => result.shortId);
-
-      if (successfulDeletions.length > 0) {
-        toast.success(
-          `Successfully deleted ${successfulDeletions.length} URLs`
-        );
-        setSelectedUrls(new Set());
-      }
-
-      const failures = data.results.filter(
-        (result: { success: boolean; error: string }) => !result.success
-      );
-      if (failures.length > 0) {
-        failures.forEach((failure: { shortId: string; error: string }) => {
-          toast.error(
-            `Failed to delete URL ${failure.shortId}: ${failure.error}`
-          );
-        });
-      }
+      deleteUrls(shortIds);
     } catch (err) {
       console.error(err);
       toast.error("Failed to delete URLs");
@@ -140,6 +105,34 @@ export default function AdminPage() {
       setDeleting(false);
     }
   };
+
+  useEffect(() => {
+    if (!deleteData) return;
+    const successfulDeletions = (
+      deleteData.results as {
+        shortId: string;
+        success: boolean;
+        error: string;
+      }[]
+    )
+      .filter((result) => result.success)
+      .map((result) => result.shortId);
+
+    if (successfulDeletions.length > 0) {
+      toast.success(`Successfully deleted ${successfulDeletions.length} URLs`);
+      setSelectedUrls(new Set());
+    }
+
+    const failures = deleteData.results.filter((result) => !result.success);
+    if (failures && failures.length > 0) {
+      failures.forEach((failure) => {
+        toast.error(
+          `Failed to delete URL ${failure.shortId}: ${failure.error}`
+        );
+      });
+    }
+    refetch();
+  }, [deleteData, refetch]);
 
   const toggleUrlSelection = (shortId: string) => {
     const newSelection = new Set(selectedUrls);
