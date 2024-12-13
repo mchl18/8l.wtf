@@ -115,7 +115,7 @@ function Home() {
 
   return (
     <>
-      <h1 className="text-purple-600 text-2xl mt-24">8l.wtf</h1>
+      <h1 className="text-purple-600 text-2xl mt-12 lg:mt-24">8l.wtf</h1>
       <p className="text-purple-600 text-center">8 letters is all you need.</p>
       <Card className="bg-black rounded-lg shadow-2xl max-w-md w-full text-center mt-6 border-2 border-purple-600">
         <CardContent className="pt-6">
@@ -391,7 +391,7 @@ function Home() {
 const LoadingSkeleton = () => {
   return (
     <>
-      <h1 className="text-purple-600 text-2xl mt-24">8l.wtf</h1>
+      <h1 className="text-purple-600 text-2xl mt-12 lg:mt-24">8l.wtf</h1>
       <Card className="bg-black rounded-lg shadow-2xl max-w-md w-full text-center mt-6 border-2 border-purple-600">
         <CardContent className="pt-6">
           <div className="flex flex-col gap-3">
