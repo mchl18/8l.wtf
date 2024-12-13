@@ -215,6 +215,7 @@ export class PostgresAdapter implements DbAdapter {
       max: 1, // Keep single connection for serverless
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
+      log: (msg) => console.log(`PG DEBUG: ${msg}`),
       // ssl:
       //   process.env.NODE_ENV === "production"
       //     ? {
@@ -349,87 +350,135 @@ export class PostgresAdapter implements DbAdapter {
   }
 
   async transaction(): Promise<Transaction> {
-    const client = await this.pool.connect();
-    await client.query("BEGIN");
-
-    const transaction: Transaction = {
-      get: async <T = string>(key: string) => {
-        const result = await client.query(
-          "SELECT value FROM key_value WHERE key = $1 AND (expires_at IS NULL OR expires_at > NOW())",
-          [key]
-        );
-        try {
-          const res = JSON.parse(result.rows[0]?.value || "null") || null;
-          return res as T;
-        } catch (error) {
-          // console.error("Error parsing JSON", error);
-          return result.rows[0]?.value || null;
-        }
-      },
-
-      set: async (key: string, value: string, options?: { ex?: number }) => {
-        if (options?.ex) {
-          await client.query(
-            "INSERT INTO key_value (key, value, expires_at) VALUES ($1, $2, NOW() + interval '1 second' * $3) " +
-              "ON CONFLICT (key) DO UPDATE SET value = $2, expires_at = NOW() + interval '1 second' * $3",
-            [key, value, options.ex]
+    console.log('Starting transaction');
+    let client: PoolClient | null = null;
+    
+    try {
+      console.log('Getting client from pool');
+      client = await this.pool.connect();
+      console.log('Got client, beginning transaction');
+      await client.query("BEGIN");
+      console.log('Transaction began');
+  
+      const transaction: Transaction = {
+        get: async <T = string>(key: string) => {
+          console.log(`Transaction get: ${key}`);
+          const result = await client!.query(
+            "SELECT value FROM key_value WHERE key = $1 AND (expires_at IS NULL OR expires_at > NOW())",
+            [key]
           );
-        } else {
-          await client.query(
-            "INSERT INTO key_value (key, value, expires_at) VALUES ($1, $2, NULL) " +
-              "ON CONFLICT (key) DO UPDATE SET value = $2, expires_at = NULL",
+          try {
+            const res = JSON.parse(result.rows[0]?.value || "null") || null;
+            return res as T;
+          } catch (error) {
+            return result.rows[0]?.value || null;
+          }
+        },
+  
+        set: async (key: string, value: string, options?: { ex?: number }) => {
+          console.log(`Transaction set: ${key}`);
+          if (options?.ex) {
+            await client!.query(
+              "INSERT INTO key_value (key, value, expires_at) VALUES ($1, $2, NOW() + interval '1 second' * $3) " +
+                "ON CONFLICT (key) DO UPDATE SET value = $2, expires_at = NOW() + interval '1 second' * $3",
+              [key, value, options.ex]
+            );
+          } else {
+            await client!.query(
+              "INSERT INTO key_value (key, value, expires_at) VALUES ($1, $2, NULL) " +
+                "ON CONFLICT (key) DO UPDATE SET value = $2, expires_at = NULL",
+              [key, value]
+            );
+          }
+        },
+  
+        smembers: async (key: string) => {
+          console.log(`Transaction smembers: ${key}`);
+          const result = await client!.query(
+            "SELECT value FROM set_members WHERE key = $1",
+            [key]
+          );
+          return result.rows.map((row) => row.value);
+        },
+  
+        sismember: async (key: string, value: string) => {
+          console.log(`Transaction sismember: ${key}`);
+          const result = await client!.query(
+            "SELECT 1 FROM set_members WHERE key = $1 AND value = $2",
             [key, value]
           );
+          return result.rows.length > 0;
+        },
+  
+        sadd: async (key: string, value: string) => {
+          console.log(`Transaction sadd: ${key}`);
+          await client!.query(
+            "INSERT INTO set_members (key, value) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+            [key, value]
+          );
+        },
+  
+        srem: async (key: string, value: string) => {
+          console.log(`Transaction srem: ${key}`);
+          await client!.query(
+            "DELETE FROM set_members WHERE key = $1 AND value = $2",
+            [key, value]
+          );
+        },
+  
+        del: async (key: string) => {
+          console.log(`Transaction del: ${key}`);
+          await client!.query("DELETE FROM key_value WHERE key = $1", [key]);
+          await client!.query("DELETE FROM set_members WHERE key = $1", [key]);
+        },
+  
+        commit: async () => {
+          if (!client) {
+            console.warn('Commit called on released client');
+            return;
+          }
+          console.log('Committing transaction');
+          try {
+            await client.query("COMMIT");
+          } finally {
+            console.log('Releasing client after commit');
+            client.release();
+            client = null;
+          }
+        },
+  
+        rollback: async () => {
+          if (!client) {
+            console.warn('Rollback called on released client');
+            return;
+          }
+          console.log('Rolling back transaction');
+          try {
+            await client.query("ROLLBACK");
+          } catch (error) {
+            console.error('Error during rollback:', error);
+          } finally {
+            console.log('Releasing client after rollback');
+            client.release();
+            client = null;
+          }
+        },
+      };
+  
+      return transaction;
+    } catch (error) {
+      console.error('Error setting up transaction:', error);
+      if (client) {
+        try {
+          await client.query("ROLLBACK");
+        } catch (rollbackError) {
+          console.error('Error rolling back failed transaction:', rollbackError);
+        } finally {
+          client.release();
         }
-      },
-
-      smembers: async (key: string) => {
-        const result = await client.query(
-          "SELECT value FROM set_members WHERE key = $1",
-          [key]
-        );
-        return result.rows.map((row) => row.value);
-      },
-
-      sismember: async (key: string, value: string) => {
-        const result = await client.query(
-          "SELECT 1 FROM set_members WHERE key = $1 AND value = $2",
-          [key, value]
-        );
-        return result.rows.length > 0;
-      },
-
-      sadd: async (key: string, value: string) => {
-        await client.query(
-          "INSERT INTO set_members (key, value) VALUES ($1, $2) ON CONFLICT DO NOTHING",
-          [key, value]
-        );
-      },
-
-      srem: async (key: string, value: string) => {
-        await client.query(
-          "DELETE FROM set_members WHERE key = $1 AND value = $2",
-          [key, value]
-        );
-      },
-
-      del: async (key: string) => {
-        await client.query("DELETE FROM key_value WHERE key = $1", [key]);
-        await client.query("DELETE FROM set_members WHERE key = $1", [key]);
-      },
-
-      commit: async () => {
-        await client.query("COMMIT");
-        client.release();
-      },
-
-      rollback: async () => {
-        await client.query("ROLLBACK");
-        client.release();
-      },
-    };
-
-    return transaction;
+      }
+      throw error;
+    }
   }
 }
 

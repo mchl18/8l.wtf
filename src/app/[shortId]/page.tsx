@@ -25,13 +25,15 @@ function RedirectPage({ params }: { params: { shortId: string } }) {
   }, []);
 
   useEffect(() => {
+    if (!startTime) {
+      return;
+    }
     const timer = setInterval(() => {
       const elapsed = Date.now() - startTime;
       const remainingSeconds = Math.ceil((REDIRECT_DELAY - elapsed) / 1000);
 
       if (elapsed >= REDIRECT_DELAY) {
         clearInterval(timer);
-        debugger
         console.log("redirecting to", data);
         if (seed && data?.isEncrypted) {
           window.location.href = decrypt(data.url, seed);
@@ -57,16 +59,16 @@ function RedirectPage({ params }: { params: { shortId: string } }) {
 
   useEffect(() => {
     (async () => {
-      const start = startTime || Date.now();
-      setStartTime(start);
       const storedToken = localStorage.getItem("8lwtf_token");
       if (token && !storedToken) {
         localStorage.setItem("8lwtf_token", token);
       }
       const finalToken = storedToken || token || "";
-      setSeed(finalToken ? encrypt(SEED, finalToken) : undefined);
+      if (finalToken) {
+        setSeed(encrypt(SEED, finalToken));
+      }
     })();
-  }, [startTime, shortId, token]);
+  }, [shortId, token]);
 
   return (
     <>
