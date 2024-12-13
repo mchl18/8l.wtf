@@ -1,39 +1,25 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import QRCode from "qrcode";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DownloadIcon } from "lucide-react";
+import { useQrCode } from "@/lib/queries";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function QRPage() {
   const params = useParams();
-  const [qrCode, setQrCode] = useState<string>("");
   const text = decodeURIComponent(params.text as string);
-
-  useEffect(() => {
-    const generateQrCode = async () => {
-      try {
-        console.log(text);
-        const qr = await QRCode.toDataURL(text, {
-          width: 300,
-          margin: 2,
-        });
-        setQrCode(qr);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    generateQrCode();
-  }, [text]);
+  const { data, isLoading, error } = useQrCode(text, {
+    width: 300,
+    margin: 2,
+  });
 
   const downloadQrCode = () => {
     const link = document.createElement("a");
     link.download = "qrcode.png";
-    link.href = qrCode;
+    link.href = data || "";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -45,10 +31,19 @@ export default function QRPage() {
       <Card className="bg-black rounded-lg shadow-2xl max-w-md w-full text-center mt-6 border-2 border-purple-600">
         <CardContent className="pt-6">
           <div className="flex flex-col items-center gap-4">
-            {qrCode && (
+            {error && (
+              <p className="text-red-500">Failed to generate QR code</p>
+            )}
+            {isLoading && (
+              <>
+                <Skeleton className="w-[300px] h-[300px] rounded-lg" />
+                <Skeleton className="h-10 w-40" />
+              </>
+            )}
+            {data && !error && (
               <>
                 <Image
-                  src={qrCode}
+                  src={data}
                   alt="QR Code"
                   className="rounded-lg"
                   width={300}

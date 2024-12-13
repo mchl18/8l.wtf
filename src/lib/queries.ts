@@ -1,10 +1,22 @@
 import { ShortenedUrl } from "@/types";
 import { useMutation, useQuery, UseQueryResult } from "@tanstack/react-query";
 import { decrypt, encrypt } from "./crypto";
+import QRCode from "qrcode";
 
+export const useQrCode = (
+  text: string,
+  options: QRCode.QRCodeToDataURLOptions
+): UseQueryResult<string, Error> => {
+  return useQuery({
+    queryKey: ["qr", text],
+    queryFn: async () => {
+      return await QRCode.toDataURL(text, options);
+    },
+  });
+};
 export const useUrlBySeed = (
   shortId: string,
-  seed?: string,
+  seed?: string
 ): UseQueryResult<ShortenedUrl, Error> => {
   return useQuery({
     queryKey: ["url", seed, shortId],
