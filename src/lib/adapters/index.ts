@@ -2,6 +2,8 @@ import { createKvAdapter } from "./kv-adapter";
 import { createPostgresAdapter } from "./postgres-adapter";
 import { createMongoAdapter } from "./mongo-adapter";
 import { DbAdapter } from "@/types";
+import { createMysqlAdapter } from "./mysql-adapter";
+import { createSqliteAdapter } from "./sqlite-adapter";
 export const getDatabase = ({
   type,
 }: {
@@ -28,6 +30,17 @@ export const getDatabase = ({
     return createPostgresAdapter({
       connectionString: process.env.DATABASE_URL!,
     });
+  }
+  if (type === "mysql") {
+    if (!process.env.MYSQL_URL) {
+      throw new Error("MYSQL_URL is not set");
+    }
+    return createMysqlAdapter({
+      connectionString: process.env.MYSQL_URL!,
+    });
+  }
+  if (type === "sqlite") {
+    return createSqliteAdapter();
   }
   const envType = process.env.NEXT_PUBLIC_DB_TYPE;
   if (!type && envType) {
