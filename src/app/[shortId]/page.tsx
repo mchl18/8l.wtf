@@ -4,13 +4,22 @@ import { useState } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 
-const getUrl = async (token: string, shortId: string) => {
+const getUrlWithToken = async (token: string, shortId: string) => {
   const res = await fetch("/api/get-url", {
     method: "POST",
     body: JSON.stringify({ token, shortId }),
   });
   return (await res.json()).url;
 };
+
+const getUrl = async (shortId: string) => {
+  const res = await fetch("/api/get-url", {
+    method: "POST",
+    body: JSON.stringify({ shortId }),
+  });
+  return (await res.json()).url;
+};
+
 const REDIRECT_DELAY = parseInt(
   process.env.NEXT_PUBLIC_REDIRECT_DELAY || "5000"
 );
@@ -23,8 +32,6 @@ export default function RedirectPage({
   const [error, setError] = useState<string>("");
   const [countdown, setCountdown] = useState(REDIRECT_DELAY / 1000);
   const [startTime, setStartTime] = useState(0);
-  // const [url, setUrl] = useState<string>("");
-
   useEffect(() => {
     setStartTime(Date.now());
   }, []);
@@ -35,11 +42,9 @@ export default function RedirectPage({
         const start = startTime || Date.now();
         setStartTime(start);
         const storedToken = localStorage.getItem("shortener_token");
-        if (!storedToken) {
-          setError("No token found");
-          return;
-        }
-        const fetchedUrl = await getUrl(storedToken, shortId);
+        const fetchedUrl = storedToken
+          ? await getUrlWithToken(storedToken, shortId)
+          : await getUrl(shortId);
         if (fetchedUrl) {
           const timer = setInterval(() => {
             const elapsed = Date.now() - start;

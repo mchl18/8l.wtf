@@ -15,6 +15,7 @@ import { CopyIcon, RefreshCcwIcon, TrashIcon } from "lucide-react";
 import { copyToClipboard, generateToken, isValidToken } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
 
 function Home() {
   const searchParams = useSearchParams();
@@ -28,6 +29,7 @@ function Home() {
     "forever" | "custom" | "preset"
   >("forever");
   const [token, setToken] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
 
   const presets = [
     { label: "1 hour", value: 3600 },
@@ -83,7 +85,7 @@ function Home() {
             ? parseInt(`${maxAge}`)
             : parseInt(`${presetValue}`),
       };
-      if (token) {
+      if (isPrivate && token) {
         opts.token = token;
       }
       const response = await fetch("/api/shorten", {
@@ -175,6 +177,17 @@ function Home() {
                   >
                     <RefreshCcwIcon className="w-4 h-4" />
                   </Button>
+                </div>
+                <div className="flex items-center gap-2 justify-center">
+                  <Checkbox
+                    id="private"
+                    checked={isPrivate}
+                    onCheckedChange={(checked) => setIsPrivate(checked as boolean)}
+                    className="border-purple-600 data-[state=checked]:bg-purple-600"
+                  />
+                  <label htmlFor="private" className="text-purple-600">
+                    Private URL
+                  </label>
                 </div>
               </div>
 

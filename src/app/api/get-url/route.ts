@@ -6,22 +6,47 @@ import { createKvAdapter } from "@/lib/adapters/kv-adapter";
 export async function POST(request: Request) {
   const { token, shortId } = await request.json();
 
-  if (!token) {
-    return NextResponse.json({ error: "Token is required" }, { status: 400 });
-  }
-
   if (!shortId) {
     return NextResponse.json({ error: "ShortId is required" }, { status: 400 });
+  }
+
+  const db = createKvAdapter();
+  const hostUrl = getHostUrl();
+
+  // Check if URL is authenticated
+  const meta = await db.get<{ authenticated: boolean }>(`url:${shortId}:meta`);
+  const isAuthenticated = meta?.authenticated;
+
+  if (!isAuthenticated) {
+    const url = await db.get(shortId);
+    const expiresAt = await db.get(`${shortId}:expires`);
+    debugger;
+
+    if (!url) {
+      return NextResponse.json({ error: "URL not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      shortId,
+      url,
+      fullUrl: `${hostUrl}/${shortId}`,
+      deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
+      expiresAt: expiresAt
+        ? new Date(expiresAt as string).toISOString()
+        : undefined,
+    });
+  }
+
+  // For authenticated URLs, token is required
+  if (!token) {
+    return NextResponse.json({ error: "Token is required" }, { status: 400 });
   }
 
   if (!isValidToken(token)) {
     return NextResponse.json({ error: "Invalid token" }, { status: 401 });
   }
 
-  const hostUrl = getHostUrl();
-
   // Check if URL belongs to this token
-  const db = createKvAdapter();
   const isUrlOwnedByToken = await db.sismember(`token:${token}:urls`, shortId);
   debugger;
   if (!isUrlOwnedByToken) {
