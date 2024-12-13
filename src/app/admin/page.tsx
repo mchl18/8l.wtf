@@ -13,7 +13,6 @@ import {
   HomeIcon,
   LockIcon,
   QrCodeIcon,
-  UserPlusIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { SEED, encrypt } from "@/lib/crypto";
@@ -49,8 +48,8 @@ const UrlSkeleton = () => (
   </div>
 );
 
-export default function AdminPage({ params }: { params: { token: string } }) {
-  const [token, setToken] = useState(params.token || "");
+export default function AdminPage() {
+  const [token, setToken] = useState("");
   const [seed, setSeed] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
@@ -62,6 +61,14 @@ export default function AdminPage({ params }: { params: { token: string } }) {
     refetch,
     isSuccess,
   } = useUrlsBySeed(seed, token);
+
+  useEffect(() => {
+    const token = localStorage.getItem("8lwtf_token");
+    if (token) {
+      setToken(token);
+    }
+  }, []);
+
   const generateQRCode = async (url: string, isEncrypted: boolean) => {
     try {
       const finalUrl = isEncrypted ? `${url}?token=${token}` : url;
@@ -168,7 +175,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
   return (
     <>
       <div className="flex flex-col gap-4 px-4 sm:px-6 md:px-8">
-        <Link className="mt-8" href={`/?token=${token}`}>
+        <Link className="mt-8" href={`/`}>
           <Button
             variant="outline"
             size="icon"

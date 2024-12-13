@@ -399,7 +399,7 @@ function Home() {
                 </div>
                 {isValidToken(token) ? (
                   <Link
-                    href={`/admin/${token}`}
+                    href={`/admin`}
                     className="text-purple-600 hover:text-purple-800"
                     target="_blank"
                     rel="noopener noreferrer"
