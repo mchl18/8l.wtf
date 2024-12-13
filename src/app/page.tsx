@@ -12,7 +12,12 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { CopyIcon, RefreshCcwIcon, TrashIcon } from "lucide-react";
-import { copyToClipboard, generateToken, isValidToken } from "@/lib/utils";
+import {
+  cleanUrl,
+  copyToClipboard,
+  generateToken,
+  isValidToken,
+} from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -135,14 +140,16 @@ function Home() {
 
               <div className="flex flex-col gap-2">
                 <div className="flex gap-2">
-                  <Input
-                    type="text"
-                    value={token}
-                    onChange={(e) => setToken(e.target.value)}
-                    readOnly={true}
-                    placeholder="Custom token (optional)"
-                    className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
-                  />
+                  {token && (
+                    <Input
+                      type="text"
+                      value={token}
+                      onChange={(e) => setToken(e.target.value)}
+                      readOnly={true}
+                      placeholder="Custom token (optional)"
+                      className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
+                    />
+                  )}
                   {token && (
                     <Button
                       type="button"
@@ -174,23 +181,13 @@ function Home() {
                     variant="outline"
                     size={"icon"}
                     onClick={makeToken}
-                    className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
+                    className={`border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black ${
+                      !token ? "w-full" : ""
+                    }`}
                   >
+                    {token ? "" : <span className="mr-2">Generate Token</span>}
                     <RefreshCcwIcon className="w-4 h-4" />
                   </Button>
-                </div>
-                <div className="flex items-center gap-2 justify-center">
-                  <Checkbox
-                    id="private"
-                    checked={isPrivate}
-                    onCheckedChange={(checked) =>
-                      setIsPrivate(checked as boolean)
-                    }
-                    className="border-purple-600 data-[state=checked]:bg-purple-600"
-                  />
-                  <label htmlFor="private" className="text-purple-600">
-                    Private URL
-                  </label>
                 </div>
               </div>
 
@@ -297,30 +294,61 @@ function Home() {
               >
                 Shorten
               </Button>
+
               {error && <p className="text-red-500">{error}</p>}
               {shortUrl && (
                 <div className="bg-transparent rounded-lg p-4 border-2 border-purple-600">
                   <p className="text-purple-600 mb-2">Shortened URL:</p>
-                  <a
-                    href={shortUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-purple-600 hover:text-purple-800 break-all"
-                  >
-                    {shortUrl}
-                  </a>
+                  <div className="flex items-center justify-between gap-2">
+                    <a
+                      href={shortUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-purple-600 hover:text-purple-800 break-all"
+                    >
+                      {cleanUrl(shortUrl)}
+                    </a>
+                    <Button
+                      type="button"
+                      size={"icon"}
+                      variant="outline"
+                      onClick={() => copyToClipboard(cleanUrl(shortUrl))}
+                      className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black flex-shrink-0"
+                    >
+                      <CopyIcon className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               )}
-              {isValidToken(token) && (
-                <Link href={`/admin/${token}`}>
-                  <Button
-                    variant="outline"
-                    className="text-purple-600 hover:bg-purple-600 hover:text-black border-2 border-purple-600"
+              <div className="flex flex-row items-center gap-2 justify-between">
+                <div
+                  className={`flex items-center gap-2 justify-center ${
+                    !isValidToken(token) ? "opacity-50" : ""
+                  }`}
+                >
+                  <Checkbox
+                    id="private"
+                    checked={isPrivate}
+                    onCheckedChange={(checked) =>
+                      setIsPrivate(checked as boolean)
+                    }
+                    className="border-purple-600 data-[state=checked]:bg-purple-600"
+                  />
+                  <label htmlFor="private" className="text-purple-600">
+                    Private URL
+                  </label>
+                </div>
+                {isValidToken(token) && (
+                  <Link
+                    href={`/admin/${token}`}
+                    className="text-purple-600 hover:text-purple-800"
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
                     All URLs
-                  </Button>
-                </Link>
-              )}
+                  </Link>
+                )}
+              </div>
             </div>
           </form>
         </CardContent>
