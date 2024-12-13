@@ -94,7 +94,7 @@ function ApiEndpoint({
         <span
           className={`px-2 py-1 rounded text-sm font-mono ml-auto ${getMethodColor(
             method
-          )}`}
+        )}`}
         >
           {method}
         </span>
@@ -212,6 +212,38 @@ function ApiEndpoint({
                 value={formData.seed || ""}
                 onChange={(e) =>
                   setFormData({ ...formData, seed: e.target.value })
+                }
+                className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
+              />
+            </>
+          )}
+          {endpoint === "/api/qr" && (
+            <>
+              <Input
+                type="text" 
+                placeholder="Text to encode"
+                value={formData.text || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, text: e.target.value })
+                }
+                className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
+                required
+              />
+              <Input
+                type="number"
+                placeholder="Width (optional)"
+                value={formData.width || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, width: e.target.value })
+                }
+                className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
+              />
+              <Input
+                type="number"
+                placeholder="Margin (optional)"
+                value={formData.margin || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, margin: e.target.value })
                 }
                 className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
               />
@@ -347,6 +379,21 @@ export default function ApiPage() {
   "expiresAt": "2024-01-01T00:00:00.000Z"  // Optional
 }`,
     },
+    {
+      title: "6. Generate QR Code",
+      method: "POST", 
+      endpoint: "/api/qr",
+      requestBody: `{
+  "text": "https://example.com",  // Required: text to encode
+  "options": {
+    "width": 300,                 // Optional: width in pixels (default: 300)
+    "margin": 2                   // Optional: margin in modules (default: 2)
+  }
+}`,
+      responseBody: `{
+  "qrCode": "data:image/png;base64,..."  // Base64 encoded PNG image
+}`,
+    }
   ] as const;
 
   return (

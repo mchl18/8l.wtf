@@ -18,7 +18,7 @@ export default function QRPage() {
 
   const downloadQrCode = () => {
     const link = document.createElement("a");
-    link.download = "qrcode.png";
+    link.download = `8l.wtf QR Code - ${new Date().toISOString()}.png`;
     link.href = data || "";
     document.body.appendChild(link);
     link.click();
