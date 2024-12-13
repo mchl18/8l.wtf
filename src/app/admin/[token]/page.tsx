@@ -22,27 +22,27 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useUrlsBySeed } from "@/lib/queries";
 
 const UrlSkeleton = () => (
-  <div className="grid grid-cols-[auto,1fr,auto] gap-4 items-center border-b border-purple-600 last:border-b-0 pb-4">
+  <div className="grid grid-cols-[auto,1fr,auto] gap-2 sm:gap-4 items-center border-b border-purple-600 last:border-b-0 pb-4">
     <Skeleton className="h-4 w-4 rounded" />
     <div className="space-y-2">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Skeleton className="h-4 w-16" />
-        <Skeleton className="h-4 w-48" />
+        <Skeleton className="h-4 w-32 sm:w-48" />
         <Skeleton className="h-4 w-4 rounded-full" />
         <Skeleton className="h-4 w-4 rounded-full" />
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Skeleton className="h-4 w-20" />
-        <Skeleton className="h-4 w-64" />
+        <Skeleton className="h-4 w-48 sm:w-64" />
         <Skeleton className="h-4 w-4 rounded-full" />
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Skeleton className="h-4 w-16" />
-        <Skeleton className="h-4 w-40" />
+        <Skeleton className="h-4 w-32 sm:w-40" />
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Skeleton className="h-4 w-16" />
-        <Skeleton className="h-4 w-40" />
+        <Skeleton className="h-4 w-32 sm:w-40" />
       </div>
     </div>
     <Skeleton className="h-8 w-8 rounded" />
@@ -167,7 +167,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
 
   return (
     <>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 px-4 sm:px-6 md:px-8">
         <Link className="mt-8" href={`/?token=${token}`}>
           <Button
             variant="outline"
@@ -177,15 +177,15 @@ export default function AdminPage({ params }: { params: { token: string } }) {
             <HomeIcon className="w-4 h-4" />
           </Button>
         </Link>
-        <Card className="bg-black rounded-lg shadow-2xl lg:min-w-[600px] w-full text-center border-2 border-purple-600 mx-auto">
+        <Card className="bg-black rounded-lg shadow-2xl w-full text-center border-2 border-purple-600 mx-auto">
           <CardHeader>
-            <CardTitle className="text-purple-600 text-2xl">
+            <CardTitle className="text-purple-600 text-xl sm:text-2xl">
               URL Management Dashboard
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6">
             <div className="flex flex-col gap-6">
-              <div className="flex flex-col md:flex-row gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Input
                   type="text"
                   value={token}
@@ -197,7 +197,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                   onClick={() => refetch()}
                   disabled={isLoading}
                   variant="outline"
-                  className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
+                  className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black whitespace-nowrap"
                 >
                   {isLoading ? "Loading..." : "Fetch URLs"}
                 </Button>
@@ -206,9 +206,9 @@ export default function AdminPage({ params }: { params: { token: string } }) {
               {error && <p className="text-red-500">{error.message}</p>}
 
               {(urls?.length > 0 || isLoading || token) && (
-                <div className="border-2 border-purple-600 rounded-lg p-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-purple-600 text-xl">
+                <div className="border-2 border-purple-600 rounded-lg p-2 sm:p-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
+                    <h3 className="text-purple-600 text-lg sm:text-xl">
                       Your Shortened URLs
                     </h3>
                     {!isLoading && urls?.length > 0 && (
@@ -216,7 +216,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                         <Button
                           onClick={toggleSelectAll}
                           variant="outline"
-                          className="border-2 border-purple-600 text-purple-600"
+                          className="border-2 border-purple-600 text-purple-600 text-sm sm:text-base"
                         >
                           {selectedUrls.size === urls?.length
                             ? "Deselect All"
@@ -249,7 +249,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                       : urls.map((url) => (
                           <div
                             key={url.shortId}
-                            className="grid grid-cols-[auto,1fr,auto] gap-4 items-center border-b border-purple-600 last:border-b-0 pb-4"
+                            className="grid grid-cols-[auto,1fr,auto] gap-2 sm:gap-4 items-start border-b border-purple-600 last:border-b-0 pb-4"
                           >
                             <Checkbox
                               id={`checkbox-${url.shortId}`}
@@ -257,10 +257,10 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                               onCheckedChange={() =>
                                 toggleUrlSelection(url.shortId)
                               }
-                              className="border-2 border-purple-600 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                              className="border-2 border-purple-600 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 mt-1"
                             />
-                            <div className="text-left">
-                              <p className="text-purple-600 flex items-center gap-2">
+                            <div className="text-left space-y-2">
+                              <p className="text-purple-600 flex flex-wrap items-center gap-2 text-sm sm:text-base">
                                 <span className="font-bold">Original URL:</span>{" "}
                                 {isPending ? (
                                   <Skeleton className="h-4 w-64" />
@@ -281,7 +281,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                                   <LinkIcon className="w-4 h-4" />
                                 </Button>
                               </p>
-                              <p className="text-purple-600 flex items-center gap-2">
+                              <p className="text-purple-600 flex flex-wrap items-center gap-2 text-sm sm:text-base">
                                 <span className="font-bold">Short URL:</span>{" "}
                                 {isPending ? (
                                   <Skeleton className="h-4 w-48" />
@@ -290,7 +290,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                                     href={url.fullUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="hover:text-purple-400"
+                                    className="hover:text-purple-400 break-all"
                                   >
                                     {cleanUrl(url.fullUrl)}
                                   </a>
@@ -322,10 +322,8 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                               </p>
 
                               {token && (
-                                <div className="">
-                                  {/* <UserPlusIcon className="w-4 h-4 text-purple-600" /> */}
-
-                                  <p className="text-purple-600 flex items-center gap-2">
+                                <div className="text-sm sm:text-base">
+                                  <p className="text-purple-600 flex flex-wrap items-center gap-2">
                                     <span className="font-bold">
                                       Invite URL:
                                     </span>
@@ -333,7 +331,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                                       href={`/?token=${token}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="hover:text-purple-400 truncate max-w-[300px]"
+                                      className="hover:text-purple-400 break-all"
                                     >
                                       {cleanUrl(
                                         `${url.fullUrl}/?token=${token}`
@@ -368,13 +366,13 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                                 </div>
                               )}
                               {url.createdAt && (
-                                <p className="text-purple-600">
+                                <p className="text-purple-600 text-sm sm:text-base">
                                   <span className="font-bold">Created:</span>{" "}
                                   {new Date(url.createdAt).toLocaleString()}
                                 </p>
                               )}
                               {url.expiresAt && (
-                                <p className="text-purple-600">
+                                <p className="text-purple-600 text-sm sm:text-base">
                                   <span className="font-bold">Expires:</span>{" "}
                                   {new Date(url.expiresAt).toLocaleString()}
                                 </p>
@@ -385,6 +383,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                               disabled={deleting}
                               variant="destructive"
                               size="icon"
+                              className="mt-1"
                             >
                               {deleting ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />

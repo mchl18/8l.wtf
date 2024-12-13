@@ -1,6 +1,7 @@
 # 8l.wtf
 
 8 letters is all you need.
+Anonymous, encrypted, and fast.
 
 A secure, fast URL shortener service built with Next.js.
 
