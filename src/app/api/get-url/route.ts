@@ -143,7 +143,7 @@ export async function POST(request: Request) {
     }
 
     // Handle specific error types
-    if (error.message === 'Transaction timeout') {
+    if ((error as Error).message === 'Transaction timeout') {
       return NextResponse.json(
         { error: "Request timed out" },
         { status: 504 }
@@ -168,9 +168,3 @@ export async function POST(request: Request) {
   }
 }
 
-// Add Next.js config for better handling
-export const config = {
-  api: {
-    externalResolver: true,
-  }
-};
