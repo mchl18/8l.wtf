@@ -102,7 +102,13 @@ export async function DELETE(request: Request) {
 
       await db.del(shortId);
 
-      results.push({ shortId, success: true });
+      results.push({
+        shortId,
+        success: true,
+        fullUrl: "",
+        deleteProxyUrl: "",
+        deletedAt: new Date().toISOString(),
+      });
     } catch (error) {
       results.push({ shortId, success: false, error: "Deletion failed" });
     }
