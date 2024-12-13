@@ -1,5 +1,7 @@
 # 8l.wtf
 
+8 letters is all you need.
+
 A secure, fast URL shortener service built with Next.js.
 
 ## Live Demo
@@ -37,6 +39,19 @@ The API allows you to:
 - Delete URLs with token authentication
 - Set URL expiration times
 
+## Environment Variables
+
+- `NEXT_PUBLIC_HOSTNAME`: The hostname of the server (e.g. `localhost:3000`)
+- `NEXT_PUBLIC_DEFAULT_URL`: The default URL to redirect to (e.g. `https://8l.wtf`)
+- `NEXT_PUBLIC_REDIRECT_DELAY`: The delay in milliseconds before redirecting to the original URL (e.g. `5000`)
+- `NEXT_PUBLIC_DB_TYPE`: The type of database to use (e.g. `kv`)
+
 ## Development
 
 This is a Next.js project. To run it locally:
+
+```bash
+npm run dev
+# or
+yarn dev
+```
