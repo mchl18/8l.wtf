@@ -2,8 +2,6 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Metadata } from "next";
 import { getHostUrl } from "@/lib/utils";
-import { Analytics } from "@vercel/analytics/react";
-import { Toaster } from "@/components/ui/sonner";
 import Providers from "@/lib/providers";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -25,7 +23,7 @@ export const metadata: Metadata = {
     description:
       "8 letters is all you need. Anonymous, encrypted, and fast. Open source, secure URL shortener with strong encryption. Create short links for free with our developer-friendly API. No tracking, no ads, fully transparent code. Github link included.",
   },
-  authors: [{ name: "Michael Gerullis", url: "https://mgerullis.com" }],
+  authors: [{ name: "8l.wtf", url: "https://8l.wtf" }],
   keywords: ["API", "URL shortener", "documentation", "8l.wtf", "REST API"],
 };
 
