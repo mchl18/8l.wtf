@@ -69,7 +69,6 @@ export const cleanUrl = (url: string) => {
 export const validateEncryptedSeedFormat = (encryptedSeed: string) => {
   // Check if the string matches the pattern: 32 hex chars : 32 hex chars
   const pattern = /^[0-9a-f]{32}:[0-9a-f]{32}$/i;
-
   // Test if the encrypted seed matches the pattern
   return pattern.test(encryptedSeed);
 };

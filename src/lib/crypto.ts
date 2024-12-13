@@ -2,7 +2,7 @@ import { createCipheriv, createDecipheriv } from "crypto";
 
 import { createHash } from "crypto";
 
-export const SEED = "8l.wtf";
+export const SEED = process.env.NEXT_PUBLIC_SEED || "8l.wtf";
 
 export function encrypt(seed: string, token: string) {
   const key = Buffer.from(token, "hex");

@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { getDatabase } from "@/lib/adapters";
 
 export async function POST(request: Request) {
-  const { url, maxAge, token, seed } = await request.json();
+  const { url, maxAge, seed } = await request.json();
   const hostUrl = getHostUrl();
   const db = await getDatabase();
 
@@ -20,6 +20,7 @@ export async function POST(request: Request) {
           shortId,
           fullUrl: `${hostUrl}/${shortId}`,
           deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
+          isEncrypted: false,
           expiresAt: expiresAt
             ? new Date(expiresAt as string).toISOString()
             : undefined,
@@ -56,6 +57,7 @@ export async function POST(request: Request) {
     shortId,
     fullUrl: `${hostUrl}/${originalShortId}`,
     deleteProxyUrl: `${hostUrl}/delete-proxy?id=${originalShortId}`,
+    isEncrypted: !!seed,
     expiresAt,
   });
 }

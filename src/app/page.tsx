@@ -22,6 +22,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SEED, encrypt } from "@/lib/crypto";
+import { useShortenUrl } from "@/lib/queries";
 
 function Home() {
   const searchParams = useSearchParams();
@@ -37,6 +38,12 @@ function Home() {
   const [token, setToken] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
   const [seed, setSeed] = useState<string | null>(null);
+  const {
+    mutate: shortenUrl,
+    data: shortenedUrl,
+    isPending,
+    isSuccess,
+  } = useShortenUrl(url, isPrivate ? seed : null, maxAge, isPrivate, token);
 
   const presets = [
     { label: "1 hour", value: 3600 },
@@ -44,13 +51,12 @@ function Home() {
     { label: "1 week", value: 604800 },
     { label: "1 month", value: 2592000 },
   ];
-  console.log(selectedMode, maxAge);
 
   const makeToken = async () => {
     setError("");
     const token = generateToken();
     setToken(token);
-    localStorage.setItem("shortener_token", token);
+    localStorage.setItem("8lwtf_token", token);
     copyToClipboard(token);
     router.push(`/?token=${token}`);
     const encryptedSeed = encrypt(SEED, token);
@@ -67,7 +73,7 @@ function Home() {
     if (queryToken) {
       if (isValidToken(queryToken)) {
         setToken(queryToken);
-        localStorage.setItem("shortener_token", queryToken);
+        localStorage.setItem("8lwtf_token", queryToken);
         const encryptedSeed = encrypt(SEED, queryToken);
         setSeed(encryptedSeed);
       } else {
@@ -75,7 +81,7 @@ function Home() {
       }
     } else {
       // Try to get token from localStorage if no query param
-      const storedToken = localStorage.getItem("shortener_token");
+      const storedToken = localStorage.getItem("8lwtf_token");
       if (storedToken && isValidToken(storedToken)) {
         setToken(storedToken);
         router.push(`/?token=${storedToken}`);
@@ -90,32 +96,7 @@ function Home() {
     setError("");
     try {
       e.preventDefault();
-      const opts: Record<string, number | string> = {
-        url,
-        maxAge:
-          selectedMode === "forever"
-            ? 0
-            : selectedMode === "custom"
-            ? parseInt(`${maxAge}`)
-            : parseInt(`${presetValue}`),
-      };
-      if (isPrivate && token) {
-        const encryptedUrl = encrypt(url, token);
-        opts.url = encryptedUrl;
-        opts.token = token;
-        opts.seed = seed!;
-      }
-      const response = await fetch("/api/shorten", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(opts),
-      });
-      const data = await response.json();
-      if (data.fullUrl) {
-        setShortUrl(`${data.fullUrl}`);
-      }
+      shortenUrl();
     } catch (error) {
       console.error(error);
       setError("Something went wrong");
@@ -169,7 +150,7 @@ function Home() {
                       onClick={() => {
                         setToken("");
                         setIsPrivate(false);
-                        localStorage.removeItem("shortener_token");
+                        localStorage.removeItem("8lwtf_token");
                       }}
                       className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
                     >
@@ -308,27 +289,37 @@ function Home() {
               </Button>
 
               {error && <p className="text-red-500">{error}</p>}
-              {shortUrl && (
+              {shortenedUrl && isSuccess && (
                 <div className="bg-transparent rounded-lg p-4 border-2 border-purple-600">
                   <p className="text-purple-600 mb-2">Shortened URL:</p>
                   <div className="flex items-center justify-between gap-2">
                     <a
-                      href={shortUrl}
+                      href={shortenedUrl?.fullUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-purple-600 hover:text-purple-800 break-all"
                     >
-                      {cleanUrl(shortUrl)}
+                      {cleanUrl(shortenedUrl?.fullUrl || "")}
                     </a>
                     <Button
                       type="button"
                       size={"icon"}
                       variant="outline"
-                      onClick={() => copyToClipboard(cleanUrl(shortUrl))}
+                      onClick={() =>
+                        copyToClipboard(cleanUrl(shortenedUrl?.fullUrl || ""))
+                      }
                       className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black flex-shrink-0"
                     >
                       <CopyIcon className="w-4 h-4" />
                     </Button>
+                  </div>
+                </div>
+              )}
+              {isPending && (
+                <div className="bg-transparent rounded-lg p-4 border-2 border-purple-600">
+                  <p className="text-purple-600 mb-2">Shortened URL:</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <Skeleton className="h-10 w-full bg-purple-600/20" />
                   </div>
                 </div>
               )}

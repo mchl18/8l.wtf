@@ -42,9 +42,9 @@ function RedirectPage({ params }: { params: { shortId: string } }) {
       try {
         const start = startTime || Date.now();
         setStartTime(start);
-        const storedToken = localStorage.getItem("shortener_token");
+        const storedToken = localStorage.getItem("8lwtf_token");
         if (token && !storedToken) {
-          localStorage.setItem("shortener_token", token);
+          localStorage.setItem("8lwtf_token", token);
         }
         const finalToken = storedToken || token || "";
         const fetchedUrl = await getUrlWithSeed({

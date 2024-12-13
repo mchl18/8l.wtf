@@ -1,6 +1,6 @@
 import { ShortenedUrl } from "@/types";
-import { useQuery, UseQueryResult } from "@tanstack/react-query";
-import { decrypt } from "./crypto";
+import { useMutation, useQuery, UseQueryResult } from "@tanstack/react-query";
+import { decrypt, encrypt } from "./crypto";
 
 export const useUrlBySeed = (
   seed: string,
@@ -28,5 +28,31 @@ export const useUrlBySeed = (
       }));
     },
     enabled: !!seed,
+  });
+};
+
+export const useShortenUrl = (
+  url: string,
+  seed?: string | null,
+  maxAge?: number | string,
+  isPrivate?: boolean,
+  token?: string
+) => {
+  return useMutation({
+    mutationFn: async () => {
+      if (isPrivate && (!token || !seed)) {
+        throw new Error("Seed is required");
+      }
+      const response = await fetch("/api/shorten", {
+        method: "POST",
+        body: JSON.stringify({
+          url: isPrivate && token ? encrypt(url, token) : url,
+          seed,
+          maxAge: maxAge ? parseInt(maxAge as string) : 0,
+        }),
+      });
+      const data = await response.json();
+      return data as ShortenedUrl;
+    },
   });
 };
