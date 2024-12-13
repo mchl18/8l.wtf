@@ -1,10 +1,10 @@
-# veryshort.me
+# 8l.wtf
 
 A secure, fast URL shortener service built with Next.js.
 
 ## Live Demo
 
-Visit [veryshort.me](https://veryshort.me) to try it out!
+Visit [8l.wtf](https://8l.wtf) to try it out!
 
 ## Features
 
@@ -28,7 +28,7 @@ Visit [veryshort.me](https://veryshort.me) to try it out!
 
 ## API Documentation
 
-Full API documentation is available at [veryshort.me/api](https://veryshort.me/api)
+Full API documentation is available at [8l.wtf/api](https://8l.wtf/api)
 
 The API allows you to:
 

@@ -134,7 +134,8 @@ function Home() {
 
   return (
     <>
-      <h1 className="text-purple-600 text-2xl mt-24">veryshort.me</h1>
+      <h1 className="text-purple-600 text-2xl mt-24">8l.wtf</h1>
+      <p className="text-purple-600 text-center">8 letters is all you need.</p>
       <Card className="bg-black rounded-lg shadow-2xl max-w-md w-full text-center mt-6 border-2 border-purple-600">
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit}>
@@ -303,7 +304,7 @@ function Home() {
                 variant="outline"
                 className="px-4 py-2 text-purple-600 hover:bg-purple-600 hover:text-black rounded-lg transition-colors focus:outline-none ring-2 ring-purple-500 ring-opacity-50 active:ring-2 active:ring-purple-500"
               >
-                Shorten
+                Shorten URL
               </Button>
 
               {error && <p className="text-red-500">{error}</p>}
@@ -349,15 +350,23 @@ function Home() {
                     Private URL
                   </label>
                 </div>
-                {isValidToken(token) && (
+                {isValidToken(token) ? (
                   <Link
                     href={`/admin/${token}`}
                     className="text-purple-600 hover:text-purple-800"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    All URLs
+                    My URLs
                   </Link>
+                ) : (
+                  <span
+                    className={` text-purple-600 hover:text-purple-800 ${
+                      !isValidToken(token) ? "opacity-50" : ""
+                    }`}
+                  >
+                    My URLs
+                  </span>
                 )}
               </div>
             </div>
@@ -377,7 +386,7 @@ function Home() {
         Delete Proxy
       </Link>
       <Link
-        href="https://github.com/mchl18/veryshort.me"
+        href="https://github.com/mchl18/8l.wtf"
         target="_blank"
         rel="noopener noreferrer"
         className="text-purple-600 ring-1 ring-purple-500 font-medium py-2 px-4 rounded-md shadow transition duration-150 mt-4"
@@ -391,7 +400,7 @@ function Home() {
 const LoadingSkeleton = () => {
   return (
     <>
-      <h1 className="text-purple-600 text-2xl mt-24">veryshort.me</h1>
+      <h1 className="text-purple-600 text-2xl mt-24">8l.wtf</h1>
       <Card className="bg-black rounded-lg shadow-2xl max-w-md w-full text-center mt-6 border-2 border-purple-600">
         <CardContent className="pt-6">
           <div className="flex flex-col gap-3">

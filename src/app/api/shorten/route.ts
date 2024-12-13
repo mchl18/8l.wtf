@@ -66,10 +66,10 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const { shortIds, token } = await request.json();
+  const { shortIds, seed } = await request.json();
 
-  if (!isValidToken(token) && !token) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+  if (!validateEncryptedSeedFormat(seed) && !seed) {
+    return NextResponse.json({ error: "Invalid seed" }, { status: 401 });
   }
 
   if (!Array.isArray(shortIds) || shortIds.length === 0) {
@@ -82,12 +82,12 @@ export async function DELETE(request: Request) {
   const results = [];
 
   for (const shortId of shortIds) {
-    const isUrlOwnedByToken = await db.sismember(
-      `token:${token}:urls`,
+    const isUrlOwnedBySeed = await db.sismember(
+      `token:${seed}:urls`,
       shortId
     );
 
-    if (!isUrlOwnedByToken) {
+    if (!isUrlOwnedBySeed) {
       results.push({ shortId, success: false, error: "Unauthorized" });
       continue;
     }
@@ -104,7 +104,7 @@ export async function DELETE(request: Request) {
       await db.del(`url:${shortId}:meta`);
       await db.del(`${shortId}:expires`);
 
-      await db.srem(`token:${token}:urls`, shortId);
+      await db.srem(`token:${seed}:urls`, shortId);
 
       await db.del(shortId);
 

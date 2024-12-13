@@ -314,7 +314,7 @@ export default function ApiPage() {
     <>
       <div className="max-w-full mx-auto">
         <h1 className="text-4xl font-extrabold text-purple-600 text-center mb-8">
-          veryshort.me API
+          8l.wtf API
         </h1>
 
         <div className="bg-black rounded-lg shadow-lg p-8 mb-8 border-2 border-purple-600">

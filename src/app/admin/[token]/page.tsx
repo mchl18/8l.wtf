@@ -6,10 +6,18 @@ import { useState, useEffect } from "react";
 import { isValidToken, copyToClipboard } from "@/lib/utils";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, TrashIcon, LinkIcon, HomeIcon, LockIcon } from "lucide-react";
+import {
+  Loader2,
+  TrashIcon,
+  LinkIcon,
+  HomeIcon,
+  LockIcon,
+  QrCodeIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { SEED, decrypt, encrypt } from "@/lib/crypto";
 import { GetUrlsResponse, ShortenedUrl } from "@/types";
+import QRCode from "qrcode";
 
 export default function AdminPage({ params }: { params: { token: string } }) {
   const [token, setToken] = useState(params.token || "");
@@ -21,6 +29,27 @@ export default function AdminPage({ params }: { params: { token: string } }) {
   const [deleting, setDeleting] = useState(false);
   const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
   const [encryptionLoading, setEncryptionLoading] = useState(false);
+
+  const generateQRCode = async (url: string, isEncrypted: boolean) => {
+    try {
+      const finalUrl = isEncrypted ? `${url}?token=${token}` : url;
+      const qrDataUrl = await QRCode.toDataURL(finalUrl);
+
+      // Create temporary link to download QR code
+      const link = document.createElement("a");
+      link.href = qrDataUrl;
+      link.download = "qrcode.png";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success("QR Code downloaded successfully");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to generate QR code");
+    }
+  };
+
   const fetchUrls = async (seed: string) => {
     try {
       setLoading(true);
@@ -93,7 +122,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ shortIds, token }),
+        body: JSON.stringify({ shortIds, seed }),
       });
 
       if (!response.ok) {
@@ -282,6 +311,16 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                               className="text-purple-600 hover:text-purple-400"
                             >
                               <LinkIcon className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              onClick={() =>
+                                generateQRCode(url.fullUrl, !!url.isEncrypted)
+                              }
+                              variant="ghost"
+                              size="icon"
+                              className="text-purple-600 hover:text-purple-400"
+                            >
+                              <QrCodeIcon className="w-4 h-4" />
                             </Button>
                           </p>
                           <p className="text-purple-600 flex items-center gap-2">

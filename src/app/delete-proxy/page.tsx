@@ -64,7 +64,7 @@ function DeleteProxyPage() {
             <div className="flex flex-col gap-6">
               <p className="text-purple-600">
                 This is a proxy that allows you to call the DELETE method for a
-                veryshort.me url by using the browser. This can be useful e.g.
+                8l.wtf url by using the browser. This can be useful e.g.
                 for an AWS signed delete url.
               </p>
 
@@ -79,7 +79,7 @@ function DeleteProxyPage() {
                   type="text"
                   value={id || ""}
                   onChange={(e) => setId(e.target.value)}
-                  placeholder="Enter veryshort.me ID"
+                  placeholder="Enter 8l.wtf ID"
                   required
                   className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
                 />

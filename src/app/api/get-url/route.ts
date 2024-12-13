@@ -3,7 +3,7 @@ import { getHostUrl, validateEncryptedSeedFormat } from "@/lib/utils";
 import { getDatabase } from "@/lib/adapters";
 
 export async function POST(request: Request) {
-  const { token, shortId, seed } = await request.json();
+  const { shortId, seed } = await request.json();
 
   if (!shortId) {
     return NextResponse.json({ error: "ShortId is required" }, { status: 400 });
@@ -15,7 +15,6 @@ export async function POST(request: Request) {
   // Check if URL is authenticated
   const meta = await db.get<{ authenticated: boolean }>(`url:${shortId}:meta`);
   const isAuthenticated = meta?.authenticated;
-
   if (!isAuthenticated) {
     const url = await db.get(shortId);
     const expiresAt = await db.get(`${shortId}:expires`);
@@ -46,8 +45,8 @@ export async function POST(request: Request) {
   }
 
   // Check if URL belongs to this token
-  const isUrlOwnedByToken = await db.sismember(`token:${token}:urls`, shortId);
-  if (!isUrlOwnedByToken) {
+  const isUrlOwnedBySeed = await db.sismember(`token:${seed}:urls`, shortId);
+  if (!isUrlOwnedBySeed) {
     return NextResponse.json({ error: "URL not found" }, { status: 404 });
   }
 
