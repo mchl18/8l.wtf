@@ -42,6 +42,17 @@ When a URL is marked as private:
 5. The token is used client-side to decrypt and redirect to the original URL
 6. Without the token, the URL contents remain completely private
 
+## How Secure URL Indexing Works
+
+To enable users to retrieve their URLs while maintaining security:
+1. The server provides a public seed (NEXT_PUBLIC_SEED)
+2. Users encrypt this seed with their private key to generate a unique hex seed
+3. This hex seed is used to index their URLs in the database
+4. Only someone with the same private key can generate the same hex seed
+5. This allows users to list their URLs without exposing their private key
+6. The server never sees or stores the private key
+7. Even if the database is compromised, URLs remain encrypted
+
 ## API Documentation
 
 Full API documentation is available at [8l.wtf/api](https://8l.wtf/api)
