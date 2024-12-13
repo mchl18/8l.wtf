@@ -157,6 +157,7 @@ function Home() {
                       variant="outline"
                       onClick={() => {
                         setToken("");
+                        setIsPrivate(false);
                         localStorage.removeItem("shortener_token");
                       }}
                       className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"

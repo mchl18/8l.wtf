@@ -20,7 +20,6 @@ export async function POST(request: Request) {
   if (!isAuthenticated) {
     const url = await db.get(shortId);
     const expiresAt = await db.get(`${shortId}:expires`);
-    debugger;
 
     if (!url) {
       return NextResponse.json({ error: "URL not found" }, { status: 404 });
@@ -48,7 +47,6 @@ export async function POST(request: Request) {
 
   // Check if URL belongs to this token
   const isUrlOwnedByToken = await db.sismember(`token:${token}:urls`, shortId);
-  debugger;
   if (!isUrlOwnedByToken) {
     return NextResponse.json({ error: "URL not found" }, { status: 404 });
   }

@@ -31,6 +31,7 @@ Visit [veryshort.me](https://veryshort.me) to try it out!
 Full API documentation is available at [veryshort.me/api](https://veryshort.me/api)
 
 The API allows you to:
+
 - Create shortened URLs with optional encryption
 - Retrieve original URLs securely
 - Delete URLs with token authentication
