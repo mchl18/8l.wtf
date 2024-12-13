@@ -43,5 +43,29 @@ export const createRedisAdapter = ({
     sismember: async (key, value) => {
       return (await redis.sismember(key, value)) === 1;
     },
+
+    transaction: async () => {
+      return {
+        get: async <T = string>(key: string): Promise<T | null> => {
+          const value = await redis.get(key);
+          return value ? (value as T) : null;
+        },
+        set: async (key, value, options) => {
+          if (options?.ex) {
+            await redis.set(key, value, "EX", options.ex);
+          } else {
+            await redis.set(key, value);
+          }
+        },
+        smembers: async (key) => await redis.smembers(key),
+        sismember: async (key, value) =>
+          (await redis.sismember(key, value)) === 1,
+        sadd: async (key, value) => await redis.sadd(key, value),
+        srem: async (key, value) => await redis.srem(key, value),
+        del: async (key) => await redis.del(key),
+        commit: async () => {},
+        rollback: async () => {},
+      };
+    },
   };
 };

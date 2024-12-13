@@ -6,62 +6,79 @@ import { createMysqlAdapter } from "./mysql-adapter";
 import { createSqliteAdapter } from "./sqlite-adapter";
 import { createRedisAdapter } from "./redis-adapter";
 //
+let db: DbAdapter;
 export const getDatabase = async ({
   type,
 }: {
   type?: DbType;
 } = {}): Promise<DbAdapter> => {
+  if (db) {
+    return db;
+  }
+  console.log("getDatabase", type);
   if (type === "kv") {
     if (!process.env.KV_URL) {
       throw new Error("KV_URL is not set");
     }
-    return createKvAdapter();
+    db = createKvAdapter();
+    return db;
   }
   if (type === "redis") {
     if (!process.env.REDIS_URL) {
       throw new Error("REDIS_URL is not set");
     }
-    return createRedisAdapter({
+    const redis = createRedisAdapter({
       connectionString: process.env.REDIS_URL,
     });
+    db = redis;
+    return redis;
   }
   if (type === "mongo") {
     if (!process.env.MONGO_URL) {
       throw new Error("MONGO_URL is not set");
     }
-    return createMongoAdapter({
+    const mongo = createMongoAdapter({
       connectionString: process.env.MONGO_URL!,
     });
+    db = mongo;
+    return mongo;
   }
   if (type === "postgres") {
     if (!process.env.DATABASE_URL) {
       throw new Error("DATABASE_URL is not set");
     }
-    return createPostgresAdapter({
+    const postgres = await createPostgresAdapter({
       connectionString: process.env.DATABASE_URL!,
     });
+    db = postgres;
+    return postgres;
   }
   if (type === "mysql") {
     if (!process.env.MYSQL_URL) {
       throw new Error("MYSQL_URL is not set");
     }
-    return createMysqlAdapter({
+    const mysql = createMysqlAdapter({
       connectionString: process.env.MYSQL_URL!,
     });
+    db = mysql;
+    return mysql;
   }
   if (type === "sqlite") {
-    return createSqliteAdapter({
+    const sqlite = createSqliteAdapter({
       filename: process.env.SQLITE_FILENAME || ":memory:",
     });
+    db = sqlite;
+    return sqlite;
   }
   const envType = process.env.NEXT_PUBLIC_DB_TYPE;
   if (!type && envType) {
     if (
       ["kv", "redis", "mongo", "postgres", "mysql", "sqlite"].includes(envType)
     ) {
-      return getDatabase({
+      db = await getDatabase({
         type: envType as DbType,
       });
+      return db;
     }
     throw new Error("Invalid database type");
   }

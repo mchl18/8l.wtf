@@ -61,6 +61,11 @@ function RedirectPage({ params }: { params: { shortId: string } }) {
             if (elapsed >= REDIRECT_DELAY) {
               clearInterval(timer);
               console.log("redirecting to", fetchedUrl);
+              debugger
+              if (fetchedUrl.error) {
+                setError(fetchedUrl.error);
+                return;
+              }
               if (finalToken && fetchedUrl.isEncrypted) {
                 window.location.href = decrypt(fetchedUrl.url, finalToken);
               } else {
@@ -82,6 +87,7 @@ function RedirectPage({ params }: { params: { shortId: string } }) {
           setError("URL not found");
         }
       } catch (e) {
+        debugger
         setError("Error getting token");
       }
     })();

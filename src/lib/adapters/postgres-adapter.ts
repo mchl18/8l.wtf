@@ -1,9 +1,14 @@
 import { DbAdapter } from "@/types";
 import { Pool, PoolClient } from "pg";
+import { Transaction } from "./transaction";
 
 const INIT_SCRIPT = `
--- Enable pgcrypto extension for better UUID generation if needed
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+-- Create initialization tracking table
+CREATE TABLE IF NOT EXISTS db_metadata (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 
 -- Create key_value table for storing key-value pairs with expiration
 CREATE TABLE IF NOT EXISTS key_value (
@@ -74,9 +79,6 @@ $$ LANGUAGE plpgsql;
 -- Attempt to create the cleanup cron job if pg_cron is available
 DO $$
 BEGIN
-    -- Try to enable pg_cron extension
-    CREATE EXTENSION IF NOT EXISTS pg_cron;
-    
     -- Schedule cleanup job to run every hour
     PERFORM create_cron_job(
         'cleanup_expired_keys',
@@ -126,7 +128,29 @@ export class PostgresAdapter implements DbAdapter {
   private async initialize(): Promise<void> {
     const client = await this.pool.connect();
     try {
-      await client.query(INIT_SCRIPT);
+      // First create the metadata table to track initialization
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS db_metadata (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      // Check if DB was already initialized
+      const result = await client.query(
+        "SELECT value FROM db_metadata WHERE key = 'initialized'"
+      );
+      
+      if (result.rows.length === 0) {
+        // DB not initialized yet, run init script
+        await client.query(INIT_SCRIPT);
+        
+        // Mark as initialized
+        await client.query(
+          "INSERT INTO db_metadata (key, value) VALUES ('initialized', 'true')"
+        );
+      }
     } finally {
       client.release();
     }
@@ -174,7 +198,13 @@ export class PostgresAdapter implements DbAdapter {
         "SELECT value FROM key_value WHERE key = $1 AND (expires_at IS NULL OR expires_at > NOW())",
         [key]
       );
-      return result.rows[0]?.value || null;
+      try {
+        const res = JSON.parse(result.rows[0]?.value || "null") || null;
+        return res as T;
+      } catch (error) {
+        // console.error("Error parsing JSON", error);
+        return result.rows[0]?.value || null;
+      }
     });
   }
 
@@ -251,6 +281,90 @@ export class PostgresAdapter implements DbAdapter {
 
   async close(): Promise<void> {
     await this.pool.end();
+  }
+
+  async transaction(): Promise<Transaction> {
+    const client = await this.pool.connect();
+    await client.query("BEGIN");
+
+    const transaction: Transaction = {
+      get: async <T = string>(key: string) => {
+        const result = await client.query(
+          "SELECT value FROM key_value WHERE key = $1 AND (expires_at IS NULL OR expires_at > NOW())",
+          [key]
+        );
+        try {
+          const res = JSON.parse(result.rows[0]?.value || "null") || null;
+          return res as T;
+        } catch (error) {
+          // console.error("Error parsing JSON", error);
+          return result.rows[0]?.value || null;
+        }
+      },
+
+      set: async (key: string, value: string, options?: { ex?: number }) => {
+        if (options?.ex) {
+          await client.query(
+            "INSERT INTO key_value (key, value, expires_at) VALUES ($1, $2, NOW() + interval '1 second' * $3) " +
+              "ON CONFLICT (key) DO UPDATE SET value = $2, expires_at = NOW() + interval '1 second' * $3",
+            [key, value, options.ex]
+          );
+        } else {
+          await client.query(
+            "INSERT INTO key_value (key, value, expires_at) VALUES ($1, $2, NULL) " +
+              "ON CONFLICT (key) DO UPDATE SET value = $2, expires_at = NULL",
+            [key, value]
+          );
+        }
+      },
+
+      smembers: async (key: string) => {
+        const result = await client.query(
+          "SELECT value FROM set_members WHERE key = $1",
+          [key]
+        );
+        return result.rows.map((row) => row.value);
+      },
+
+      sismember: async (key: string, value: string) => {
+        const result = await client.query(
+          "SELECT 1 FROM set_members WHERE key = $1 AND value = $2",
+          [key, value]
+        );
+        return result.rows.length > 0;
+      },
+
+      sadd: async (key: string, value: string) => {
+        await client.query(
+          "INSERT INTO set_members (key, value) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+          [key, value]
+        );
+      },
+
+      srem: async (key: string, value: string) => {
+        await client.query(
+          "DELETE FROM set_members WHERE key = $1 AND value = $2",
+          [key, value]
+        );
+      },
+
+      del: async (key: string) => {
+        await client.query("DELETE FROM key_value WHERE key = $1", [key]);
+        await client.query("DELETE FROM set_members WHERE key = $1", [key]);
+      },
+
+      commit: async () => {
+        await client.query("COMMIT");
+        client.release();
+      },
+
+      rollback: async () => {
+        await client.query("ROLLBACK");
+        client.release();
+      },
+    };
+
+    return transaction;
   }
 }
 

@@ -1,4 +1,7 @@
+import { Transaction } from "@/lib/adapters/transaction";
+
 export type DbAdapter = {
+  transaction: () => Promise<Transaction>;
   smembers: (key: string) => Promise<string[]>;
   get: <T = string>(key: string) => Promise<T | null>;
   set: (key: string, value: any, options?: { ex?: number }) => Promise<void>;
@@ -16,6 +19,7 @@ export type ShortenedUrl = {
   createdAt?: string;
   expiresAt?: string;
   isEncrypted?: boolean;
+  error?: string;
 };
 
 export type GetUrlsResponse = {

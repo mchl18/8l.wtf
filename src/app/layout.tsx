@@ -4,8 +4,10 @@ import { Metadata } from "next";
 import { getHostUrl } from "@/lib/utils";
 import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "@/components/ui/sonner";
+import Providers from "@/lib/providers";
 
 const inter = Inter({ subsets: ["latin"] });
+
 export const metadata: Metadata = {
   title: "8l.wtf",
   description:
@@ -35,11 +37,11 @@ export default function RootLayout({
   return (
     <html className="dark" lang="en">
       <body className={inter.className}>
-        <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
-          {children}
-        </div>
-        <Analytics />
-        <Toaster />
+        <Providers>
+          <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
+            {children}
+          </div>
+        </Providers>
       </body>
     </html>
   );

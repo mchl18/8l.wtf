@@ -15,10 +15,10 @@ import {
   QrCodeIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { SEED, decrypt, encrypt } from "@/lib/crypto";
-import { GetUrlsResponse, ShortenedUrl } from "@/types";
+import { SEED, encrypt } from "@/lib/crypto";
 import QRCode from "qrcode";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useUrlBySeed } from "@/lib/queries";
 
 const UrlSkeleton = () => (
   <div className="grid grid-cols-[auto,1fr,auto] gap-4 items-center border-b border-purple-600 last:border-b-0 pb-4">
@@ -50,15 +50,17 @@ const UrlSkeleton = () => (
 
 export default function AdminPage({ params }: { params: { token: string } }) {
   const [token, setToken] = useState(params.token || "");
-  const [urls, setUrls] = useState<ShortenedUrl[]>([]);
-  const [error, setError] = useState("");
   const [seed, setSeed] = useState("");
-  const [loaded, setLoaded] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
-  const [encryptionLoading, setEncryptionLoading] = useState(false);
-
+  const {
+    data: urls = [],
+    isLoading,
+    error,
+    isPending,
+    refetch,
+    isSuccess,
+  } = useUrlBySeed(seed, token);
   const generateQRCode = async (url: string, isEncrypted: boolean) => {
     try {
       const finalUrl = isEncrypted ? `${url}?token=${token}` : url;
@@ -76,68 +78,6 @@ export default function AdminPage({ params }: { params: { token: string } }) {
     } catch (err) {
       console.error(err);
       toast.error("Failed to generate QR code");
-    }
-  };
-
-  const fetchUrls = async (seed: string) => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/get-urls", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ seed }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-
-        const error = JSON.parse(errorText);
-        if (error.error) {
-          throw new Error(error.error);
-        } else {
-          throw new Error(errorText);
-        }
-      }
-
-      const data = (await response.json()) as GetUrlsResponse;
-      setUrls(data.urls);
-
-      if (typeof window !== "undefined") {
-        const w = new Worker(
-          new URL("../../../workers/decrypt.worker.ts", import.meta.url)
-        );
-        // Use web worker for decryption
-        w.onmessage = (e) => {
-          setUrls(e.data);
-          setError("");
-          setLoaded(true);
-          setLoading(false);
-          setEncryptionLoading(false);
-        };
-
-        w.postMessage({ urls: data.urls, token });
-        setEncryptionLoading(true);
-      } else {
-        // Fallback if worker not available
-        setUrls(
-          data.urls.map((url) => ({
-            ...url,
-            url: decrypt(url.url, token),
-          }))
-        );
-        setError("");
-        setLoaded(true);
-        setLoading(false);
-      }
-    } catch (err) {
-      console.error(err);
-      setError((err as Error).message || "Failed to fetch URLs");
-      setLoading(false);
-      toast.error("Failed to fetch URLs");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -172,9 +112,6 @@ export default function AdminPage({ params }: { params: { token: string } }) {
         toast.success(
           `Successfully deleted ${successfulDeletions.length} URLs`
         );
-        setUrls(
-          urls.filter((url) => !successfulDeletions.includes(url.shortId))
-        );
         setSelectedUrls(new Set());
       }
 
@@ -207,30 +144,24 @@ export default function AdminPage({ params }: { params: { token: string } }) {
   };
 
   const toggleSelectAll = () => {
-    if (selectedUrls.size === urls.length) {
+    if (selectedUrls.size === urls?.length) {
       setSelectedUrls(new Set());
     } else {
-      setSelectedUrls(new Set(urls.map((url) => url.shortId)));
+      setSelectedUrls(new Set(urls?.map((url) => url.shortId)));
     }
   };
 
   useEffect(() => {
     if (!token) {
-      setError("");
       setSelectedUrls(new Set());
-      setUrls([]);
       return;
     }
     if (!isValidToken(token)) {
-      setError("Invalid token format");
       setSelectedUrls(new Set());
-      setUrls([]);
       return;
     }
     const encryptedSeed = encrypt(SEED, token);
     setSeed(encryptedSeed);
-    fetchUrls(encryptedSeed);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   return (
@@ -262,31 +193,31 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                   className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
                 />
                 <Button
-                  onClick={() => fetchUrls(seed)}
-                  disabled={loading}
+                  onClick={() => refetch()}
+                  disabled={isLoading}
                   variant="outline"
                   className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
                 >
-                  {loading ? "Loading..." : "Fetch URLs"}
+                  {isLoading ? "Loading..." : "Fetch URLs"}
                 </Button>
               </div>
 
-              {error && <p className="text-red-500">{error}</p>}
+              {error && <p className="text-red-500">{error.message}</p>}
 
-              {(urls.length > 0 || loading) && (
+              {(urls?.length > 0 || isLoading) && (
                 <div className="border-2 border-purple-600 rounded-lg p-4">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-purple-600 text-xl">
                       Your Shortened URLs
                     </h3>
-                    {!loading && (
+                    {!isLoading && (
                       <div className="flex gap-2">
                         <Button
                           onClick={toggleSelectAll}
                           variant="outline"
                           className="border-2 border-purple-600 text-purple-600"
                         >
-                          {selectedUrls.size === urls.length
+                          {selectedUrls.size === urls?.length
                             ? "Deselect All"
                             : "Select All"}
                         </Button>
@@ -310,7 +241,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                     )}
                   </div>
                   <div className="space-y-4">
-                    {loading && !urls.length
+                    {isLoading || isPending || !seed
                       ? Array(5)
                           .fill(0)
                           .map((_, i) => <UrlSkeleton key={i} />)
@@ -330,7 +261,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                             <div className="text-left">
                               <p className="text-purple-600 flex items-center gap-2">
                                 <span className="font-bold">Short URL:</span>{" "}
-                                {encryptionLoading ? (
+                                {isPending ? (
                                   <Skeleton className="h-4 w-48" />
                                 ) : (
                                   <a
@@ -369,7 +300,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                               </p>
                               <p className="text-purple-600 flex items-center gap-2">
                                 <span className="font-bold">Original URL:</span>{" "}
-                                {encryptionLoading ? (
+                                {isPending ? (
                                   <Skeleton className="h-4 w-64" />
                                 ) : (
                                   <span className="break-all">{url.url}</span>
@@ -416,7 +347,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                   </div>
                 </div>
               )}
-              {!loading && loaded && urls.length === 0 && (
+              {isSuccess && !error && !urls?.length && (
                 <p className="text-purple-600">No URLs found</p>
               )}
             </div>

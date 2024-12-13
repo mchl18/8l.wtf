@@ -79,10 +79,10 @@ export const createSqliteAdapter = ({
 
     srem: async (key, value) => {
       const db = await getDb();
-      await db.run(
-        "DELETE FROM set_members WHERE set_key = ? AND value = ?",
-        [key, value]
-      );
+      await db.run("DELETE FROM set_members WHERE set_key = ? AND value = ?", [
+        key,
+        value,
+      ]);
     },
 
     del: async (key) => {
@@ -97,6 +97,47 @@ export const createSqliteAdapter = ({
         [key, value]
       );
       return !!row;
+    },
+
+    transaction: async () => {
+      return {
+        get: async <T = string>(key: string): Promise<T | null> => {
+          const value = await db.get(key);
+          return value ? (value as T) : null;
+        },
+        set: async (key, value, options) => {
+          const db = await getDb();
+          const expiresAt = options?.ex
+            ? new Date(Date.now() + options.ex * 1000).toISOString()
+            : null;
+        },
+
+        smembers: async (key) =>
+          await db.all("SELECT value FROM set_members WHERE set_key = ?", [
+            key,
+          ]),
+        sismember: async (key, value) => {
+          const row = await db.get(
+            "SELECT 1 FROM set_members WHERE set_key = ? AND value = ? LIMIT 1",
+            [key, value]
+          );
+          return !!row;
+        },
+        sadd: async (key, value) =>
+          await db.run(
+            "INSERT OR IGNORE INTO set_members (set_key, value) VALUES (?, ?)",
+            [key, value]
+          ),
+        srem: async (key, value) =>
+          await db.run(
+            "DELETE FROM set_members WHERE set_key = ? AND value = ?",
+            [key, value]
+          ),
+        del: async (key) =>
+          await db.run("DELETE FROM key_values WHERE key_name = ?", [key]),
+        commit: async () => {},
+        rollback: async () => {},
+      };
     },
   };
 };
