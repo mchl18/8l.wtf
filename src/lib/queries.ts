@@ -15,6 +15,7 @@ export const useUrlBySeed = (
       });
       return (await res.json()) as ShortenedUrl;
     },
+    enabled: !!seed,
   });
 };
 

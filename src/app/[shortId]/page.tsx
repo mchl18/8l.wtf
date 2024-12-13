@@ -31,6 +31,7 @@ function RedirectPage({ params }: { params: { shortId: string } }) {
 
       if (elapsed >= REDIRECT_DELAY) {
         clearInterval(timer);
+        debugger
         console.log("redirecting to", data);
         if (seed && data?.isEncrypted) {
           window.location.href = decrypt(data.url, seed);
@@ -52,7 +53,7 @@ function RedirectPage({ params }: { params: { shortId: string } }) {
     }, 333);
 
     return () => clearInterval(timer);
-  }, [startTime, shortId, seed]);
+  }, [startTime, shortId, seed, data]);
 
   useEffect(() => {
     (async () => {

@@ -28,7 +28,6 @@ export async function POST(request: Request) {
       if (!url) {
         return NextResponse.json({ error: "URL not found" }, { status: 404 });
       }
-
       return NextResponse.json({
         shortId,
         url,
@@ -55,6 +54,7 @@ export async function POST(request: Request) {
       `token:${seed}:urls`,
       shortId
     );
+
     if (!isUrlOwnedBySeed) {
       return NextResponse.json({ error: "URL not found" }, { status: 404 });
     }
