@@ -5,15 +5,15 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 
 const getUrl = async (token: string, shortId: string) => {
-  const res = await fetch("/api/get-urls", {
+  const res = await fetch("/api/get-url", {
     method: "POST",
-    body: JSON.stringify({ token }),
+    body: JSON.stringify({ token, shortId }),
   });
-  return (await res.json()).urls.find(
-    (url: { shortId: string }) => url.shortId === shortId
-  );
+  return (await res.json()).url;
 };
-const REDIRECT_DELAY = 5000;
+const REDIRECT_DELAY = parseInt(
+  process.env.NEXT_PUBLIC_REDIRECT_DELAY || "5000"
+);
 export default function RedirectPage({
   params,
 }: {
@@ -23,6 +23,7 @@ export default function RedirectPage({
   const [error, setError] = useState<string>("");
   const [countdown, setCountdown] = useState(REDIRECT_DELAY / 1000);
   const [startTime, setStartTime] = useState(0);
+  // const [url, setUrl] = useState<string>("");
 
   useEffect(() => {
     setStartTime(Date.now());
@@ -38,8 +39,8 @@ export default function RedirectPage({
           setError("No token found");
           return;
         }
-        const url = await getUrl(storedToken, shortId);
-        if (url) {
+        const fetchedUrl = await getUrl(storedToken, shortId);
+        if (fetchedUrl) {
           const timer = setInterval(() => {
             const elapsed = Date.now() - start;
             const remainingSeconds = Math.ceil(
@@ -48,12 +49,13 @@ export default function RedirectPage({
 
             if (elapsed >= REDIRECT_DELAY) {
               clearInterval(timer);
-              window.location.href = url.url;
+              console.log("redirecting to", fetchedUrl);
+              window.location.href = fetchedUrl;
               return;
             }
 
             setCountdown(remainingSeconds);
-          }, 100);
+          }, 333);
 
           return () => clearInterval(timer);
         } else {

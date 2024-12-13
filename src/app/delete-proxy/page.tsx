@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { HomeIcon } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function DeleteProxyPage() {
   const searchParams = useSearchParams();
@@ -154,8 +155,35 @@ function DeleteProxyPage() {
   );
 }
 
+const LoadingSkeleton = () => {
+  return (
+    <div className="flex flex-col gap-4 min-w-[320px]">
+      <div className="mt-8">
+        <Skeleton className="h-10 w-10 bg-purple-600/20" />
+      </div>
+
+      <Card className="bg-black rounded-lg shadow-2xl max-w-md w-full text-center border-2 border-purple-600">
+        <CardHeader>
+          <CardTitle className="text-purple-600 text-2xl">
+            <Skeleton className="h-8 w-48 mx-auto bg-purple-600/20" />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-6">
+            <Skeleton className="h-24 w-full bg-purple-600/20" />
+            <div className="flex flex-col gap-4">
+              <Skeleton className="h-10 w-full bg-purple-600/20" />
+              <Skeleton className="h-10 w-full bg-purple-600/20" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => {
-  return <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>;
+  return <Suspense fallback={<LoadingSkeleton />}>{children}</Suspense>;
 };
 
 export default function Page() {

@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CopyIcon, RefreshCcwIcon, TrashIcon } from "lucide-react";
 import { copyToClipboard, generateToken, isValidToken } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function Home() {
   const searchParams = useSearchParams();
@@ -332,8 +333,45 @@ function Home() {
   );
 }
 
+const LoadingSkeleton = () => {
+  return (
+    <>
+      <h1 className="text-purple-600 text-2xl mt-24">veryshort.me</h1>
+      <Card className="bg-black rounded-lg shadow-2xl max-w-md w-full text-center mt-6 border-2 border-purple-600">
+        <CardContent className="pt-6">
+          <div className="flex flex-col gap-3">
+            <Skeleton className="h-10 w-full bg-purple-600/20" />
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                <Skeleton className="h-10 flex-1 bg-purple-600/20" />
+                <Skeleton className="h-10 w-10 bg-purple-600/20" />
+              </div>
+            </div>
+            <div className="flex md:flex-row flex-col w-full gap-2 md:gap-1 justify-center md:items-center">
+              <Skeleton className="h-10 flex-1 bg-purple-600/20" />
+              <Skeleton className="h-10 md:w-[180px] w-full bg-purple-600/20" />
+              <Skeleton className="h-10 flex-1 bg-purple-600/20" />
+            </div>
+            <Skeleton className="h-10 w-full bg-purple-600/20" />
+            <div className="flex gap-2 justify-center">
+              <Skeleton className="h-10 w-32 bg-purple-600/20" />
+              <Skeleton className="h-10 w-32 bg-purple-600/20" />
+              <Skeleton className="h-10 w-32 bg-purple-600/20" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      <div className="flex gap-4 mt-4 justify-center">
+        <Skeleton className="h-10 w-32 bg-purple-600/20" />
+        <Skeleton className="h-10 w-32 bg-purple-600/20" />
+        <Skeleton className="h-10 w-32 bg-purple-600/20" />
+      </div>
+    </>
+  );
+};
+
 const SupsenseWrapper = ({ children }: { children: React.ReactNode }) => {
-  return <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>;
+  return <Suspense fallback={<LoadingSkeleton />}>{children}</Suspense>;
 };
 
 export default function Page() {
