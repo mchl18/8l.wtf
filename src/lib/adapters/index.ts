@@ -1,10 +1,9 @@
 import { DbAdapter, DbType } from "@/types";
-import { createKvAdapter } from "./kv-adapter";
 import { createPostgresAdapter } from "./postgres-adapter";
 import { createMongoAdapter } from "./mongo-adapter";
 import { createMysqlAdapter } from "./mysql-adapter";
 import { createSqliteAdapter } from "./sqlite-adapter";
-import { createRedisAdapter } from "./redis-adapter";
+import { createKvAdapter, createRedisAdapter } from "./redis-adapter";
 //
 let db: DbAdapter;
 export const getDatabase = async ({
@@ -16,7 +15,7 @@ export const getDatabase = async ({
     return db;
   }
   console.log("getDatabase", type);
-  if (type === "kv") {
+  if (type === "vercel-kv") {
     if (!process.env.KV_URL) {
       throw new Error("KV_URL is not set");
     }
@@ -73,7 +72,9 @@ export const getDatabase = async ({
   const envType = process.env.NEXT_PUBLIC_DB_TYPE;
   if (!type && envType) {
     if (
-      ["kv", "redis", "mongo", "postgres", "mysql", "sqlite"].includes(envType)
+      ["vercel-kv", "redis", "mongo", "postgres", "mysql", "sqlite"].includes(
+        envType
+      )
     ) {
       db = await getDatabase({
         type: envType as DbType,

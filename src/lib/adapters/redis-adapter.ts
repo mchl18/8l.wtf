@@ -1,71 +1,85 @@
 import { DbAdapter } from "@/types";
 import { Redis } from "ioredis";
+import { kv } from "@vercel/kv";
 
+type RedisLikeClient = Redis | typeof kv;
+
+interface AdapterOptions {
+  client: RedisLikeClient;
+  type: "redis" | "vercel-kv";
+}
+
+export const createRedisLikeAdapter = ({
+  client,
+  type,
+}: AdapterOptions): DbAdapter => {
+  const isRedis = type === "redis";
+
+  const handleSet = async (
+    key: string,
+    value: any,
+    options?: { ex?: number }
+  ) => {
+    if (options?.ex) {
+      if (isRedis) {
+        await (client as Redis).set(key, value, "EX", options.ex);
+      } else {
+        await (client as typeof kv).set(key, value, { ex: options.ex });
+      }
+    } else {
+      await client.set(key, value);
+    }
+  };
+
+  const handleGet = async <T = string>(key: string): Promise<T | null> => {
+    const value = await client.get(key);
+    return value ? (value as T) : null;
+  };
+
+  const handleSisMember = async (
+    key: string,
+    value: string
+  ): Promise<boolean> => {
+    return (await client.sismember(key, value)) === 1;
+  };
+
+  const adapter: DbAdapter = {
+    smembers: async (key) => await client.smembers(key),
+    get: handleGet,
+    set: handleSet,
+    sadd: async (key, value) => await client.sadd(key, value),
+    srem: async (key, value) => await client.srem(key, value),
+    del: async (key) => await client.del(key),
+    sismember: handleSisMember,
+    transaction: async () => ({
+      get: handleGet,
+      set: handleSet,
+      smembers: async (key) => await client.smembers(key),
+      sismember: handleSisMember,
+      sadd: async (key, value) => await client.sadd(key, value),
+      srem: async (key, value) => await client.srem(key, value),
+      del: async (key) => await client.del(key),
+      commit: async () => {}, // No-op for both implementations
+      rollback: async () => {}, // No-op for both implementations
+    }),
+  };
+
+  return adapter;
+};
+
+// Factory function to create Redis adapter
 export const createRedisAdapter = ({
   connectionString = process.env.REDIS_URL,
-}: {
-  connectionString?: string;
-} = {}): DbAdapter => {
+}): DbAdapter => {
   if (!connectionString) {
     throw new Error("REDIS_URL is not set");
   }
 
   const redis = new Redis(connectionString);
+  return createRedisLikeAdapter({ client: redis, type: "redis" });
+};
 
-  return {
-    smembers: async (key) => await redis.smembers(key),
-
-    get: async <T = string>(key: string): Promise<T | null> => {
-      const value = await redis.get(key);
-      return value ? (value as T) : null;
-    },
-
-    set: async (key, value, options) => {
-      if (options?.ex) {
-        await redis.set(key, value, "EX", options.ex);
-      } else {
-        await redis.set(key, value);
-      }
-    },
-
-    sadd: async (key, value) => {
-      await redis.sadd(key, value);
-    },
-
-    srem: async (key, value) => {
-      await redis.srem(key, value);
-    },
-
-    del: async (key) => {
-      await redis.del(key);
-    },
-
-    sismember: async (key, value) => {
-      return (await redis.sismember(key, value)) === 1;
-    },
-
-    transaction: async () => {
-      return {
-        get: async <T = string>(key: string): Promise<T | null> => {
-          const value = await redis.get(key);
-          return value ? (value as T) : null;
-        },
-        set: async (key, value, options) => {
-          if (options?.ex) {
-            await redis.set(key, value, "EX", options.ex);
-          } else {
-            await redis.set(key, value);
-          }
-        },
-        smembers: async (key) => await redis.smembers(key),
-        sismember: async (key, value) =>
-          (await redis.sismember(key, value)) === 1,
-        sadd: async (key, value) => await redis.sadd(key, value),
-        srem: async (key, value) => await redis.srem(key, value),
-        del: async (key) => await redis.del(key),
-        commit: async () => {},
-        rollback: async () => {},
-      };
-    },
-  };
+// Factory function to create Vercel KV adapter
+export const createKvAdapter = (): DbAdapter => {
+  return createRedisLikeAdapter({ client: kv, type: "vercel-kv" });
 };

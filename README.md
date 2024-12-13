@@ -26,7 +26,7 @@ Visit [8l.wtf](https://8l.wtf) to try it out!
 
 - AES-256-CBC encryption for authenticated URLs
 - Zero-knowledge encryption for private URLs - only token holders can decrypt
-- Cryptographically secure tokens required for API access 
+- Cryptographically secure tokens required for API access
 - URLs can be set to automatically expire
 - Deletion endpoints require token verification
 - Secure proxy system for DELETE requests
@@ -35,6 +35,7 @@ Visit [8l.wtf](https://8l.wtf) to try it out!
 ## How Private URLs Work
 
 When a URL is marked as private:
+
 1. The URL is encrypted client-side using the token as the encryption key
 2. Only the encrypted URL is stored on the server
 3. The server cannot decrypt or view the original URL
@@ -45,6 +46,7 @@ When a URL is marked as private:
 ## How Secure URL Indexing Works
 
 To enable users to retrieve their URLs while maintaining security:
+
 1. The server provides a public seed (NEXT_PUBLIC_SEED)
 2. Users encrypt this seed with their private key to generate a unique hex seed
 3. This hex seed is used to index their URLs in the database
@@ -74,3 +76,24 @@ The API allows you to:
 ## Development
 
 This is a Next.js project. To run it locally:
+
+```bash
+npm run dev
+# or
+yarn dev
+```
+
+## Database Adapters (Work in Progress)
+
+Currently works best with Vercel KV (Redis) adapter.
+
+Postgres adapter is a work in progress.
+
+Rest have not been tested.
+
+- If you want to use Vercel KV, you need to set the `KV_URL` environment variable.
+- If you want to use Redis, you need to set the `REDIS_URL` environment variable.
+- If you want to use Postgres, you need to set the `POSTGRES_URL` environment variable.
+- If you want to use MySQL, you need to set the `MYSQL_URL` environment variable.
+- If you want to use MongoDB, you need to set the `MONGO_URL` environment variable.
+- If you want to use SQLite, you need to set the `SQLITE_URL` environment variable.
