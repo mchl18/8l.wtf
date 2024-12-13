@@ -73,6 +73,7 @@ export async function DELETE(request: Request) {
       { status: 400 }
     );
   }
+
   const db = await getDatabase();
   const results = [];
 
@@ -93,15 +94,26 @@ export async function DELETE(request: Request) {
 
       const deletedAt = new Date().toISOString();
 
-      // Update metadata to mark as deleted instead of deleting
+      // 1. Update metadata to mark as deleted
       await db.set(`url:${shortId}:meta`, {
         authenticated: true,
         deleted: true,
         deletedAt,
       });
+
+      // 2. Remove from authenticated_urls set
       await db.srem("authenticated_urls", `${shortId}::${storedUrl}`);
 
-      // Keep the token association but mark deletion time
+      // 3. Remove from seed's URL set
+      await db.srem(`token:${seed}:urls`, shortId);
+
+      // 4. Delete the actual URL mapping
+      await db.del(shortId);
+
+      // 5. Clean up expiration data if it exists
+      await db.del(`${shortId}:expires`);
+
+      // 6. Mark deletion time (if you want to keep track of deleted URLs)
       await db.set(`${shortId}:deleted`, deletedAt);
 
       results.push({
@@ -112,6 +124,7 @@ export async function DELETE(request: Request) {
         deletedAt,
       });
     } catch (error) {
+      console.error(`Error deleting ${shortId}:`, error);
       results.push({ shortId, success: false, error: "Deletion failed" });
     }
   }

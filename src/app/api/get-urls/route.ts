@@ -12,19 +12,31 @@ export async function POST(request: Request) {
   const db = await getDatabase();
   const shortIds = await db.smembers(`token:${seed}:urls`);
   const urls = [];
+
   for (const shortId of shortIds) {
-    const encryptedUrl = await db.get(shortId);
-    const expiresAt = await db.get(`${shortId}:expires`);
-    urls.push({
-      shortId,
-      url: encryptedUrl,
-      fullUrl: `${hostUrl}/${shortId}`,
-      deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
-      isEncrypted: true,
-      expiresAt: expiresAt
-        ? new Date(expiresAt as string).toISOString()
-        : undefined,
-    });
+    // Check if URL is marked as deleted
+    const metadata = await db.get<{ deleted: boolean }>(`url:${shortId}:meta`);
+    const isDeleted =
+      metadata && typeof metadata === "object" && metadata.deleted === true;
+
+    if (!isDeleted) {
+      const encryptedUrl = await db.get(shortId);
+      const expiresAt = await db.get(`${shortId}:expires`);
+
+      // Only add URL if it exists (not deleted)
+      if (encryptedUrl) {
+        urls.push({
+          shortId,
+          url: encryptedUrl,
+          fullUrl: `${hostUrl}/${shortId}`,
+          deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
+          isEncrypted: true,
+          expiresAt: expiresAt
+            ? new Date(expiresAt as string).toISOString()
+            : undefined,
+        });
+      }
+    }
   }
 
   return NextResponse.json({ urls });

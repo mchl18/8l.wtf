@@ -61,7 +61,11 @@ export default function AdminPage() {
     refetch,
     isSuccess,
   } = useUrlsBySeed(seed, token);
-  const { mutate: deleteUrls, data: deleteData } = useDeleteUrls(seed);
+  const {
+    mutate: deleteUrls,
+    data: deleteData,
+    isPending: isDeleting,
+  } = useDeleteUrls(seed);
 
   useEffect(() => {
     const token = localStorage.getItem("8lwtf_token");
@@ -242,7 +246,7 @@ export default function AdminPage() {
                     )}
                   </div>
                   <div className="space-y-4">
-                    {isLoading || isPending || !seed
+                    {isLoading || isPending || !seed || isDeleting
                       ? Array(5)
                           .fill(0)
                           .map((_, i) => <UrlSkeleton key={i} />)
