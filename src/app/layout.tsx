@@ -10,8 +10,6 @@ export const metadata: Metadata = {
   title: "8l.wtf",
   description:
     "8 letters is all you need. Open source, secure URL shortener with strong encryption. Create short links for free with our developer-friendly API. No tracking, no ads, fully transparent code. Github link included.",
-  keywords:
-    "URL shortener, open source, encryption, secure links, free URL shortener, developer API, transparent code, privacy focused, no tracking",
   openGraph: {
     title: "8l.wtf",
     description:
@@ -26,6 +24,7 @@ export const metadata: Metadata = {
       "8 letters is all you need. Open source, secure URL shortener with strong encryption. Create short links for free with our developer-friendly API. No tracking, no ads, fully transparent code. Github link included.",
   },
   authors: [{ name: "Michael Gerullis", url: "https://mgerullis.com" }],
+  keywords: ["API", "URL shortener", "documentation", "8l.wtf", "REST API"],
 };
 
 export default function RootLayout({

@@ -18,6 +18,8 @@ Visit [8l.wtf](https://8l.wtf) to try it out!
 - Secure token validation
 - URL expiration support
 - Separate storage for authenticated and anonymous URLs
+- Support for private URLs that can only be accessed by a token
+- Support for inviting users to your account/token
 
 ## Security Features
 
