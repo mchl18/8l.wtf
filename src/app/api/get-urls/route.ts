@@ -1,7 +1,7 @@
-import { kv } from "@vercel/kv";
 import { NextResponse } from "next/server";
 import { getHostUrl } from "@/lib/utils";
 import { createDecipheriv } from "crypto";
+import { createKvAdapter } from "@/adapters/kv-adapter";
 export async function POST(request: Request) {
   const { token } = await request.json();
 
@@ -10,12 +10,13 @@ export async function POST(request: Request) {
   }
 
   const hostUrl = getHostUrl();
-  const shortIds = await kv.smembers(`token:${token}:urls`);
+  const db = createKvAdapter();
+  const shortIds = await db.smembers(`token:${token}:urls`);
   const urls = [];
 
   for (const shortId of shortIds) {
-    const encryptedUrl = await kv.get(shortId);
-    const expiresAt = await kv.get(`${shortId}:expires`);
+    const encryptedUrl = await db.get(shortId);
+    const expiresAt = await db.get(`${shortId}:expires`);
     if (encryptedUrl) {
       // Decrypt the URL using the token
       const [urlIvHex, urlEncrypted] = (encryptedUrl as string).split(":");

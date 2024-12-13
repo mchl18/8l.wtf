@@ -1,9 +1,10 @@
-import { kv } from "@vercel/kv";
+import { createKvAdapter } from "@/adapters/kv-adapter";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const { id } = await request.json();
-  const url = await kv.get<string>(id);
+  const db = createKvAdapter();
+  const url = await db.get(id);
   if (!url) {
     return NextResponse.json({ error: "URL not found" }, { status: 404 });
   }

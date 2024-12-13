@@ -1,7 +1,7 @@
-import { kv } from "@vercel/kv";
 import { NextResponse } from "next/server";
 import { getHostUrl } from "@/lib/utils";
 import { createDecipheriv } from "crypto";
+import { createKvAdapter } from "@/adapters/kv-adapter";
 
 export async function POST(request: Request) {
   const { token, shortId } = await request.json();
@@ -17,13 +17,14 @@ export async function POST(request: Request) {
   const hostUrl = getHostUrl();
 
   // Check if URL belongs to this token
-  const isUrlOwnedByToken = await kv.sismember(`token:${token}:urls`, shortId);
+  const db = createKvAdapter();
+  const isUrlOwnedByToken = await db.sismember(`token:${token}:urls`, shortId);
   if (!isUrlOwnedByToken) {
     return NextResponse.json({ error: "URL not found" }, { status: 404 });
   }
 
-  const encryptedUrl = await kv.get(shortId);
-  const expiresAt = await kv.get(`${shortId}:expires`);
+  const encryptedUrl = await db.get(shortId);
+  const expiresAt = await db.get(`${shortId}:expires`);
 
   if (!encryptedUrl) {
     return NextResponse.json({ error: "URL not found" }, { status: 404 });
@@ -43,6 +44,8 @@ export async function POST(request: Request) {
     url: decryptedUrl,
     fullUrl: `${hostUrl}/${shortId}`,
     deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
-    expiresAt: expiresAt ? new Date(expiresAt as string).toISOString() : undefined,
+    expiresAt: expiresAt
+      ? new Date(expiresAt as string).toISOString()
+      : undefined,
   });
 }
