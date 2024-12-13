@@ -7,7 +7,7 @@ import { getDatabase } from "@/lib/adapters";
 export async function POST(request: Request) {
   const { url, maxAge, token } = await request.json();
   const hostUrl = getHostUrl();
-  const db = getDatabase({ type: "kv" });
+  const db = getDatabase();
 
   const urlsSet = token ? "authenticated_urls" : "anonymous_urls";
 
@@ -84,7 +84,7 @@ export async function DELETE(request: Request) {
       { status: 400 }
     );
   }
-  const db = getDatabase({ type: "kv" });
+  const db = getDatabase();
   const results = [];
 
   for (const shortId of shortIds) {

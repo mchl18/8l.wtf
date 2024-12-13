@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   }
 
   const hostUrl = getHostUrl();
-  const db = getDatabase({ type: "kv" });
+  const db = getDatabase();
   const shortIds = await db.smembers(`token:${token}:urls`);
   const urls = [];
 

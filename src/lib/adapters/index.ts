@@ -6,7 +6,7 @@ export const getDatabase = ({
   type,
 }: {
   type?: "kv" | "mongo" | "postgres" | "mysql" | "sqlite";
-}): DbAdapter => {
+} = {}): DbAdapter => {
   if (type === "kv") {
     if (!process.env.KV_URL) {
       throw new Error("KV_URL is not set");

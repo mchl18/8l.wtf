@@ -12,7 +12,7 @@ type ApiEndpointProps = {
   /** Title of the API endpoint */
   title: string;
   /** HTTP method (GET, POST, DELETE etc) */
-  method: string;
+  method: "GET" | "POST" | "DELETE";
   /** API endpoint URL path */
   endpoint: string;
   /** Example request body as a string */
@@ -294,7 +294,7 @@ export default function ApiPage() {
     },
     {
       title: "5. Get URL",
-      method: "POST", 
+      method: "POST",
       endpoint: "/api/get-url",
       requestBody: `{
   "shortId": "abc123xy",     // Required: shortId to retrieve
@@ -307,8 +307,8 @@ export default function ApiPage() {
   "deleteProxyUrl": "${hostUrlRef.current}/delete-proxy?id=abc123xy",
   "expiresAt": "2024-01-01T00:00:00.000Z"  // Optional
 }`,
-    }
-  ];
+    },
+  ] as const;
 
   return (
     <>
