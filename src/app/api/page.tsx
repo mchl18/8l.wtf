@@ -5,14 +5,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getHostUrl } from "@/lib/utils";
 
+/**
+ * Props for the ApiEndpoint component
+ */
 type ApiEndpointProps = {
+  /** Title of the API endpoint */
   title: string;
+  /** HTTP method (GET, POST, DELETE etc) */
   method: string;
+  /** API endpoint URL path */
   endpoint: string;
+  /** Example request body as a string */
   requestBody: string;
+  /** Example response body as a string */
   responseBody: string;
 };
 
+/**
+ * Component to display and test an individual API endpoint
+ */
 function ApiEndpoint({
   title,
   method,
@@ -25,6 +36,9 @@ function ApiEndpoint({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  /**
+   * Get color styling based on HTTP method
+   */
   const getMethodColor = (method: string) => {
     switch (method.toUpperCase()) {
       case "POST":
@@ -38,6 +52,9 @@ function ApiEndpoint({
     }
   };
 
+  /**
+   * Handle form submission to test API endpoint
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -205,6 +222,10 @@ function ApiEndpoint({
   );
 }
 
+/**
+ * API documentation page component
+ * Displays interactive documentation for the URL shortener API endpoints
+ */
 export default function ApiPage() {
   const hostUrlRef = useRef(getHostUrl());
 
@@ -271,6 +292,22 @@ export default function ApiPage() {
   "id": "abc123xy"
 }`,
     },
+    {
+      title: "5. Get URL",
+      method: "POST", 
+      endpoint: "/api/get-url",
+      requestBody: `{
+  "shortId": "abc123xy",     // Required: shortId to retrieve
+  "token": "hex_token"       // Optional: required for private URLs
+}`,
+      responseBody: `{
+  "shortId": "abc123xy",
+  "url": "https://example.com",
+  "fullUrl": "${hostUrlRef.current}/abc123xy",
+  "deleteProxyUrl": "${hostUrlRef.current}/delete-proxy?id=abc123xy",
+  "expiresAt": "2024-01-01T00:00:00.000Z"  // Optional
+}`,
+    }
   ];
 
   return (

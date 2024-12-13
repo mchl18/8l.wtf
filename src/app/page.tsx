@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { CopyIcon, RefreshCcwIcon, TrashIcon } from "lucide-react";
 import { copyToClipboard, generateToken, isValidToken } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -70,6 +70,7 @@ function Home() {
         router.push(`/?token=${storedToken}`);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -182,7 +183,9 @@ function Home() {
                   <Checkbox
                     id="private"
                     checked={isPrivate}
-                    onCheckedChange={(checked) => setIsPrivate(checked as boolean)}
+                    onCheckedChange={(checked) =>
+                      setIsPrivate(checked as boolean)
+                    }
                     className="border-purple-600 data-[state=checked]:bg-purple-600"
                   />
                   <label htmlFor="private" className="text-purple-600">
