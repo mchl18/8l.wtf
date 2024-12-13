@@ -3,13 +3,16 @@ import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 
 export const createSqliteAdapter = ({
-  filename = ":memory:",
+  filename,
 }: {
   filename?: string;
 } = {}): DbAdapter => {
   let db: any;
 
   const getDb = async () => {
+    if (!filename) {
+      throw new Error("Filename is required for SQLite adapter");
+    }
     if (!db) {
       db = await open({
         filename,
