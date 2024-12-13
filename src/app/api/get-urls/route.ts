@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getHostUrl } from "@/lib/utils";
 import { createDecipheriv } from "crypto";
-import { createKvAdapter } from "@/adapters/kv-adapter";
+import { createKvAdapter } from "@/lib/adapters/kv-adapter";
 export async function POST(request: Request) {
   const { token } = await request.json();
 

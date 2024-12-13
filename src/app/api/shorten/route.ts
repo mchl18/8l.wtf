@@ -2,7 +2,7 @@ import { getHostUrl, isValidToken } from "@/lib/utils";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
 import { createCipheriv, randomBytes } from "crypto";
-import { createKvAdapter } from "@/adapters/kv-adapter";
+import { createKvAdapter } from "@/lib/adapters/kv-adapter";
 
 export async function POST(request: Request) {
   const { url, maxAge, token } = await request.json();
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
   let expiresAt;
   if (maxAge && typeof maxAge === "number") {
     expiresAt = new Date(Date.now() + maxAge).toISOString();
-    await db.set(originalShortId, storedUrl, { ex: Math.floor(maxAge / 1000) });
+    await db.set(originalShortId, storedUrl, { ex: Math.floor(maxAge) });
     await db.set(`${originalShortId}:expires`, expiresAt);
   } else {
     await db.set(originalShortId, storedUrl);

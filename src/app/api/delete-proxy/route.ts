@@ -1,4 +1,4 @@
-import { createKvAdapter } from "@/adapters/kv-adapter";
+import { createKvAdapter } from "@/lib/adapters/kv-adapter";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
