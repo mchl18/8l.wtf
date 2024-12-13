@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import { getHostUrl, isValidToken } from "@/lib/utils";
-import { createDecipheriv } from "crypto";
+import { getHostUrl, validateEncryptedSeedFormat } from "@/lib/utils";
 import { getDatabase } from "@/lib/adapters";
 
 export async function POST(request: Request) {
-  const { token, shortId } = await request.json();
+  const { token, shortId, seed } = await request.json();
 
   if (!shortId) {
     return NextResponse.json({ error: "ShortId is required" }, { status: 400 });
@@ -30,6 +29,7 @@ export async function POST(request: Request) {
       url,
       fullUrl: `${hostUrl}/${shortId}`,
       deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
+      isEncrypted: false,
       expiresAt: expiresAt
         ? new Date(expiresAt as string).toISOString()
         : undefined,
@@ -37,12 +37,12 @@ export async function POST(request: Request) {
   }
 
   // For authenticated URLs, token is required
-  if (!token) {
-    return NextResponse.json({ error: "Token is required" }, { status: 400 });
+  if (!seed) {
+    return NextResponse.json({ error: "Seed is required" }, { status: 400 });
   }
 
-  if (!isValidToken(token)) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+  if (!validateEncryptedSeedFormat(seed)) {
+    return NextResponse.json({ error: "Invalid seed" }, { status: 401 });
   }
 
   // Check if URL belongs to this token
@@ -58,20 +58,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "URL not found" }, { status: 404 });
   }
 
-  // Decrypt the URL using the token
-  const [urlIvHex, urlEncrypted] = (encryptedUrl as string).split(":");
-  const urlIv = Buffer.from(urlIvHex, "hex");
-  // Convert hex token to bytes for the key, matching the encryption
-  const key = Buffer.from(token, "hex");
-  const urlDecipher = createDecipheriv("aes-256-cbc", key, urlIv);
-  let decryptedUrl = urlDecipher.update(urlEncrypted, "hex", "utf8");
-  decryptedUrl += urlDecipher.final("utf8");
-
   return NextResponse.json({
     shortId,
-    url: decryptedUrl,
+    url: encryptedUrl,
     fullUrl: `${hostUrl}/${shortId}`,
     deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
+    isEncrypted: true,
     expiresAt: expiresAt
       ? new Date(expiresAt as string).toISOString()
       : undefined,

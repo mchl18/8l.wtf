@@ -1,17 +1,21 @@
-import { getHostUrl, isValidToken } from "@/lib/utils";
+import {
+  getHostUrl,
+  isValidToken,
+  validateEncryptedSeedFormat,
+} from "@/lib/utils";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
 import { createCipheriv, randomBytes } from "crypto";
 import { getDatabase } from "@/lib/adapters";
 
 export async function POST(request: Request) {
-  const { url, maxAge, token } = await request.json();
+  const { url, maxAge, token, seed } = await request.json();
   const hostUrl = getHostUrl();
   const db = getDatabase();
 
-  const urlsSet = token ? "authenticated_urls" : "anonymous_urls";
+  const urlsSet = seed ? "authenticated_urls" : "anonymous_urls";
 
-  if (!token) {
+  if (!seed) {
     const existingEntries = await db.smembers("anonymous_urls");
     for (const entry of existingEntries) {
       const [shortId, storedUrl] = entry.split("::");
@@ -29,30 +33,20 @@ export async function POST(request: Request) {
     }
   }
 
-  if (token && !isValidToken(token)) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+  if (seed && !validateEncryptedSeedFormat(seed)) {
+    return NextResponse.json({ error: "Invalid seed" }, { status: 401 });
   }
 
   const originalShortId = nanoid(8);
   let shortId = originalShortId;
 
   let storedUrl = url;
-  if (token) {
-    const key = Buffer.from(token, "hex");
-
-    const urlIv = randomBytes(16);
-    const urlCipher = createCipheriv("aes-256-cbc", key, urlIv);
-    let encryptedUrl = urlCipher.update(url, "utf8", "hex");
-    encryptedUrl += urlCipher.final("hex");
-    storedUrl = `${urlIv.toString("hex")}:${encryptedUrl}`;
-  }
-
-  await db.set(`url:${originalShortId}:meta`, { authenticated: !!token });
+  await db.set(`url:${originalShortId}:meta`, { authenticated: !!seed });
 
   await db.sadd(urlsSet, `${originalShortId}::${storedUrl}`);
 
-  if (token) {
-    await db.sadd(`token:${token}:urls`, originalShortId);
+  if (seed) {
+    await db.sadd(`token:${seed}:urls`, originalShortId);
   }
 
   let expiresAt;

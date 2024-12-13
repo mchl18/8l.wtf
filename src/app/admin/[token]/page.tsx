@@ -6,27 +6,22 @@ import { useState, useEffect } from "react";
 import { isValidToken, copyToClipboard } from "@/lib/utils";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, TrashIcon, LinkIcon, HomeIcon } from "lucide-react";
+import { Loader2, TrashIcon, LinkIcon, HomeIcon, LockIcon } from "lucide-react";
 import Link from "next/link";
-
-type ShortenedUrl = {
-  shortId: string;
-  url: string;
-  fullUrl: string;
-  createdAt?: string;
-  expiresAt?: string;
-};
+import { SEED, decrypt, encrypt } from "@/lib/crypto";
+import { GetUrlsResponse, ShortenedUrl } from "@/types";
 
 export default function AdminPage({ params }: { params: { token: string } }) {
   const [token, setToken] = useState(params.token || "");
   const [urls, setUrls] = useState<ShortenedUrl[]>([]);
   const [error, setError] = useState("");
+  const [seed, setSeed] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
-
-  const fetchUrls = async () => {
+  const [encryptionLoading, setEncryptionLoading] = useState(false);
+  const fetchUrls = async (seed: string) => {
     try {
       setLoading(true);
       const response = await fetch("/api/get-urls", {
@@ -34,20 +29,52 @@ export default function AdminPage({ params }: { params: { token: string } }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ seed }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to fetch URLs");
+        const errorText = await response.text();
+
+        const error = JSON.parse(errorText);
+        if (error.error) {
+          throw new Error(error.error);
+        } else {
+          throw new Error(errorText);
+        }
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as GetUrlsResponse;
       setUrls(data.urls);
-      setError("");
-      setLoaded(true);
+
+      if (typeof window !== "undefined") {
+        const w = new Worker(
+          new URL("../../../workers/decrypt.worker.ts", import.meta.url)
+        );
+        // Use web worker for decryption
+        w.onmessage = (e) => {
+          setUrls(e.data);
+          setError("");
+          setLoaded(true);
+          setLoading(false);
+          setEncryptionLoading(false);
+        };
+
+        w.postMessage({ urls: data.urls, token });
+        setEncryptionLoading(true);
+      } else {
+        // Fallback if worker not available
+        setUrls(
+          data.urls.map((url) => ({
+            ...url,
+            url: decrypt(url.url, token),
+          }))
+        );
+        setError("");
+        setLoaded(true);
+      }
     } catch (err) {
       console.error(err);
-      setError("Failed to fetch URLs");
+      setError((err as Error).message || "Failed to fetch URLs");
       toast.error("Failed to fetch URLs");
     } finally {
       setLoading(false);
@@ -140,8 +167,9 @@ export default function AdminPage({ params }: { params: { token: string } }) {
       setUrls([]);
       return;
     }
-
-    fetchUrls();
+    const encryptedSeed = encrypt(SEED, token);
+    setSeed(encryptedSeed);
+    fetchUrls(encryptedSeed);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
@@ -174,7 +202,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                   className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
                 />
                 <Button
-                  onClick={fetchUrls}
+                  onClick={() => fetchUrls(seed)}
                   disabled={loading}
                   variant="outline"
                   className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
@@ -240,8 +268,13 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                               rel="noopener noreferrer"
                               className="hover:text-purple-400"
                             >
-                              {url.fullUrl}
+                              {encryptionLoading
+                                ? "Decrypting..."
+                                : url.fullUrl}
                             </a>
+                            {url.isEncrypted && (
+                              <LockIcon className="w-4 h-4 text-purple-600" />
+                            )}
                             <Button
                               onClick={() => copyToClipboard(url.fullUrl)}
                               variant="ghost"
@@ -253,7 +286,12 @@ export default function AdminPage({ params }: { params: { token: string } }) {
                           </p>
                           <p className="text-purple-600 flex items-center gap-2">
                             <span className="font-bold">Original URL:</span>{" "}
-                            <span className="break-all">{url.url}</span>
+                            <span className="break-all">
+                              {encryptionLoading ? "Decrypting..." : url.url}
+                            </span>
+                            {url.isEncrypted && (
+                              <LockIcon className="w-4 h-4 text-purple-600" />
+                            )}
                             <Button
                               onClick={() => copyToClipboard(url.url)}
                               variant="ghost"

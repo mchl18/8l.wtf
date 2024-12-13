@@ -21,6 +21,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SEED, encrypt } from "@/lib/crypto";
 
 function Home() {
   const searchParams = useSearchParams();
@@ -35,6 +36,7 @@ function Home() {
   >("forever");
   const [token, setToken] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
+  const [seed, setSeed] = useState<string | null>(null);
 
   const presets = [
     { label: "1 hour", value: 3600 },
@@ -51,6 +53,8 @@ function Home() {
     localStorage.setItem("shortener_token", token);
     copyToClipboard(token);
     router.push(`/?token=${token}`);
+    const encryptedSeed = encrypt(SEED, token);
+    setSeed(encryptedSeed);
   };
 
   useEffect(() => {
@@ -64,6 +68,8 @@ function Home() {
       if (isValidToken(queryToken)) {
         setToken(queryToken);
         localStorage.setItem("shortener_token", queryToken);
+        const encryptedSeed = encrypt(SEED, queryToken);
+        setSeed(encryptedSeed);
       } else {
         setError("Invalid token");
       }
@@ -73,6 +79,8 @@ function Home() {
       if (storedToken && isValidToken(storedToken)) {
         setToken(storedToken);
         router.push(`/?token=${storedToken}`);
+        const encryptedSeed = encrypt(SEED, storedToken);
+        setSeed(encryptedSeed);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -92,7 +100,10 @@ function Home() {
             : parseInt(`${presetValue}`),
       };
       if (isPrivate && token) {
+        const encryptedUrl = encrypt(url, token);
+        opts.url = encryptedUrl;
         opts.token = token;
+        opts.seed = seed!;
       }
       const response = await fetch("/api/shorten", {
         method: "POST",
@@ -125,7 +136,6 @@ function Home() {
     <>
       <h1 className="text-purple-600 text-2xl mt-24">veryshort.me</h1>
       <Card className="bg-black rounded-lg shadow-2xl max-w-md w-full text-center mt-6 border-2 border-purple-600">
-        {/* <CardHeader></CardHeader> */}
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit}>
             <div className="flex flex-col gap-3">

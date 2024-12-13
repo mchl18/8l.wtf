@@ -1,19 +1,29 @@
+import { DbAdapter, DbType } from "@/types";
 import { createKvAdapter } from "./kv-adapter";
 import { createPostgresAdapter } from "./postgres-adapter";
 import { createMongoAdapter } from "./mongo-adapter";
-import { DbAdapter } from "@/types";
 import { createMysqlAdapter } from "./mysql-adapter";
 import { createSqliteAdapter } from "./sqlite-adapter";
+import { createRedisAdapter } from "./redis-adapter";
+//
 export const getDatabase = ({
   type,
 }: {
-  type?: "kv" | "mongo" | "postgres" | "mysql" | "sqlite";
+  type?: DbType;
 } = {}): DbAdapter => {
   if (type === "kv") {
     if (!process.env.KV_URL) {
       throw new Error("KV_URL is not set");
     }
     return createKvAdapter();
+  }
+  if (type === "redis") {
+    if (!process.env.REDIS_URL) {
+      throw new Error("REDIS_URL is not set");
+    }
+    return createRedisAdapter({
+      connectionString: process.env.REDIS_URL,
+    });
   }
   if (type === "mongo") {
     if (!process.env.MONGO_URL) {
@@ -40,13 +50,17 @@ export const getDatabase = ({
     });
   }
   if (type === "sqlite") {
-    return createSqliteAdapter();
+    return createSqliteAdapter({
+      filename: process.env.SQLITE_FILENAME || ":memory:",
+    });
   }
   const envType = process.env.NEXT_PUBLIC_DB_TYPE;
   if (!type && envType) {
-    if (["kv", "mongo", "postgres", "mysql", "sqlite"].includes(envType)) {
+    if (
+      ["kv", "redis", "mongo", "postgres", "mysql", "sqlite"].includes(envType)
+    ) {
       return getDatabase({
-        type: envType as "kv" | "mongo" | "postgres" | "mysql" | "sqlite",
+        type: envType as DbType,
       });
     }
     throw new Error("Invalid database type");
