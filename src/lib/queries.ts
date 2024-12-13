@@ -12,6 +12,7 @@ export const useQrCode = (
     queryFn: async () => {
       return await QRCode.toDataURL(text, options);
     },
+    enabled: !!text,
   });
 };
 export const useUrlBySeed = (

@@ -51,10 +51,7 @@ function Home() {
   const [token, setToken] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
   const [seed, setSeed] = useState<string | null>(null);
-  const { data: qrCode, isLoading: isQrLoading } = useQrCode(url, {
-    width: 300,
-    margin: 2,
-  });
+
   const [showQrModal, setShowQrModal] = useState(false);
 
   const {
@@ -63,7 +60,13 @@ function Home() {
     isPending,
     isSuccess,
   } = useShortenUrl(url, isPrivate ? seed : null, maxAge, isPrivate, token);
-
+  const { data: qrCode, isLoading: isQrLoading } = useQrCode(
+    shortenedUrl?.fullUrl || "",
+    {
+      width: 300,
+      margin: 2,
+    }
+  );
   const presets = [
     { label: "1 hour", value: 3600 },
     { label: "1 day", value: 86400 },
