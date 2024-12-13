@@ -96,6 +96,7 @@ const RETRY_OPTIONS = {
   initialDelayMs: 100,
 };
 
+let initializing = false;
 export class PostgresAdapter implements DbAdapter {
   private pool: Pool;
   private static instance: PostgresAdapter | null = null;
@@ -117,10 +118,24 @@ export class PostgresAdapter implements DbAdapter {
   public static async getInstance(
     connectionString: string
   ): Promise<PostgresAdapter> {
+    let retries = 0;
+    while (retries < 3) {
+      if (initializing) {
+        throw new Error("Database is initializing");
+      }
+
+      if (!PostgresAdapter.instance) {
+        initializing = true;
+        const adapter = new PostgresAdapter(connectionString);
+        await adapter.initialize();
+        PostgresAdapter.instance = adapter;
+        initializing = false;
+      }
+      retries++;
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
     if (!PostgresAdapter.instance) {
-      const adapter = new PostgresAdapter(connectionString);
-      await adapter.initialize();
-      PostgresAdapter.instance = adapter;
+      throw new Error("Failed to initialize database");
     }
     return PostgresAdapter.instance;
   }
@@ -141,11 +156,11 @@ export class PostgresAdapter implements DbAdapter {
       const result = await client.query(
         "SELECT value FROM db_metadata WHERE key = 'initialized'"
       );
-      
+
       if (result.rows.length === 0) {
         // DB not initialized yet, run init script
         await client.query(INIT_SCRIPT);
-        
+
         // Mark as initialized
         await client.query(
           "INSERT INTO db_metadata (key, value) VALUES ('initialized', 'true')"
