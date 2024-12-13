@@ -35,7 +35,6 @@ export async function POST(request: Request) {
 
   const shortId = nanoid(parseInt(process.env.ID_LENGTH || "8"));
   await db.set(`url:${shortId}:meta`, { authenticated: !!seed });
-  debugger
   await db.sadd(urlsSet, `${shortId}::${url}`);
 
   if (seed) {
