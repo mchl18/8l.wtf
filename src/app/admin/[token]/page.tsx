@@ -18,6 +18,35 @@ import Link from "next/link";
 import { SEED, decrypt, encrypt } from "@/lib/crypto";
 import { GetUrlsResponse, ShortenedUrl } from "@/types";
 import QRCode from "qrcode";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const UrlSkeleton = () => (
+  <div className="grid grid-cols-[auto,1fr,auto] gap-4 items-center border-b border-purple-600 last:border-b-0 pb-4">
+    <Skeleton className="h-4 w-4 rounded" />
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-4 w-48" />
+        <Skeleton className="h-4 w-4 rounded-full" />
+        <Skeleton className="h-4 w-4 rounded-full" />
+      </div>
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-20" />
+        <Skeleton className="h-4 w-64" />
+        <Skeleton className="h-4 w-4 rounded-full" />
+      </div>
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-4 w-40" />
+      </div>
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-4 w-40" />
+      </div>
+    </div>
+    <Skeleton className="h-8 w-8 rounded" />
+  </div>
+);
 
 export default function AdminPage({ params }: { params: { token: string } }) {
   const [token, setToken] = useState(params.token || "");
@@ -25,7 +54,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
   const [error, setError] = useState("");
   const [seed, setSeed] = useState("");
   const [loaded, setLoaded] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
   const [encryptionLoading, setEncryptionLoading] = useState(false);
@@ -100,10 +129,12 @@ export default function AdminPage({ params }: { params: { token: string } }) {
         );
         setError("");
         setLoaded(true);
+        setLoading(false);
       }
     } catch (err) {
       console.error(err);
       setError((err as Error).message || "Failed to fetch URLs");
+      setLoading(false);
       toast.error("Failed to fetch URLs");
     } finally {
       setLoading(false);
@@ -242,136 +273,150 @@ export default function AdminPage({ params }: { params: { token: string } }) {
 
               {error && <p className="text-red-500">{error}</p>}
 
-              {urls.length > 0 && (
+              {(urls.length > 0 || loading) && (
                 <div className="border-2 border-purple-600 rounded-lg p-4">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-purple-600 text-xl">
                       Your Shortened URLs
                     </h3>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={toggleSelectAll}
-                        variant="outline"
-                        className="border-2 border-purple-600 text-purple-600"
-                      >
-                        {selectedUrls.size === urls.length
-                          ? "Deselect All"
-                          : "Select All"}
-                      </Button>
-                      {selectedUrls.size > 0 && (
+                    {!loading && (
+                      <div className="flex gap-2">
                         <Button
-                          onClick={() => handleDelete(Array.from(selectedUrls))}
-                          disabled={deleting}
-                          variant="destructive"
-                          size="icon"
+                          onClick={toggleSelectAll}
+                          variant="outline"
+                          className="border-2 border-purple-600 text-purple-600"
                         >
-                          {deleting ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <TrashIcon className="w-4 h-4" />
-                          )}
+                          {selectedUrls.size === urls.length
+                            ? "Deselect All"
+                            : "Select All"}
                         </Button>
-                      )}
-                    </div>
+                        {selectedUrls.size > 0 && (
+                          <Button
+                            onClick={() =>
+                              handleDelete(Array.from(selectedUrls))
+                            }
+                            disabled={deleting}
+                            variant="destructive"
+                            size="icon"
+                          >
+                            {deleting ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <TrashIcon className="w-4 h-4" />
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-4">
-                    {urls.map((url) => (
-                      <div
-                        key={url.shortId}
-                        className="grid grid-cols-[auto,1fr,auto] gap-4 items-center border-b border-purple-600 last:border-b-0 pb-4"
-                      >
-                        <Checkbox
-                          id={`checkbox-${url.shortId}`}
-                          checked={selectedUrls.has(url.shortId)}
-                          onCheckedChange={() =>
-                            toggleUrlSelection(url.shortId)
-                          }
-                          className="border-2 border-purple-600 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
-                        />
-                        <div className="text-left">
-                          <p className="text-purple-600 flex items-center gap-2">
-                            <span className="font-bold">Short URL:</span>{" "}
-                            <a
-                              href={url.fullUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="hover:text-purple-400"
-                            >
-                              {encryptionLoading
-                                ? "Decrypting..."
-                                : url.fullUrl}
-                            </a>
-                            {url.isEncrypted && (
-                              <LockIcon className="w-4 h-4 text-purple-600" />
-                            )}
-                            <Button
-                              onClick={() => copyToClipboard(url.fullUrl)}
-                              variant="ghost"
-                              size="icon"
-                              className="text-purple-600 hover:text-purple-400"
-                            >
-                              <LinkIcon className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              onClick={() =>
-                                generateQRCode(url.fullUrl, !!url.isEncrypted)
+                    {loading && !urls.length
+                      ? Array(5)
+                          .fill(0)
+                          .map((_, i) => <UrlSkeleton key={i} />)
+                      : urls.map((url) => (
+                          <div
+                            key={url.shortId}
+                            className="grid grid-cols-[auto,1fr,auto] gap-4 items-center border-b border-purple-600 last:border-b-0 pb-4"
+                          >
+                            <Checkbox
+                              id={`checkbox-${url.shortId}`}
+                              checked={selectedUrls.has(url.shortId)}
+                              onCheckedChange={() =>
+                                toggleUrlSelection(url.shortId)
                               }
-                              variant="ghost"
-                              size="icon"
-                              className="text-purple-600 hover:text-purple-400"
-                            >
-                              <QrCodeIcon className="w-4 h-4" />
-                            </Button>
-                          </p>
-                          <p className="text-purple-600 flex items-center gap-2">
-                            <span className="font-bold">Original URL:</span>{" "}
-                            <span className="break-all">
-                              {encryptionLoading ? "Decrypting..." : url.url}
-                            </span>
-                            {url.isEncrypted && (
-                              <LockIcon className="w-4 h-4 text-purple-600" />
-                            )}
+                              className="border-2 border-purple-600 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                            />
+                            <div className="text-left">
+                              <p className="text-purple-600 flex items-center gap-2">
+                                <span className="font-bold">Short URL:</span>{" "}
+                                {encryptionLoading ? (
+                                  <Skeleton className="h-4 w-48" />
+                                ) : (
+                                  <a
+                                    href={url.fullUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:text-purple-400"
+                                  >
+                                    {url.fullUrl}
+                                  </a>
+                                )}
+                                {url.isEncrypted && (
+                                  <LockIcon className="w-4 h-4 text-purple-600" />
+                                )}
+                                <Button
+                                  onClick={() => copyToClipboard(url.fullUrl)}
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-purple-600 hover:text-purple-400"
+                                >
+                                  <LinkIcon className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  onClick={() =>
+                                    generateQRCode(
+                                      url.fullUrl,
+                                      !!url.isEncrypted
+                                    )
+                                  }
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-purple-600 hover:text-purple-400"
+                                >
+                                  <QrCodeIcon className="w-4 h-4" />
+                                </Button>
+                              </p>
+                              <p className="text-purple-600 flex items-center gap-2">
+                                <span className="font-bold">Original URL:</span>{" "}
+                                {encryptionLoading ? (
+                                  <Skeleton className="h-4 w-64" />
+                                ) : (
+                                  <span className="break-all">{url.url}</span>
+                                )}
+                                {url.isEncrypted && (
+                                  <LockIcon className="w-4 h-4 text-purple-600" />
+                                )}
+                                <Button
+                                  onClick={() => copyToClipboard(url.url)}
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-purple-600 hover:text-purple-400"
+                                >
+                                  <LinkIcon className="w-4 h-4" />
+                                </Button>
+                              </p>
+                              {url.createdAt && (
+                                <p className="text-purple-600">
+                                  <span className="font-bold">Created:</span>{" "}
+                                  {new Date(url.createdAt).toLocaleString()}
+                                </p>
+                              )}
+                              {url.expiresAt && (
+                                <p className="text-purple-600">
+                                  <span className="font-bold">Expires:</span>{" "}
+                                  {new Date(url.expiresAt).toLocaleString()}
+                                </p>
+                              )}
+                            </div>
                             <Button
-                              onClick={() => copyToClipboard(url.url)}
-                              variant="ghost"
+                              onClick={() => handleDelete([url.shortId])}
+                              disabled={deleting}
+                              variant="destructive"
                               size="icon"
-                              className="text-purple-600 hover:text-purple-400"
                             >
-                              <LinkIcon className="w-4 h-4" />
+                              {deleting ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <TrashIcon className="w-4 h-4" />
+                              )}
                             </Button>
-                          </p>
-                          {url.createdAt && (
-                            <p className="text-purple-600">
-                              <span className="font-bold">Created:</span>{" "}
-                              {new Date(url.createdAt).toLocaleString()}
-                            </p>
-                          )}
-                          {url.expiresAt && (
-                            <p className="text-purple-600">
-                              <span className="font-bold">Expires:</span>{" "}
-                              {new Date(url.expiresAt).toLocaleString()}
-                            </p>
-                          )}
-                        </div>
-                        <Button
-                          onClick={() => handleDelete([url.shortId])}
-                          disabled={deleting}
-                          variant="destructive"
-                          size="icon"
-                        >
-                          {deleting ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <TrashIcon className="w-4 h-4" />
-                          )}
-                        </Button>
-                      </div>
-                    ))}
+                          </div>
+                        ))}
                   </div>
                 </div>
               )}
-              {loading && <p className="text-purple-600">Loading...</p>}
-              {loaded && !loading && urls.length === 0 && (
+              {!loading && loaded && urls.length === 0 && (
                 <p className="text-purple-600">No URLs found</p>
               )}
             </div>

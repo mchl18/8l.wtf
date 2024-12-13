@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   }
 
   const hostUrl = getHostUrl();
-  const db = getDatabase();
+  const db = await getDatabase();
   const shortIds = await db.smembers(`token:${seed}:urls`);
   const urls = [];
   for (const shortId of shortIds) {

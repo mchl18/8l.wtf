@@ -6,11 +6,11 @@ import { createMysqlAdapter } from "./mysql-adapter";
 import { createSqliteAdapter } from "./sqlite-adapter";
 import { createRedisAdapter } from "./redis-adapter";
 //
-export const getDatabase = ({
+export const getDatabase = async ({
   type,
 }: {
   type?: DbType;
-} = {}): DbAdapter => {
+} = {}): Promise<DbAdapter> => {
   if (type === "kv") {
     if (!process.env.KV_URL) {
       throw new Error("KV_URL is not set");

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSearchParams } from "next/navigation";
 import { decrypt, encrypt, SEED } from "@/lib/crypto";
+import { ShortenedUrl } from "@/types";
 
 const getUrlWithSeed = async ({
   seed,
@@ -17,7 +18,7 @@ const getUrlWithSeed = async ({
     method: "POST",
     body: JSON.stringify({ seed, shortId }),
   });
-  return (await res.json()).url;
+  return (await res.json()) as ShortenedUrl;
 };
 
 const REDIRECT_DELAY = parseInt(
@@ -60,10 +61,10 @@ function RedirectPage({ params }: { params: { shortId: string } }) {
             if (elapsed >= REDIRECT_DELAY) {
               clearInterval(timer);
               console.log("redirecting to", fetchedUrl);
-              if (finalToken) {
-                window.location.href = decrypt(fetchedUrl, finalToken);
+              if (finalToken && fetchedUrl.isEncrypted) {
+                window.location.href = decrypt(fetchedUrl.url, finalToken);
               } else {
-                window.location.href = fetchedUrl;
+                window.location.href = fetchedUrl.url;
               }
               return;
             }

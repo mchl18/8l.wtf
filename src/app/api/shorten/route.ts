@@ -1,17 +1,12 @@
-import {
-  getHostUrl,
-  isValidToken,
-  validateEncryptedSeedFormat,
-} from "@/lib/utils";
+import { getHostUrl, validateEncryptedSeedFormat } from "@/lib/utils";
 import { nanoid } from "nanoid";
 import { NextResponse } from "next/server";
-import { createCipheriv, randomBytes } from "crypto";
 import { getDatabase } from "@/lib/adapters";
 
 export async function POST(request: Request) {
   const { url, maxAge, token, seed } = await request.json();
   const hostUrl = getHostUrl();
-  const db = getDatabase();
+  const db = await getDatabase();
 
   const urlsSet = seed ? "authenticated_urls" : "anonymous_urls";
 
@@ -78,14 +73,11 @@ export async function DELETE(request: Request) {
       { status: 400 }
     );
   }
-  const db = getDatabase();
+  const db = await getDatabase();
   const results = [];
 
   for (const shortId of shortIds) {
-    const isUrlOwnedBySeed = await db.sismember(
-      `token:${seed}:urls`,
-      shortId
-    );
+    const isUrlOwnedBySeed = await db.sismember(`token:${seed}:urls`, shortId);
 
     if (!isUrlOwnedBySeed) {
       results.push({ shortId, success: false, error: "Unauthorized" });

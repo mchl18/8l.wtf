@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const { id } = await request.json();
-  const db = getDatabase();
+  const db = await getDatabase();
   const url = await db.get(id);
   if (!url) {
     return NextResponse.json({ error: "URL not found" }, { status: 404 });

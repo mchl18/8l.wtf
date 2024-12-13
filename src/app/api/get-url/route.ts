@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "ShortId is required" }, { status: 400 });
   }
 
-  const db = getDatabase();
+  const db = await getDatabase();
   const hostUrl = getHostUrl();
 
   // Check if URL is authenticated

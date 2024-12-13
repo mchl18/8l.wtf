@@ -1,6 +1,44 @@
 import { DbAdapter } from "@/types";
 import mysql from "mysql2/promise";
 
+// Setup script for MySQL adapter:
+/*
+-- Create the key_values table for storing key-value pairs with expiration
+CREATE TABLE IF NOT EXISTS key_values (
+  key_name VARCHAR(255) PRIMARY KEY,
+  value TEXT NOT NULL,
+  expires_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_key_values_expires (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Create the set_members table for storing sets
+CREATE TABLE IF NOT EXISTS set_members (
+  set_key VARCHAR(255),
+  value TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (set_key, value(255)),
+  INDEX idx_set_members_key (set_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+-- Create a cleanup procedure for expired keys
+DELIMITER //
+CREATE PROCEDURE IF NOT EXISTS cleanup_expired_keys()
+BEGIN
+  DELETE FROM key_values WHERE expires_at IS NOT NULL AND expires_at <= NOW();
+END //
+DELIMITER ;
+
+-- Create an event to periodically clean up expired keys (runs every hour)
+CREATE EVENT IF NOT EXISTS cleanup_expired_keys_event
+ON SCHEDULE EVERY 1 HOUR
+DO CALL cleanup_expired_keys();
+
+-- Ensure event scheduler is running
+SET GLOBAL event_scheduler = ON;
+*/
+
 export const createMysqlAdapter = ({
   connectionString,
 }: {
