@@ -121,7 +121,9 @@ export class PostgresAdapter implements DbAdapter {
     let retries = 0;
     while (retries < 3) {
       if (initializing) {
-        throw new Error("Database is initializing");
+        console.log("Database is initializing");
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        continue;
       }
 
       if (!PostgresAdapter.instance) {
