@@ -29,8 +29,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SEED, encrypt } from "@/lib/crypto";
-import { useShortenUrl } from "@/lib/queries";
-import QRCode from "qrcode";
+import { useQrCode, useShortenUrl } from "@/lib/queries";
 import {
   Dialog,
   DialogContent,
@@ -43,7 +42,6 @@ function Home() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [url, setUrl] = useState("");
-  const [shortUrl, setShortUrl] = useState("");
   const [maxAge, setMaxAge] = useState<number | string>(0);
   const [presetValue, setPresetValue] = useState("");
   const [error, setError] = useState("");
@@ -53,7 +51,10 @@ function Home() {
   const [token, setToken] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
   const [seed, setSeed] = useState<string | null>(null);
-  const [qrCode, setQrCode] = useState<string>("");
+  const { data: qrCode, isLoading: isQrLoading } = useQrCode(url, {
+    width: 300,
+    margin: 2,
+  });
   const [showQrModal, setShowQrModal] = useState(false);
 
   const {
@@ -131,23 +132,10 @@ function Home() {
     [setSelectedMode, setMaxAge]
   );
 
-  const generateQrCode = async (url: string) => {
-    try {
-      const qr = await QRCode.toDataURL(url, {
-        width: 300,
-        margin: 2,
-      });
-      setQrCode(qr);
-      setShowQrModal(true);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   const downloadQrCode = () => {
     const link = document.createElement("a");
     link.download = "qrcode.png";
-    link.href = qrCode;
+    link.href = qrCode || "";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -360,9 +348,7 @@ function Home() {
                         type="button"
                         size={"icon"}
                         variant="outline"
-                        onClick={() =>
-                          generateQrCode(shortenedUrl?.fullUrl || "")
-                        }
+                        onClick={() => setShowQrModal(true)}
                         className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black flex-shrink-0"
                       >
                         <QrCodeIcon className="w-4 h-4" />
@@ -448,13 +434,18 @@ function Home() {
           </DialogHeader>
           {qrCode && (
             <div className="flex flex-col items-center gap-4">
-              <Image
-                src={qrCode}
-                alt="QR Code"
-                className="rounded-lg"
-                width={300}
-                height={300}
-              />
+              {!isQrLoading && (
+                <Image
+                  src={qrCode}
+                  alt="QR Code"
+                  className="rounded-lg"
+                  width={300}
+                  height={300}
+                />
+              )}
+              {isQrLoading && (
+                <Skeleton className="h-300 w-300 bg-purple-600/20" />
+              )}
               <Button
                 onClick={downloadQrCode}
                 variant="outline"
