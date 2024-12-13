@@ -215,12 +215,12 @@ export class PostgresAdapter implements DbAdapter {
       max: 1, // Keep single connection for serverless
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
-      ssl:
-        process.env.NODE_ENV === "production"
-          ? {
-              rejectUnauthorized: true,
-            }
-          : undefined,
+      // ssl:
+      //   process.env.NODE_ENV === "production"
+      //     ? {
+      //         rejectUnauthorized: true,
+      //       }
+      //     : undefined,
     });
 
     this.pool.on("error", (err, client) => {

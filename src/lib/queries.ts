@@ -3,6 +3,22 @@ import { useMutation, useQuery, UseQueryResult } from "@tanstack/react-query";
 import { decrypt, encrypt } from "./crypto";
 
 export const useUrlBySeed = (
+  shortId: string,
+  seed?: string,
+): UseQueryResult<ShortenedUrl, Error> => {
+  return useQuery({
+    queryKey: ["url", seed, shortId],
+    queryFn: async () => {
+      const res = await fetch("/api/get-url", {
+        method: "POST",
+        body: JSON.stringify({ seed, shortId }),
+      });
+      return (await res.json()) as ShortenedUrl;
+    },
+  });
+};
+
+export const useUrlsBySeed = (
   seed: string,
   token: string
 ): UseQueryResult<ShortenedUrl[], Error> => {

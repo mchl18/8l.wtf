@@ -19,7 +19,7 @@ import Link from "next/link";
 import { SEED, encrypt } from "@/lib/crypto";
 import QRCode from "qrcode";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useUrlBySeed } from "@/lib/queries";
+import { useUrlsBySeed } from "@/lib/queries";
 
 const UrlSkeleton = () => (
   <div className="grid grid-cols-[auto,1fr,auto] gap-4 items-center border-b border-purple-600 last:border-b-0 pb-4">
@@ -61,7 +61,7 @@ export default function AdminPage({ params }: { params: { token: string } }) {
     isPending,
     refetch,
     isSuccess,
-  } = useUrlBySeed(seed, token);
+  } = useUrlsBySeed(seed, token);
   const generateQRCode = async (url: string, isEncrypted: boolean) => {
     try {
       const finalUrl = isEncrypted ? `${url}?token=${token}` : url;

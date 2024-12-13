@@ -5,21 +5,7 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSearchParams } from "next/navigation";
 import { decrypt, encrypt, SEED } from "@/lib/crypto";
-import { ShortenedUrl } from "@/types";
-
-const getUrlWithSeed = async ({
-  seed,
-  shortId,
-}: {
-  seed?: string;
-  shortId: string;
-}) => {
-  const res = await fetch("/api/get-url", {
-    method: "POST",
-    body: JSON.stringify({ seed, shortId }),
-  });
-  return (await res.json()) as ShortenedUrl;
-};
+import { useUrlBySeed } from "@/lib/queries";
 
 const REDIRECT_DELAY = parseInt(
   process.env.NEXT_PUBLIC_REDIRECT_DELAY || "5000"
@@ -29,67 +15,55 @@ function RedirectPage({ params }: { params: { shortId: string } }) {
   const { shortId } = params;
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  const [error, setError] = useState<string>("");
+  const [seed, setSeed] = useState<string | undefined>(undefined);
   const [countdown, setCountdown] = useState(REDIRECT_DELAY / 1000);
   const [startTime, setStartTime] = useState(0);
+  const { data, error } = useUrlBySeed(shortId, seed);
 
   useEffect(() => {
     setStartTime(Date.now());
   }, []);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const start = startTime || Date.now();
-        setStartTime(start);
-        const storedToken = localStorage.getItem("8lwtf_token");
-        if (token && !storedToken) {
-          localStorage.setItem("8lwtf_token", token);
-        }
-        const finalToken = storedToken || token || "";
-        const fetchedUrl = await getUrlWithSeed({
-          shortId,
-          seed: finalToken ? encrypt(SEED, finalToken) : undefined,
-        });
-        if (fetchedUrl) {
-          const timer = setInterval(() => {
-            const elapsed = Date.now() - start;
-            const remainingSeconds = Math.ceil(
-              (REDIRECT_DELAY - elapsed) / 1000
-            );
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const remainingSeconds = Math.ceil((REDIRECT_DELAY - elapsed) / 1000);
 
-            if (elapsed >= REDIRECT_DELAY) {
-              clearInterval(timer);
-              console.log("redirecting to", fetchedUrl);
-              debugger
-              if (fetchedUrl.error) {
-                setError(fetchedUrl.error);
-                return;
-              }
-              if (finalToken && fetchedUrl.isEncrypted) {
-                window.location.href = decrypt(fetchedUrl.url, finalToken);
-              } else {
-                window.location.href = fetchedUrl.url;
-              }
-              return;
-            }
-
-            setCountdown((x) => {
-              if (x === remainingSeconds) {
-                return x;
-              }
-              return remainingSeconds;
-            });
-          }, 333);
-
-          return () => clearInterval(timer);
+      if (elapsed >= REDIRECT_DELAY) {
+        clearInterval(timer);
+        console.log("redirecting to", data);
+        if (seed && data?.isEncrypted) {
+          window.location.href = decrypt(data.url, seed);
         } else {
-          setError("URL not found");
+          if (!data?.url) {
+            return;
+          }
+          window.location.href = data.url;
         }
-      } catch (e) {
-        debugger
-        setError("Error getting token");
+        return;
       }
+
+      setCountdown((x) => {
+        if (x === remainingSeconds) {
+          return x;
+        }
+        return remainingSeconds;
+      });
+    }, 333);
+
+    return () => clearInterval(timer);
+  }, [startTime, shortId, seed]);
+
+  useEffect(() => {
+    (async () => {
+      const start = startTime || Date.now();
+      setStartTime(start);
+      const storedToken = localStorage.getItem("8lwtf_token");
+      if (token && !storedToken) {
+        localStorage.setItem("8lwtf_token", token);
+      }
+      const finalToken = storedToken || token || "";
+      setSeed(finalToken ? encrypt(SEED, finalToken) : undefined);
     })();
   }, [startTime, shortId, token]);
 
@@ -117,7 +91,7 @@ function RedirectPage({ params }: { params: { shortId: string } }) {
 
           {error && (
             <div className="border-2 border-purple-600 p-4 rounded-md">
-              <p className="text-purple-600">{error}</p>
+              <p className="text-purple-600">{error.message}</p>
             </div>
           )}
         </CardContent>
