@@ -27,14 +27,14 @@ function ApiEndpoint({
 
   const getMethodColor = (method: string) => {
     switch (method.toUpperCase()) {
-      case 'POST':
-        return 'text-blue-500 border-blue-500';
-      case 'GET':
-        return 'text-green-500 border-green-500';
-      case 'DELETE':
-        return 'text-red-500 border-red-500';
+      case "POST":
+        return "text-blue-500 border-blue-500";
+      case "GET":
+        return "text-green-500 border-green-500";
+      case "DELETE":
+        return "text-red-500 border-red-500";
       default:
-        return 'text-purple-600 border-purple-600';
+        return "text-purple-600 border-purple-600";
     }
   };
 
@@ -66,9 +66,17 @@ function ApiEndpoint({
 
   return (
     <div className="border-l-4 border-purple-600 pl-4">
-      <div className={`flex items-center gap-4 mb-3 border-r-4 pr-4 ${getMethodColor(method)}`}>
+      <div
+        className={`flex items-center gap-4 mb-3 border-r-4 pr-4 ${getMethodColor(
+          method
+        )}`}
+      >
         <h3 className="text-xl font-semibold text-purple-600">{title}</h3>
-        <span className={`px-2 py-1 rounded text-sm font-mono ml-auto ${getMethodColor(method)}`}>
+        <span
+          className={`px-2 py-1 rounded text-sm font-mono ml-auto ${getMethodColor(
+            method
+          )}`}
+        >
           {method}
         </span>
       </div>
@@ -95,7 +103,9 @@ function ApiEndpoint({
                 type="url"
                 placeholder="URL to shorten"
                 value={formData.url || ""}
-                onChange={(e) => setFormData({...formData, url: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, url: e.target.value })
+                }
                 className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
                 required
               />
@@ -103,14 +113,18 @@ function ApiEndpoint({
                 type="number"
                 placeholder="Max age in seconds (optional)"
                 value={formData.maxAge || ""}
-                onChange={(e) => setFormData({...formData, maxAge: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, maxAge: e.target.value })
+                }
                 className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
               />
               <Input
                 type="text"
                 placeholder="Token (optional)"
                 value={formData.token || ""}
-                onChange={(e) => setFormData({...formData, token: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, token: e.target.value })
+                }
                 className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
               />
             </>
@@ -121,7 +135,9 @@ function ApiEndpoint({
                 type="text"
                 placeholder="Comma-separated shortIds"
                 value={formData.shortIds || ""}
-                onChange={(e) => setFormData({...formData, shortIds: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, shortIds: e.target.value })
+                }
                 className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
                 required
               />
@@ -129,7 +145,9 @@ function ApiEndpoint({
                 type="text"
                 placeholder="Token"
                 value={formData.token || ""}
-                onChange={(e) => setFormData({...formData, token: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, token: e.target.value })
+                }
                 className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
                 required
               />
@@ -140,7 +158,9 @@ function ApiEndpoint({
               type="text"
               placeholder="Token"
               value={formData.token || ""}
-              onChange={(e) => setFormData({...formData, token: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, token: e.target.value })
+              }
               className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
               required
             />
@@ -150,7 +170,7 @@ function ApiEndpoint({
               type="text"
               placeholder="Short ID"
               value={formData.id || ""}
-              onChange={(e) => setFormData({...formData, id: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, id: e.target.value })}
               className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
               required
             />

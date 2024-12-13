@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { HomeIcon } from "lucide-react";
 
@@ -16,13 +16,6 @@ function DeleteProxyPage() {
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [responseData, setResponseData] = useState<any>(null);
-
-  useEffect(() => {
-    if (idFromSearchParams) {
-      handleSubmit();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idFromSearchParams]);
 
   const handleSubmit = async () => {
     setStatus("loading");
@@ -70,8 +63,8 @@ function DeleteProxyPage() {
             <div className="flex flex-col gap-6">
               <p className="text-purple-600">
                 This is a proxy that allows you to call the DELETE method for a
-                veryshort.me url by using the browser. This can be useful e.g. for
-                an AWS signed delete url.
+                veryshort.me url by using the browser. This can be useful e.g.
+                for an AWS signed delete url.
               </p>
 
               <form
@@ -126,7 +119,9 @@ function DeleteProxyPage() {
                       Status: {responseData.status} {responseData.statusText}
                     </p>
                   </div>
-                  <p className="text-purple-600 mt-2">URL: {responseData.url}</p>
+                  <p className="text-purple-600 mt-2">
+                    URL: {responseData.url}
+                  </p>
                   <p className="text-purple-600">ID: {responseData.id}</p>
                 </div>
               )}
