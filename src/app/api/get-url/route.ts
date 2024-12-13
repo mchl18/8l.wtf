@@ -24,9 +24,9 @@ export async function POST(request: Request) {
   let transaction = null;
 
   // Create timeout promise
-  const timeoutPromise = new Promise((_, reject) => {
+  const timeoutPromise = new Promise<NextResponse>((_, reject) => {
     setTimeout(
-      () => reject(new Error("Transaction timeout")),
+      () => reject(new NextResponse("Transaction timeout", { status: 504 })),
       TRANSACTION_TIMEOUT
     );
   });
