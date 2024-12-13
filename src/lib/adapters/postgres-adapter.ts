@@ -95,84 +95,19 @@ const RETRY_OPTIONS = {
   maxRetries: 3,
   initialDelayMs: 100,
 };
+type ConnectionState = {
+  pool: Pool | null;
+  initPromise: Promise<void> | null;
+};
 
-let initializing = false;
+const state: ConnectionState = {
+  pool: null,
+  initPromise: null,
+};
+
 export class PostgresAdapter implements DbAdapter {
   private pool: Pool;
   private static instance: PostgresAdapter | null = null;
-
-  private constructor(connectionString: string) {
-    this.pool = new Pool({
-      connectionString,
-      max: 20, // Maximum number of clients in the pool
-      idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-      connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection cannot be established
-    });
-
-    // Handle pool errors
-    this.pool.on("error", (err, client) => {
-      console.error("Unexpected error on idle client", err);
-    });
-  }
-
-  public static async getInstance(
-    connectionString: string
-  ): Promise<PostgresAdapter> {
-    let retries = 0;
-    while (retries < 3) {
-      if (initializing) {
-        console.log("Database is initializing");
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        continue;
-      }
-
-      if (!PostgresAdapter.instance) {
-        initializing = true;
-        const adapter = new PostgresAdapter(connectionString);
-        await adapter.initialize();
-        PostgresAdapter.instance = adapter;
-        initializing = false;
-      }
-      retries++;
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-    if (!PostgresAdapter.instance) {
-      throw new Error("Failed to initialize database");
-    }
-    return PostgresAdapter.instance;
-  }
-
-  private async initialize(): Promise<void> {
-    const client = await this.pool.connect();
-    try {
-      // First create the metadata table to track initialization
-      await client.query(`
-        CREATE TABLE IF NOT EXISTS db_metadata (
-          key TEXT PRIMARY KEY,
-          value TEXT NOT NULL,
-          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-        );
-      `);
-
-      // Check if DB was already initialized
-      const result = await client.query(
-        "SELECT value FROM db_metadata WHERE key = 'initialized'"
-      );
-
-      if (result.rows.length === 0) {
-        // DB not initialized yet, run init script
-        await client.query(INIT_SCRIPT);
-
-        // Mark as initialized
-        await client.query(
-          "INSERT INTO db_metadata (key, value) VALUES ('initialized', 'true')"
-        );
-      }
-    } finally {
-      client.release();
-    }
-  }
-
   private async withRetry<T>(
     operation: (client: PoolClient) => Promise<T>
   ): Promise<T> {
@@ -270,6 +205,119 @@ export class PostgresAdapter implements DbAdapter {
         [key, value]
       );
     });
+  }
+  // private pool: Pool;
+  // private static instance: PostgresAdapter | null = null;
+
+  private constructor(connectionString: string) {
+    this.pool = new Pool({
+      connectionString,
+      max: 1, // Keep single connection for serverless
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+      ssl:
+        process.env.NODE_ENV === "production"
+          ? {
+              rejectUnauthorized: true,
+            }
+          : undefined,
+    });
+
+    this.pool.on("error", (err, client) => {
+      console.error("Unexpected error on idle client", err);
+      // Optionally reset the pool on fatal errors
+      if (err.message.includes("Connection terminated")) {
+        state.pool = null;
+        state.initPromise = null;
+      }
+    });
+  }
+
+  public static async getInstance(
+    connectionString: string
+  ): Promise<PostgresAdapter> {
+    // If we have an instance and its pool is healthy, return it
+    if (PostgresAdapter.instance?.pool) {
+      try {
+        await PostgresAdapter.instance.pool.query("SELECT 1");
+        return PostgresAdapter.instance;
+      } catch (error) {
+        // Pool is not healthy, reset everything
+        await PostgresAdapter.instance?.close();
+        PostgresAdapter.instance = null;
+        state.pool = null;
+        state.initPromise = null;
+      }
+    }
+
+    // If we're already initializing, wait for that to complete
+    if (state.initPromise) {
+      await state.initPromise;
+      if (PostgresAdapter.instance) {
+        return PostgresAdapter.instance;
+      }
+    }
+
+    // Start new initialization
+    state.initPromise = (async () => {
+      try {
+        const adapter = new PostgresAdapter(connectionString);
+        await adapter.initialize();
+        PostgresAdapter.instance = adapter;
+        state.pool = adapter.pool;
+        return;
+      } catch (error) {
+        // Clean up on failure
+        state.pool = null;
+        PostgresAdapter.instance = null;
+        throw error;
+      } finally {
+        state.initPromise = null;
+      }
+    })();
+
+    await state.initPromise;
+
+    if (!PostgresAdapter.instance) {
+      throw new Error("Failed to initialize database");
+    }
+
+    return PostgresAdapter.instance;
+  }
+
+  private async initialize(): Promise<void> {
+    let client: PoolClient | null = null;
+    try {
+      client = await this.pool.connect();
+
+      // First create the metadata table to track initialization
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS db_metadata (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+
+      // Check if DB was already initialized
+      const result = await client.query(
+        "SELECT value FROM db_metadata WHERE key = 'initialized'"
+      );
+
+      if (result.rows.length === 0) {
+        // DB not initialized yet, run init script
+        await client.query(INIT_SCRIPT);
+
+        // Mark as initialized
+        await client.query(
+          "INSERT INTO db_metadata (key, value) VALUES ('initialized', 'true')"
+        );
+      }
+    } finally {
+      if (client) {
+        client.release();
+      }
+    }
   }
 
   async del(key: string): Promise<void> {
