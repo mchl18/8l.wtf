@@ -1,10 +1,10 @@
-import { Inter } from "next/font/google";
+import { Pixelify_Sans } from "next/font/google";
 import "./globals.css";
 import { Metadata } from "next";
 import { getHostUrl } from "@/lib/utils";
 import Providers from "@/lib/providers";
 
-const inter = Inter({ subsets: ["latin"] });
+const pixelify = Pixelify_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "8l.wtf",
@@ -34,7 +34,7 @@ export default function RootLayout({
 }) {
   return (
     <html className="dark" lang="en">
-      <body className={inter.className}>
+      <body className={pixelify.className}>
         <Providers>
           <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
             {children}
