@@ -43,11 +43,11 @@ function Home() {
   const router = useRouter();
   const [url, setUrl] = useState("");
   const [maxAge, setMaxAge] = useState<number | string>(0);
-  const [presetValue, setPresetValue] = useState("");
+  const [presetValue, setPresetValue] = useState<number | string>(86400);
   const [error, setError] = useState("");
   const [selectedMode, setSelectedMode] = useState<
     "forever" | "custom" | "preset"
-  >("forever");
+  >("preset");
   const [token, setToken] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
   const [seed, setSeed] = useState<string | null>(null);
@@ -59,7 +59,13 @@ function Home() {
     data: shortenedUrl,
     isPending,
     isSuccess,
-  } = useShortenUrl(url, isPrivate ? seed : null, maxAge, isPrivate, token);
+  } = useShortenUrl(
+    url,
+    isPrivate ? seed : null,
+    selectedMode === "preset" ? presetValue : maxAge,
+    isPrivate,
+    token
+  );
   const { data: qrCode, isLoading: isQrLoading } = useQrCode(
     shortenedUrl?.fullUrl || "",
     {
@@ -244,12 +250,12 @@ function Home() {
                       setMode("preset");
                     }
                   }}
-                  onOpenChange={(open) => {
+                  onOpenChange={() => {
                     if (
+                      selectedMode !== "custom" &&
                       !presets.find(
                         (preset) => preset.value === Number(presetValue)
-                      )?.value &&
-                      selectedMode !== "custom"
+                      )?.value
                     ) {
                       setMode("forever");
                     }
