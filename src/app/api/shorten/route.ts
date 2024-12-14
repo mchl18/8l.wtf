@@ -33,7 +33,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid seed" }, { status: 401 });
   }
 
-  const shortId = nanoid(parseInt(process.env.ID_LENGTH || "8"));
+  let shortId;
+  let existingUrl;
+  const idLength = parseInt(process.env.ID_LENGTH || "8");
+
+  // Generate a shortId until it's not in the database
+  do {
+    shortId = nanoid(idLength);
+    existingUrl = await db.get(shortId);
+  } while (existingUrl);
+
   await db.set(`url:${shortId}:meta`, { authenticated: !!seed });
   await db.sadd(urlsSet, `${shortId}::${url}`);
 
