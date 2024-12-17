@@ -19,34 +19,7 @@ import { SEED, encrypt } from "@/lib/crypto";
 import QRCode from "qrcode";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDeleteUrls, useUrlsBySeed } from "@/lib/queries";
-
-const UrlSkeleton = () => (
-  <div className="grid grid-cols-[auto,1fr,auto] gap-2 sm:gap-4 items-center border-b border-purple-600 last:border-b-0 pb-4">
-    <Skeleton className="h-4 w-4 rounded" />
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <Skeleton className="h-4 w-16" />
-        <Skeleton className="h-4 w-32 sm:w-48" />
-        <Skeleton className="h-4 w-4 rounded-full" />
-        <Skeleton className="h-4 w-4 rounded-full" />
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Skeleton className="h-4 w-20" />
-        <Skeleton className="h-4 w-48 sm:w-64" />
-        <Skeleton className="h-4 w-4 rounded-full" />
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Skeleton className="h-4 w-16" />
-        <Skeleton className="h-4 w-32 sm:w-40" />
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Skeleton className="h-4 w-16" />
-        <Skeleton className="h-4 w-32 sm:w-40" />
-      </div>
-    </div>
-    <Skeleton className="h-8 w-8 rounded" />
-  </div>
-);
+import { AdminSkeleton } from "@/components/admin-skeleton";
 
 type State = {
   token: string;
@@ -229,7 +202,9 @@ export default function AdminPage() {
                 <Input
                   type="text"
                   value={state.token}
-                  onChange={(e) => dispatch({ type: "SET_TOKEN", payload: e.target.value })}
+                  onChange={(e) =>
+                    dispatch({ type: "SET_TOKEN", payload: e.target.value })
+                  }
                   placeholder="Enter your token"
                   className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
                 />
@@ -254,7 +229,12 @@ export default function AdminPage() {
                     {!isLoading && urls?.length > 0 && (
                       <div className="flex gap-2">
                         <Button
-                          onClick={() => dispatch({ type: "TOGGLE_ALL", payload: urls.map(url => url.shortId) })}
+                          onClick={() =>
+                            dispatch({
+                              type: "TOGGLE_ALL",
+                              payload: urls.map((url) => url.shortId),
+                            })
+                          }
                           variant="outline"
                           className="border-2 border-purple-600 text-purple-600 text-sm sm:text-base"
                         >
@@ -285,7 +265,7 @@ export default function AdminPage() {
                     {isLoading || isPending || !state.seed || isDeleting
                       ? Array(5)
                           .fill(0)
-                          .map((_, i) => <UrlSkeleton key={i} />)
+                          .map((_, i) => <AdminSkeleton key={i} />)
                       : urls.map((url) => (
                           <div
                             key={url.shortId}
@@ -295,7 +275,10 @@ export default function AdminPage() {
                               id={`checkbox-${url.shortId}`}
                               checked={state.selectedUrls.has(url.shortId)}
                               onCheckedChange={() =>
-                                dispatch({ type: "TOGGLE_URL", payload: url.shortId })
+                                dispatch({
+                                  type: "TOGGLE_URL",
+                                  payload: url.shortId,
+                                })
                               }
                               className="border-2 border-purple-600 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 mt-1"
                             />
