@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState, useEffect } from "react";
+import { useEffect, useReducer } from "react";
 import { isValidToken, copyToClipboard, cleanUrl } from "@/lib/utils";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -48,11 +48,65 @@ const UrlSkeleton = () => (
   </div>
 );
 
+type State = {
+  token: string;
+  seed: string;
+  deleting: boolean;
+  selectedUrls: Set<string>;
+};
+
+type Action =
+  | { type: "SET_TOKEN"; payload: string }
+  | { type: "SET_SEED"; payload: string }
+  | { type: "SET_DELETING"; payload: boolean }
+  | { type: "SET_SELECTED_URLS"; payload: Set<string> }
+  | { type: "TOGGLE_URL"; payload: string }
+  | { type: "TOGGLE_ALL"; payload: string[] }
+  | { type: "CLEAR_SELECTED" };
+
+const initialState: State = {
+  token: "",
+  seed: "",
+  deleting: false,
+  selectedUrls: new Set(),
+};
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "SET_TOKEN":
+      return { ...state, token: action.payload };
+    case "SET_SEED":
+      return { ...state, seed: action.payload };
+    case "SET_DELETING":
+      return { ...state, deleting: action.payload };
+    case "SET_SELECTED_URLS":
+      return { ...state, selectedUrls: action.payload };
+    case "TOGGLE_URL": {
+      const newSelection = new Set(state.selectedUrls);
+      if (newSelection.has(action.payload)) {
+        newSelection.delete(action.payload);
+      } else {
+        newSelection.add(action.payload);
+      }
+      return { ...state, selectedUrls: newSelection };
+    }
+    case "TOGGLE_ALL": {
+      const newSelection =
+        state.selectedUrls.size === action.payload.length
+          ? new Set<string>()
+          : new Set(action.payload);
+      return { ...state, selectedUrls: newSelection };
+    }
+    case "CLEAR_SELECTED":
+      return { ...state, selectedUrls: new Set() };
+    default:
+      return state;
+  }
+}
+
 export default function AdminPage() {
-  const [token, setToken] = useState("");
-  const [seed, setSeed] = useState("");
-  const [deleting, setDeleting] = useState(false);
-  const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
+  const [state, dispatch] = useReducer(reducer, initialState);
+
   const {
     data: urls = [],
     isLoading,
@@ -60,26 +114,26 @@ export default function AdminPage() {
     isPending,
     refetch,
     isSuccess,
-  } = useUrlsBySeed(seed, token);
+  } = useUrlsBySeed(state.seed, state.token);
+
   const {
     mutate: deleteUrls,
     data: deleteData,
     isPending: isDeleting,
-  } = useDeleteUrls(seed);
+  } = useDeleteUrls(state.seed);
 
   useEffect(() => {
     const token = localStorage.getItem("8lwtf_token");
     if (token) {
-      setToken(token);
+      dispatch({ type: "SET_TOKEN", payload: token });
     }
   }, []);
 
   const generateQRCode = async (url: string, isEncrypted: boolean) => {
     try {
-      const finalUrl = isEncrypted ? `${url}?token=${token}` : url;
+      const finalUrl = isEncrypted ? `${url}?token=${state.token}` : url;
       const qrDataUrl = await QRCode.toDataURL(finalUrl);
 
-      // Create temporary link to download QR code
       const link = document.createElement("a");
       link.href = qrDataUrl;
       link.download = `8l.wtf QR Code - ${new Date().toISOString()}.png`;
@@ -100,13 +154,13 @@ export default function AdminPage() {
     }
 
     try {
-      setDeleting(true);
+      dispatch({ type: "SET_DELETING", payload: true });
       deleteUrls(shortIds);
     } catch (err) {
       console.error(err);
       toast.error("Failed to delete URLs");
     } finally {
-      setDeleting(false);
+      dispatch({ type: "SET_DELETING", payload: false });
     }
   };
 
@@ -124,7 +178,7 @@ export default function AdminPage() {
 
     if (successfulDeletions.length > 0) {
       toast.success(`Successfully deleted ${successfulDeletions.length} URLs`);
-      setSelectedUrls(new Set());
+      dispatch({ type: "CLEAR_SELECTED" });
     }
 
     const failures = deleteData.results.filter((result) => !result.success);
@@ -138,36 +192,18 @@ export default function AdminPage() {
     refetch();
   }, [deleteData, refetch]);
 
-  const toggleUrlSelection = (shortId: string) => {
-    const newSelection = new Set(selectedUrls);
-    if (newSelection.has(shortId)) {
-      newSelection.delete(shortId);
-    } else {
-      newSelection.add(shortId);
-    }
-    setSelectedUrls(newSelection);
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedUrls.size === urls?.length) {
-      setSelectedUrls(new Set());
-    } else {
-      setSelectedUrls(new Set(urls?.map((url) => url.shortId)));
-    }
-  };
-
   useEffect(() => {
-    if (!token) {
-      setSelectedUrls(new Set());
+    if (!state.token) {
+      dispatch({ type: "CLEAR_SELECTED" });
       return;
     }
-    if (!isValidToken(token)) {
-      setSelectedUrls(new Set());
+    if (!isValidToken(state.token)) {
+      dispatch({ type: "CLEAR_SELECTED" });
       return;
     }
-    const encryptedSeed = encrypt(SEED, token);
-    setSeed(encryptedSeed);
-  }, [token]);
+    const encryptedSeed = encrypt(SEED, state.token);
+    dispatch({ type: "SET_SEED", payload: encryptedSeed });
+  }, [state.token]);
 
   return (
     <>
@@ -192,8 +228,8 @@ export default function AdminPage() {
               <div className="flex flex-col sm:flex-row gap-2">
                 <Input
                   type="text"
-                  value={token}
-                  onChange={(e) => setToken(e.target.value)}
+                  value={state.token}
+                  onChange={(e) => dispatch({ type: "SET_TOKEN", payload: e.target.value })}
                   placeholder="Enter your token"
                   className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
                 />
@@ -209,7 +245,7 @@ export default function AdminPage() {
 
               {error && <p className="text-red-500">{error.message}</p>}
 
-              {(urls?.length > 0 || isLoading || token) && (
+              {(urls?.length > 0 || isLoading || state.token) && (
                 <div className="border-2 border-purple-600 rounded-lg p-2 sm:p-4">
                   <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
                     <h3 className="text-purple-600 text-lg sm:text-xl">
@@ -218,24 +254,24 @@ export default function AdminPage() {
                     {!isLoading && urls?.length > 0 && (
                       <div className="flex gap-2">
                         <Button
-                          onClick={toggleSelectAll}
+                          onClick={() => dispatch({ type: "TOGGLE_ALL", payload: urls.map(url => url.shortId) })}
                           variant="outline"
                           className="border-2 border-purple-600 text-purple-600 text-sm sm:text-base"
                         >
-                          {selectedUrls.size === urls?.length
+                          {state.selectedUrls.size === urls?.length
                             ? "Deselect All"
                             : "Select All"}
                         </Button>
-                        {selectedUrls.size > 0 && (
+                        {state.selectedUrls.size > 0 && (
                           <Button
                             onClick={() =>
-                              handleDelete(Array.from(selectedUrls))
+                              handleDelete(Array.from(state.selectedUrls))
                             }
-                            disabled={deleting}
+                            disabled={state.deleting}
                             variant="destructive"
                             size="icon"
                           >
-                            {deleting ? (
+                            {state.deleting ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
                             ) : (
                               <TrashIcon className="w-4 h-4" />
@@ -246,7 +282,7 @@ export default function AdminPage() {
                     )}
                   </div>
                   <div className="space-y-4">
-                    {isLoading || isPending || !seed || isDeleting
+                    {isLoading || isPending || !state.seed || isDeleting
                       ? Array(5)
                           .fill(0)
                           .map((_, i) => <UrlSkeleton key={i} />)
@@ -257,9 +293,9 @@ export default function AdminPage() {
                           >
                             <Checkbox
                               id={`checkbox-${url.shortId}`}
-                              checked={selectedUrls.has(url.shortId)}
+                              checked={state.selectedUrls.has(url.shortId)}
                               onCheckedChange={() =>
-                                toggleUrlSelection(url.shortId)
+                                dispatch({ type: "TOGGLE_URL", payload: url.shortId })
                               }
                               className="border-2 border-purple-600 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 mt-1"
                             />
@@ -325,26 +361,26 @@ export default function AdminPage() {
                                 </Button>
                               </p>
 
-                              {token && (
+                              {state.token && (
                                 <div className="text-sm sm:text-base">
                                   <p className="text-purple-600 flex flex-wrap items-center gap-2">
                                     <span className="font-bold">
                                       Invite URL:
                                     </span>
                                     <a
-                                      href={`/?token=${token}`}
+                                      href={`/?token=${state.token}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="hover:text-purple-400 break-all"
                                     >
                                       {cleanUrl(
-                                        `${url.fullUrl}/?token=${token}`
+                                        `${url.fullUrl}/?token=${state.token}`
                                       )}
                                     </a>
                                     <Button
                                       onClick={() =>
                                         copyToClipboard(
-                                          `${url.fullUrl}/?token=${token}`
+                                          `${url.fullUrl}/?token=${state.token}`
                                         )
                                       }
                                       variant="ghost"
@@ -356,7 +392,7 @@ export default function AdminPage() {
                                     <Button
                                       onClick={() =>
                                         generateQRCode(
-                                          `${url.fullUrl}/?token=${token}`,
+                                          `${url.fullUrl}/?token=${state.token}`,
                                           false
                                         )
                                       }
@@ -384,12 +420,12 @@ export default function AdminPage() {
                             </div>
                             <Button
                               onClick={() => handleDelete([url.shortId])}
-                              disabled={deleting}
+                              disabled={state.deleting}
                               variant="destructive"
                               size="icon"
                               className="mt-1"
                             >
-                              {deleting ? (
+                              {state.deleting ? (
                                 <Loader2 className="w-4 h-4 animate-spin" />
                               ) : (
                                 <TrashIcon className="w-4 h-4" />

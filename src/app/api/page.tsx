@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useReducer, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getHostUrl } from "@/lib/utils";
@@ -23,6 +23,59 @@ type ApiEndpointProps = {
   responseBody: string;
 };
 
+type State = {
+  formData: Record<string, string>;
+  response: any;
+  error: string;
+  loading: boolean;
+};
+
+type Action =
+  | { type: "SET_FORM_DATA"; field: string; value: string }
+  | { type: "SET_RESPONSE"; payload: any }
+  | { type: "SET_ERROR"; payload: string }
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "RESET_STATE" };
+
+const initialState: State = {
+  formData: {},
+  response: null,
+  error: "",
+  loading: false,
+};
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "SET_FORM_DATA":
+      return {
+        ...state,
+        formData: {
+          ...state.formData,
+          [action.field]: action.value,
+        },
+      };
+    case "SET_RESPONSE":
+      return {
+        ...state,
+        response: action.payload,
+      };
+    case "SET_ERROR":
+      return {
+        ...state,
+        error: action.payload,
+      };
+    case "SET_LOADING":
+      return {
+        ...state,
+        loading: action.payload,
+      };
+    case "RESET_STATE":
+      return initialState;
+    default:
+      return state;
+  }
+}
+
 /**
  * Component to display and test an individual API endpoint
  */
@@ -33,10 +86,7 @@ function ApiEndpoint({
   requestBody,
   responseBody,
 }: ApiEndpointProps) {
-  const [formData, setFormData] = useState<Record<string, string>>({});
-  const [response, setResponse] = useState<any>(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   /**
    * Get color styling based on HTTP method
@@ -59,15 +109,15 @@ function ApiEndpoint({
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
+    dispatch({ type: "SET_LOADING", payload: true });
+    dispatch({ type: "SET_ERROR", payload: "" });
     try {
       const response = await fetch(endpoint, {
         method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(state.formData),
       });
 
       if (!response.ok) {
@@ -75,11 +125,14 @@ function ApiEndpoint({
       }
 
       const data = await response.json();
-      setResponse(data);
+      dispatch({ type: "SET_RESPONSE", payload: data });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      dispatch({
+        type: "SET_ERROR",
+        payload: err instanceof Error ? err.message : "An error occurred",
+      });
     } finally {
-      setLoading(false);
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
@@ -121,9 +174,13 @@ function ApiEndpoint({
               <Input
                 type="url"
                 placeholder="URL to shorten"
-                value={formData.url || ""}
+                value={state.formData.url || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, url: e.target.value })
+                  dispatch({
+                    type: "SET_FORM_DATA",
+                    field: "url",
+                    value: e.target.value,
+                  })
                 }
                 className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
                 required
@@ -131,18 +188,26 @@ function ApiEndpoint({
               <Input
                 type="number"
                 placeholder="Max age in seconds (optional)"
-                value={formData.maxAge || ""}
+                value={state.formData.maxAge || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, maxAge: e.target.value })
+                  dispatch({
+                    type: "SET_FORM_DATA",
+                    field: "maxAge",
+                    value: e.target.value,
+                  })
                 }
                 className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
               />
               <Input
                 type="text"
                 placeholder="Seed (optional)"
-                value={formData.seed || ""}
+                value={state.formData.seed || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, seed: e.target.value })
+                  dispatch({
+                    type: "SET_FORM_DATA",
+                    field: "seed",
+                    value: e.target.value,
+                  })
                 }
                 className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
               />
@@ -153,9 +218,13 @@ function ApiEndpoint({
               <Input
                 type="text"
                 placeholder="Comma-separated shortIds"
-                value={formData.shortIds || ""}
+                value={state.formData.shortIds || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, shortIds: e.target.value })
+                  dispatch({
+                    type: "SET_FORM_DATA",
+                    field: "shortIds",
+                    value: e.target.value,
+                  })
                 }
                 className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
                 required
@@ -163,9 +232,13 @@ function ApiEndpoint({
               <Input
                 type="text"
                 placeholder="Seed"
-                value={formData.seed || ""}
+                value={state.formData.seed || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, seed: e.target.value })
+                  dispatch({
+                    type: "SET_FORM_DATA",
+                    field: "seed",
+                    value: e.target.value,
+                  })
                 }
                 className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
                 required
@@ -176,9 +249,13 @@ function ApiEndpoint({
             <Input
               type="text"
               placeholder="Seed"
-              value={formData.seed || ""}
+              value={state.formData.seed || ""}
               onChange={(e) =>
-                setFormData({ ...formData, seed: e.target.value })
+                dispatch({
+                  type: "SET_FORM_DATA",
+                  field: "seed",
+                  value: e.target.value,
+                })
               }
               className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
               required
@@ -188,8 +265,14 @@ function ApiEndpoint({
             <Input
               type="text"
               placeholder="Short ID"
-              value={formData.id || ""}
-              onChange={(e) => setFormData({ ...formData, id: e.target.value })}
+              value={state.formData.id || ""}
+              onChange={(e) =>
+                dispatch({
+                  type: "SET_FORM_DATA",
+                  field: "id",
+                  value: e.target.value,
+                })
+              }
               className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
               required
             />
@@ -199,9 +282,13 @@ function ApiEndpoint({
               <Input
                 type="text"
                 placeholder="Short ID"
-                value={formData.shortId || ""}
+                value={state.formData.shortId || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, shortId: e.target.value })
+                  dispatch({
+                    type: "SET_FORM_DATA",
+                    field: "shortId",
+                    value: e.target.value,
+                  })
                 }
                 className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
                 required
@@ -209,9 +296,13 @@ function ApiEndpoint({
               <Input
                 type="text"
                 placeholder="Seed (optional)"
-                value={formData.seed || ""}
+                value={state.formData.seed || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, seed: e.target.value })
+                  dispatch({
+                    type: "SET_FORM_DATA",
+                    field: "seed",
+                    value: e.target.value,
+                  })
                 }
                 className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
               />
@@ -220,11 +311,15 @@ function ApiEndpoint({
           {endpoint === "/api/qr" && (
             <>
               <Input
-                type="text" 
+                type="text"
                 placeholder="Text to encode"
-                value={formData.text || ""}
+                value={state.formData.text || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, text: e.target.value })
+                  dispatch({
+                    type: "SET_FORM_DATA",
+                    field: "text",
+                    value: e.target.value,
+                  })
                 }
                 className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
                 required
@@ -232,18 +327,26 @@ function ApiEndpoint({
               <Input
                 type="number"
                 placeholder="Width (optional)"
-                value={formData.width || ""}
+                value={state.formData.width || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, width: e.target.value })
+                  dispatch({
+                    type: "SET_FORM_DATA",
+                    field: "width",
+                    value: e.target.value,
+                  })
                 }
                 className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
               />
               <Input
                 type="number"
                 placeholder="Margin (optional)"
-                value={formData.margin || ""}
+                value={state.formData.margin || ""}
                 onChange={(e) =>
-                  setFormData({ ...formData, margin: e.target.value })
+                  dispatch({
+                    type: "SET_FORM_DATA",
+                    field: "margin",
+                    value: e.target.value,
+                  })
                 }
                 className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
               />
@@ -252,25 +355,25 @@ function ApiEndpoint({
 
           <Button
             type="submit"
-            disabled={loading}
+            disabled={state.loading}
             variant="outline"
             className="w-full text-purple-600 hover:bg-purple-600 hover:text-black border-2 border-purple-600"
           >
-            {loading ? "Sending..." : "Send Request"}
+            {state.loading ? "Sending..." : "Send Request"}
           </Button>
         </form>
 
-        {error && (
+        {state.error && (
           <div className="mt-4 bg-black border-l-4 border-red-500 p-4">
-            <p className="text-red-500">{error}</p>
+            <p className="text-red-500">{state.error}</p>
           </div>
         )}
 
-        {response && (
+        {state.response && (
           <div className="mt-4 bg-black border-l-4 border-purple-600 p-4">
             <p className="text-purple-600 font-medium mb-2">Response:</p>
             <pre className="bg-black p-4 rounded-md font-mono text-sm overflow-x-auto text-purple-600">
-              {JSON.stringify(response, null, 2)}
+              {JSON.stringify(state.response, null, 2)}
             </pre>
           </div>
         )}

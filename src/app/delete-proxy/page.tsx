@@ -4,22 +4,51 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useReducer } from "react";
 import Link from "next/link";
 import { HomeIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+type State = {
+  id: string | null;
+  status: "idle" | "loading" | "success" | "error";
+  responseData: any;
+};
+
+type Action =
+  | { type: "SET_ID"; payload: string }
+  | { type: "SET_STATUS"; payload: "idle" | "loading" | "success" | "error" }
+  | { type: "SET_RESPONSE_DATA"; payload: any };
+
+const initialState: State = {
+  id: null,
+  status: "idle",
+  responseData: null,
+};
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "SET_ID":
+      return { ...state, id: action.payload };
+    case "SET_STATUS":
+      return { ...state, status: action.payload };
+    case "SET_RESPONSE_DATA":
+      return { ...state, responseData: action.payload };
+    default:
+      return state;
+  }
+}
+
 function DeleteProxyPage() {
   const searchParams = useSearchParams();
   const idFromSearchParams = searchParams.get("q");
-  const [id, setId] = useState(idFromSearchParams);
-  const [status, setStatus] = useState<
-    "idle" | "loading" | "success" | "error"
-  >("idle");
-  const [responseData, setResponseData] = useState<any>(null);
+  const [state, dispatch] = useReducer(reducer, {
+    ...initialState,
+    id: idFromSearchParams,
+  });
 
   const handleSubmit = async () => {
-    setStatus("loading");
+    dispatch({ type: "SET_STATUS", payload: "loading" });
 
     try {
       const response = await fetch(`/api/delete-proxy`, {
@@ -27,17 +56,17 @@ function DeleteProxyPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id: state.id }),
       });
       if (!response.ok) {
         throw new Error("Failed to fetch proxy data");
       }
 
       const data = await response.json();
-      setResponseData(data);
-      setStatus("success");
+      dispatch({ type: "SET_RESPONSE_DATA", payload: data });
+      dispatch({ type: "SET_STATUS", payload: "success" });
     } catch (err) {
-      setStatus("error");
+      dispatch({ type: "SET_STATUS", payload: "error" });
     }
   };
 
@@ -77,8 +106,8 @@ function DeleteProxyPage() {
               >
                 <Input
                   type="text"
-                  value={id || ""}
-                  onChange={(e) => setId(e.target.value)}
+                  value={state.id || ""}
+                  onChange={(e) => dispatch({ type: "SET_ID", payload: e.target.value })}
                   placeholder="Enter 8l.wtf ID"
                   required
                   className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
@@ -86,21 +115,21 @@ function DeleteProxyPage() {
 
                 <Button
                   type="submit"
-                  disabled={status === "loading"}
+                  disabled={state.status === "loading"}
                   variant="outline"
                   className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
                 >
-                  {status === "loading" ? "Sending..." : "Send DELETE request"}
+                  {state.status === "loading" ? "Sending..." : "Send DELETE request"}
                 </Button>
               </form>
 
-              {status === "loading" && (
+              {state.status === "loading" && (
                 <div className="flex justify-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
                 </div>
               )}
 
-              {status === "success" && responseData && (
+              {state.status === "success" && state.responseData && (
                 <div className="border-2 border-purple-600 rounded-lg p-4">
                   <div className="flex items-center justify-center gap-2">
                     <svg
@@ -117,17 +146,17 @@ function DeleteProxyPage() {
                       />
                     </svg>
                     <p className="text-purple-600">
-                      Status: {responseData.status} {responseData.statusText}
+                      Status: {state.responseData.status} {state.responseData.statusText}
                     </p>
                   </div>
                   <p className="text-purple-600 mt-2">
-                    URL: {responseData.url}
+                    URL: {state.responseData.url}
                   </p>
-                  <p className="text-purple-600">ID: {responseData.id}</p>
+                  <p className="text-purple-600">ID: {state.responseData.id}</p>
                 </div>
               )}
 
-              {status === "error" && (
+              {state.status === "error" && (
                 <div className="border-2 border-red-500 rounded-lg p-4">
                   <div className="flex items-center justify-center gap-2">
                     <svg
