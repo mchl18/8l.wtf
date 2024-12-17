@@ -90,7 +90,7 @@ export default function AdminPage() {
   } = useUrlsBySeed(state.seed, state.token);
 
   const {
-    mutate: deleteUrls,
+    mutateAsync: deleteUrls,
     data: deleteData,
     isPending: isDeleting,
   } = useDeleteUrls(state.seed);
@@ -128,7 +128,11 @@ export default function AdminPage() {
 
     try {
       dispatch({ type: "SET_DELETING", payload: true });
-      deleteUrls(shortIds);
+      const result = await deleteUrls(shortIds);
+      const failedDeletions = result.results.filter((r) => !r.success);
+      if (failedDeletions.length > 0) {
+        toast.error(`Failed to delete ${failedDeletions.length} URLs`);
+      }
     } catch (err) {
       console.error(err);
       toast.error("Failed to delete URLs");
