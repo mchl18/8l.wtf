@@ -691,7 +691,7 @@ function Home() {
           <div className="flex flex-col items-center gap-4">
             <p className="text-purple-600">
               Please make sure you read these instructions carefully.
-              <ul>
+              <ul className="list-disc list-inside flex flex-col gap-2">
                 <li>
                   Private URLs are only accessible to the user who has access to
                   the token they were created with.
@@ -767,7 +767,9 @@ function Home() {
                   Whoever you invite to this url will be able to see all urls
                   that were created with this token.
                 </li>
-                <li>Treat invites like inviting someone to a list of url.</li>
+                <li>
+                  Treat invites like inviting someone to a list of urls.
+                </li>
                 <li>
                   If you realize you accidentally shared a url with someone you
                   didn&apos;t want to share it with, you can delete it under
