@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { Suspense, useCallback, useEffect, useMemo, useReducer } from "react";
+import { Suspense, useEffect, useMemo, useReducer } from "react";
 import {
   Select,
   SelectContent,
@@ -46,7 +46,7 @@ type State = {
   maxAge: number | string;
   presetValue: number | string;
   error: string;
-  selectedMode: "forever" | "custom" | "preset";
+  selectedMode: "forever" | "custom" | "preset" | "";
   token: string;
   isPrivate: boolean;
   seed: string | null;
@@ -86,7 +86,7 @@ const initialState: State = {
   maxAge: 0,
   presetValue: 86400,
   error: "",
-  selectedMode: "preset",
+  selectedMode: "",
   token: "",
   isPrivate: false,
   seed: null,
@@ -123,6 +123,7 @@ function reducer(state: State, action: Action): State {
       return { ...state, token: "", isPrivate: false };
     }
     case "SET_DURATION_FOREVER":
+      localStorage.setItem("8lwtf_duration_mode", "forever");
       return {
         ...state,
         maxAge: 0,
@@ -130,6 +131,7 @@ function reducer(state: State, action: Action): State {
         selectedMode: "forever",
       };
     case "SET_DURATION_PRESET":
+      localStorage.setItem("8lwtf_duration_mode", "preset");
       return {
         ...state,
         maxAge: action.payload,
@@ -137,6 +139,7 @@ function reducer(state: State, action: Action): State {
         selectedMode: "preset",
       };
     case "SET_DURATION_CUSTOM":
+      localStorage.setItem("8lwtf_duration_mode", "custom");
       return {
         ...state,
         maxAge: action.payload,
@@ -169,6 +172,25 @@ function Home() {
     }
     return url;
   };
+
+  useEffect(() => {
+    const durationMode = localStorage.getItem("8lwtf_duration_mode");
+
+    switch (durationMode) {
+      case "forever":
+        dispatch({ type: "SET_DURATION_FOREVER" });
+        break;
+      case "preset":
+        dispatch({ type: "SET_DURATION_PRESET", payload: "86400" });
+        break;
+      case "custom":
+        dispatch({ type: "SET_DURATION_CUSTOM", payload: "" });
+        break;
+      default:
+        dispatch({ type: "SET_DURATION_FOREVER" });
+        break;
+    }
+  }, []);
 
   useEffect(() => {
     if (state.isPrivate && !state.dontShowPrivateDisclaimer) {
@@ -393,79 +415,89 @@ function Home() {
                 </div>
               </div>
 
-              <div className="flex md:flex-row flex-col w-full gap-2 md:gap-1 justify-center md:items-center">
-                <Button
-                  type="button"
-                  variant={"outline"}
-                  onClick={() => {
-                    dispatch({ type: "SET_DURATION_FOREVER" });
-                  }}
-                  className={`text-sm flex-1 ${
-                    state.selectedMode === "forever"
-                      ? "text-purple-600 bg-purple-600 text-black ring-2 ring-purple-500 active:ring-2 active:ring-purple-500"
-                      : "border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
-                  }`}
-                >
-                  Forever
-                </Button>
-                <Select
-                  value={`${state.presetValue || ""}`}
-                  onValueChange={(value) => {
-                    if (value === "0" || !value) {
-                      return;
-                    } else {
-                      dispatch({ type: "SET_DURATION_PRESET", payload: value });
-                    }
-                  }}
-                  onOpenChange={() => {
-                    if (
-                      state.selectedMode !== "custom" &&
-                      !presets.find(
-                        (preset) => preset.value === Number(state.presetValue)
-                      )?.value
-                    ) {
+              {!state.selectedMode && (
+                <div className="flex md:flex-row flex-col w-full gap-2 md:gap-1 justify-center md:items-center">
+                  <Skeleton className="h-10 w-full bg-purple-600/20" />
+                </div>
+              )}
+              {state.selectedMode && (
+                <div className="flex md:flex-row flex-col w-full gap-2 md:gap-1 justify-center md:items-center">
+                  <Button
+                    type="button"
+                    variant={"outline"}
+                    onClick={() => {
                       dispatch({ type: "SET_DURATION_FOREVER" });
-                    }
-                  }}
-                >
-                  <SelectTrigger
-                    className={`md:w-[180px] w-full text-sm hover:text-black ${
-                      state.selectedMode === "preset"
+                    }}
+                    className={`text-sm flex-1 ${
+                      state.selectedMode === "forever"
                         ? "text-purple-600 bg-purple-600 text-black ring-2 ring-purple-500 active:ring-2 active:ring-purple-500"
                         : "border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
                     }`}
                   >
-                    <SelectValue placeholder="Select duration..." />
-                  </SelectTrigger>
-                  <SelectContent className="text-purple-600">
-                    {presets
-                      .filter((preset) => preset.value !== 0)
-                      .map((preset) => (
-                        <SelectItem
-                          key={preset.value}
-                          value={preset.value.toString()}
-                        >
-                          {preset.label}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+                    Forever
+                  </Button>
+                  <Select
+                    value={`${state.presetValue || ""}`}
+                    onValueChange={(value) => {
+                      if (value === "0" || !value) {
+                        return;
+                      } else {
+                        dispatch({
+                          type: "SET_DURATION_PRESET",
+                          payload: value,
+                        });
+                      }
+                    }}
+                    onOpenChange={() => {
+                      if (
+                        state.selectedMode !== "custom" &&
+                        !presets.find(
+                          (preset) => preset.value === Number(state.presetValue)
+                        )?.value
+                      ) {
+                        dispatch({ type: "SET_DURATION_FOREVER" });
+                      }
+                    }}
+                  >
+                    <SelectTrigger
+                      className={`md:w-[180px] w-full text-sm hover:text-black ${
+                        state.selectedMode === "preset"
+                          ? "text-purple-600 bg-purple-600 text-black ring-2 ring-purple-500 active:ring-2 active:ring-purple-500"
+                          : "border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
+                      }`}
+                    >
+                      <SelectValue placeholder="Select duration..." />
+                    </SelectTrigger>
+                    <SelectContent className="text-purple-600">
+                      {presets
+                        .filter((preset) => preset.value !== 0)
+                        .map((preset) => (
+                          <SelectItem
+                            key={preset.value}
+                            value={preset.value.toString()}
+                          >
+                            {preset.label}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
 
-                <Button
-                  type="button"
-                  variant={"outline"}
-                  onClick={() => {
-                    dispatch({ type: "SET_DURATION_CUSTOM", payload: "" });
-                  }}
-                  className={`text-sm flex-1 ${
-                    state.selectedMode === "custom"
-                      ? "text-purple-600 bg-purple-600 text-black ring-2 ring-purple-500 active:ring-2 active:ring-purple-500"
-                      : "border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
-                  }`}
-                >
-                  Custom
-                </Button>
-              </div>
+                  <Button
+                    type="button"
+                    variant={"outline"}
+                    onClick={() => {
+                      dispatch({ type: "SET_DURATION_CUSTOM", payload: "" });
+                    }}
+                    className={`text-sm flex-1 ${
+                      state.selectedMode === "custom"
+                        ? "text-purple-600 bg-purple-600 text-black ring-2 ring-purple-500 active:ring-2 active:ring-purple-500"
+                        : "border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
+                    }`}
+                  >
+                    Custom
+                  </Button>
+                </div>
+              )}
 
               {state.selectedMode === "custom" && (
                 <div className="flex items-center gap-2 justify-center">
