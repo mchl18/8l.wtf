@@ -58,6 +58,7 @@ To enable users to retrieve their URLs while maintaining security:
 ## API Documentation
 
 Full API documentation is available at [8l.wtf/api](https://8l.wtf/api)
+Source code is available at [github.com/mchl18/8l.wtf-server](https://github.com/mchl18/8l.wtf-server)
 
 The API allows you to:
 
