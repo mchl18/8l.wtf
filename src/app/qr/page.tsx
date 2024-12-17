@@ -12,10 +12,14 @@ import { Suspense } from "react";
 function QRPage() {
   const searchParams = useSearchParams();
   const text = decodeURIComponent(searchParams.get("text") as string);
-  const { data, isLoading, error } = useQrCode(text, {
-    width: 300,
-    margin: 2,
-  });
+  const format = searchParams.get("format") as string;
+  const { data, isLoading, error } = useQrCode(
+    decodeURIComponent(format === "base64" ? atob(text) : text),
+    {
+      width: 300,
+      margin: 2,
+    }
+  );
 
   const downloadQrCode = () => {
     const link = document.createElement("a");

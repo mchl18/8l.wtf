@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useReducer } from "react";
 import {
   Select,
   SelectContent,
@@ -38,108 +38,200 @@ import {
 } from "@/components/ui/dialog";
 import Image from "next/image";
 import RedirectPage from "@/components/redirect";
+
+type State = {
+  url: string;
+  maxAge: number | string;
+  presetValue: number | string;
+  error: string;
+  selectedMode: "forever" | "custom" | "preset";
+  token: string;
+  isPrivate: boolean;
+  seed: string | null;
+  isInvite: boolean;
+  showQrModal: boolean;
+};
+
+type Action =
+  | { type: "SET_URL"; payload: string }
+  | { type: "SET_MAX_AGE"; payload: number | string }
+  | { type: "SET_PRESET_VALUE"; payload: number | string }
+  | { type: "SET_ERROR"; payload: string }
+  | { type: "SET_MODE"; payload: "forever" | "custom" | "preset" }
+  | { type: "SET_TOKEN"; payload: string }
+  | { type: "SET_IS_PRIVATE"; payload: boolean }
+  | { type: "SET_SEED"; payload: string | null }
+  | { type: "SET_IS_INVITE"; payload: boolean }
+  | { type: "SET_SHOW_QR_MODAL"; payload: boolean }
+  | { type: "RESET_TOKEN" }
+  | {
+      type: "INITIALIZE_FROM_PARAMS";
+      payload: { url: string; token: string; seed: string | null };
+    };
+
+const initialState: State = {
+  url: "",
+  maxAge: 0,
+  presetValue: 86400,
+  error: "",
+  selectedMode: "preset",
+  token: "",
+  isPrivate: false,
+  seed: null,
+  isInvite: false,
+  showQrModal: false,
+};
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "SET_URL":
+      return { ...state, url: action.payload };
+    case "SET_MAX_AGE":
+      return { ...state, maxAge: action.payload };
+    case "SET_PRESET_VALUE":
+      return { ...state, presetValue: action.payload };
+    case "SET_ERROR":
+      return { ...state, error: action.payload };
+    case "SET_MODE":
+      return {
+        ...state,
+        selectedMode: action.payload,
+        maxAge: action.payload === "forever" ? 0 : state.maxAge,
+        presetValue: action.payload === "custom" ? "" : state.presetValue,
+      };
+    case "SET_TOKEN":
+      return { ...state, token: action.payload };
+    case "SET_IS_PRIVATE":
+      return { ...state, isPrivate: action.payload };
+    case "SET_SEED":
+      return { ...state, seed: action.payload };
+    case "SET_IS_INVITE":
+      return { ...state, isInvite: action.payload };
+    case "SET_SHOW_QR_MODAL":
+      return { ...state, showQrModal: action.payload };
+    case "RESET_TOKEN":
+      return { ...state, token: "", isPrivate: false };
+    case "INITIALIZE_FROM_PARAMS":
+      return { ...state, ...action.payload };
+    default:
+      return state;
+  }
+}
+
 function Home() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [url, setUrl] = useState("");
-  const [maxAge, setMaxAge] = useState<number | string>(0);
-  const [presetValue, setPresetValue] = useState<number | string>(86400);
-  const [error, setError] = useState("");
-  const [selectedMode, setSelectedMode] = useState<
-    "forever" | "custom" | "preset"
-  >("preset");
-  const [token, setToken] = useState("");
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [seed, setSeed] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(reducer, initialState);
 
-  const [showQrModal, setShowQrModal] = useState(false);
+  const getCopyUrl = (url: string) => {
+    if (state.isInvite) {
+      return `${url}&token=${state.token}`;
+    }
+    return url;
+  };
 
   const {
     mutate: shortenUrl,
     data: shortenedUrl,
     isPending,
     isSuccess,
+    reset,
   } = useShortenUrl(
-    url,
-    isPrivate ? seed : null,
-    selectedMode === "preset" ? presetValue : maxAge,
-    isPrivate,
-    token
+    state.url,
+    state.isPrivate ? state.seed : null,
+    state.selectedMode === "preset" ? state.presetValue : state.maxAge,
+    state.isPrivate,
+    state.token
   );
+
+  useEffect(() => {
+    reset();
+  }, [state.isPrivate, reset]);
+
   const { data: qrCode, isLoading: isQrLoading } = useQrCode(
-    shortenedUrl?.fullUrl || "",
+    state.isInvite
+      ? `${shortenedUrl?.fullUrl}&token=${state.token}`
+      : shortenedUrl?.fullUrl || "",
     {
       width: 300,
       margin: 2,
     }
   );
-  const presets = [
-    { label: "1 hour", value: 3600 },
-    { label: "1 day", value: 86400 },
-    { label: "1 week", value: 604800 },
-    { label: "1 month", value: 2592000 },
-  ];
+
+  const presets = useMemo(
+    () => [
+      { label: "1 hour", value: 3600 },
+      { label: "1 day", value: 86400 },
+      { label: "1 week", value: 604800 },
+      { label: "1 month", value: 2592000 },
+    ],
+    []
+  );
 
   const makeToken = async () => {
-    setError("");
+    dispatch({ type: "SET_ERROR", payload: "" });
     const token = generateToken();
-    setToken(token);
+    dispatch({ type: "SET_TOKEN", payload: token });
     localStorage.setItem("8lwtf_token", token);
     copyToClipboard(token);
     router.push(`/?token=${token}`);
     const encryptedSeed = encrypt(SEED, token);
-    setSeed(encryptedSeed);
+    dispatch({ type: "SET_SEED", payload: encryptedSeed });
   };
 
   useEffect(() => {
-    setUrl(process.env.NEXT_PUBLIC_DEFAULT_URL || "");
-    if (searchParams.get("url")) {
-      setUrl(searchParams.get("url") || "");
-    }
-
+    const defaultUrl = process.env.NEXT_PUBLIC_DEFAULT_URL || "";
+    const urlParam = searchParams.get("url") || defaultUrl;
     const queryToken = searchParams.get("token");
+
     if (queryToken) {
       if (isValidToken(queryToken)) {
-        setToken(queryToken);
-        localStorage.setItem("8lwtf_token", queryToken);
         const encryptedSeed = encrypt(SEED, queryToken);
-        setSeed(encryptedSeed);
+        dispatch({
+          type: "INITIALIZE_FROM_PARAMS",
+          payload: {
+            url: urlParam,
+            token: queryToken,
+            seed: encryptedSeed,
+          },
+        });
+        localStorage.setItem("8lwtf_token", queryToken);
       } else {
-        setError("Invalid token");
+        dispatch({ type: "SET_ERROR", payload: "Invalid token" });
       }
     } else {
-      // Try to get token from localStorage if no query param
       const storedToken = localStorage.getItem("8lwtf_token");
       if (storedToken && isValidToken(storedToken)) {
-        setToken(storedToken);
-        router.push(`/?token=${storedToken}`);
         const encryptedSeed = encrypt(SEED, storedToken);
-        setSeed(encryptedSeed);
+        dispatch({
+          type: "INITIALIZE_FROM_PARAMS",
+          payload: {
+            url: urlParam,
+            token: storedToken,
+            seed: encryptedSeed,
+          },
+        });
+        router.push(`/?token=${storedToken}`);
+      } else {
+        dispatch({ type: "SET_URL", payload: urlParam });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    setError("");
+    dispatch({ type: "SET_ERROR", payload: "" });
     try {
       e.preventDefault();
       shortenUrl();
     } catch (error) {
       console.error(error);
-      setError("Something went wrong");
+      dispatch({ type: "SET_ERROR", payload: "Something went wrong" });
     }
   };
 
-  const setMode = useCallback(
-    (mode: "forever" | "custom" | "preset") => {
-      setSelectedMode(mode);
-      if (mode === "forever") {
-        setMaxAge(0);
-      }
-    },
-    [setSelectedMode, setMaxAge]
-  );
+  const setMode = useCallback((mode: "forever" | "custom" | "preset") => {
+    dispatch({ type: "SET_MODE", payload: mode });
+  }, []);
 
   const downloadQrCode = () => {
     const link = document.createElement("a");
@@ -162,9 +254,10 @@ function Home() {
           <form onSubmit={handleSubmit}>
             <div className="flex flex-col gap-3">
               <Input
-                // type="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
+                value={state.url}
+                onChange={(e) =>
+                  dispatch({ type: "SET_URL", payload: e.target.value })
+                }
                 placeholder="Enter URL to shorten"
                 required
                 className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
@@ -172,24 +265,25 @@ function Home() {
 
               <div className="flex flex-col gap-2">
                 <div className="flex gap-2">
-                  {token && (
+                  {state.token && (
                     <Input
                       type="text"
-                      value={token}
-                      onChange={(e) => setToken(e.target.value)}
+                      value={state.token}
+                      onChange={(e) =>
+                        dispatch({ type: "SET_TOKEN", payload: e.target.value })
+                      }
                       readOnly={true}
                       placeholder="Custom token (optional)"
                       className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
                     />
                   )}
-                  {token && (
+                  {state.token && (
                     <Button
                       type="button"
                       size={"icon"}
                       variant="outline"
                       onClick={() => {
-                        setToken("");
-                        setIsPrivate(false);
+                        dispatch({ type: "RESET_TOKEN" });
                         localStorage.removeItem("8lwtf_token");
                       }}
                       className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
@@ -197,12 +291,12 @@ function Home() {
                       <TrashIcon className="w-4 h-4" />
                     </Button>
                   )}
-                  {token && (
+                  {state.token && (
                     <Button
                       type="button"
                       size={"icon"}
                       variant="outline"
-                      onClick={() => copyToClipboard(token)}
+                      onClick={() => copyToClipboard(state.token)}
                       className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
                     >
                       <CopyIcon className="w-4 h-4" />
@@ -215,10 +309,14 @@ function Home() {
                     size={"icon"}
                     onClick={makeToken}
                     className={`border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black ${
-                      !token ? "w-full" : ""
+                      !state.token ? "w-full" : ""
                     }`}
                   >
-                    {token ? "" : <span className="mr-2">Generate Token</span>}
+                    {state.token ? (
+                      ""
+                    ) : (
+                      <span className="mr-2">Generate Token</span>
+                    )}
                     <RefreshCcwIcon className="w-4 h-4" />
                   </Button>
                 </div>
@@ -230,10 +328,10 @@ function Home() {
                   variant={"outline"}
                   onClick={() => {
                     setMode("forever");
-                    setPresetValue("");
+                    dispatch({ type: "SET_PRESET_VALUE", payload: "" });
                   }}
                   className={`text-sm flex-1 ${
-                    selectedMode === "forever"
+                    state.selectedMode === "forever"
                       ? "text-purple-600 bg-purple-600 text-black ring-2 ring-purple-500 active:ring-2 active:ring-purple-500"
                       : "border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
                   }`}
@@ -241,20 +339,20 @@ function Home() {
                   Forever
                 </Button>
                 <Select
-                  value={`${presetValue || ""}`}
+                  value={`${state.presetValue || ""}`}
                   onValueChange={(value) => {
                     if (value === "0" || !value) {
                       return;
                     } else {
-                      setPresetValue(value);
+                      dispatch({ type: "SET_PRESET_VALUE", payload: value });
                       setMode("preset");
                     }
                   }}
                   onOpenChange={() => {
                     if (
-                      selectedMode !== "custom" &&
+                      state.selectedMode !== "custom" &&
                       !presets.find(
-                        (preset) => preset.value === Number(presetValue)
+                        (preset) => preset.value === Number(state.presetValue)
                       )?.value
                     ) {
                       setMode("forever");
@@ -263,7 +361,7 @@ function Home() {
                 >
                   <SelectTrigger
                     className={`md:w-[180px] w-full text-sm hover:text-black ${
-                      selectedMode === "preset"
+                      state.selectedMode === "preset"
                         ? "text-purple-600 bg-purple-600 text-black ring-2 ring-purple-500 active:ring-2 active:ring-purple-500"
                         : "border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
                     }`}
@@ -289,11 +387,11 @@ function Home() {
                   variant={"outline"}
                   onClick={() => {
                     setMode("custom");
-                    setPresetValue("");
-                    setMaxAge("");
+                    dispatch({ type: "SET_PRESET_VALUE", payload: "" });
+                    dispatch({ type: "SET_MAX_AGE", payload: "" });
                   }}
                   className={`text-sm flex-1 ${
-                    selectedMode === "custom"
+                    state.selectedMode === "custom"
                       ? "text-purple-600 bg-purple-600 text-black ring-2 ring-purple-500 active:ring-2 active:ring-purple-500"
                       : "border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
                   }`}
@@ -302,17 +400,20 @@ function Home() {
                 </Button>
               </div>
 
-              {selectedMode === "custom" && (
+              {state.selectedMode === "custom" && (
                 <div className="flex items-center gap-2 justify-center">
                   <Input
                     type="number"
-                    value={maxAge}
+                    value={state.maxAge}
                     onChange={(e) => {
                       if (e.target.value === "") {
-                        setMaxAge("");
+                        dispatch({ type: "SET_MAX_AGE", payload: "" });
                         return;
                       }
-                      setMaxAge(Number(e.target.value));
+                      dispatch({
+                        type: "SET_MAX_AGE",
+                        payload: Number(e.target.value),
+                      });
                     }}
                     placeholder="Custom expiry (seconds)"
                     className="w-48 text-purple-600 ring-2 ring-purple-500 placeholder:text-purple-400 w-full"
@@ -328,13 +429,13 @@ function Home() {
                 Shorten URL
               </Button>
 
-              {error && <p className="text-red-500">{error}</p>}
+              {state.error && <p className="text-red-500">{state.error}</p>}
               {shortenedUrl && isSuccess && (
                 <div className="bg-transparent rounded-lg p-4 border-2 border-purple-600">
                   <p className="text-purple-600 mb-2">Shortened URL:</p>
                   <div className="flex items-center justify-between gap-2">
                     <a
-                      href={shortenedUrl?.fullUrl}
+                      href={getCopyUrl(shortenedUrl?.fullUrl || "")}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-purple-600 hover:text-purple-800 break-all"
@@ -347,7 +448,9 @@ function Home() {
                         size={"icon"}
                         variant="outline"
                         onClick={() =>
-                          copyToClipboard(cleanUrl(shortenedUrl?.fullUrl || ""))
+                          copyToClipboard(
+                            getCopyUrl(shortenedUrl?.fullUrl || "")
+                          )
                         }
                         className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black flex-shrink-0"
                       >
@@ -357,7 +460,9 @@ function Home() {
                         type="button"
                         size={"icon"}
                         variant="outline"
-                        onClick={() => setShowQrModal(true)}
+                        onClick={() =>
+                          dispatch({ type: "SET_SHOW_QR_MODAL", payload: true })
+                        }
                         className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black flex-shrink-0"
                       >
                         <QrCodeIcon className="w-4 h-4" />
@@ -375,24 +480,49 @@ function Home() {
                 </div>
               )}
               <div className="flex flex-row items-center gap-2 justify-between">
-                <div
-                  className={`flex items-center gap-2 justify-center ${
-                    !isValidToken(token) ? "opacity-50" : ""
-                  }`}
-                >
-                  <Checkbox
-                    id="private"
-                    checked={isPrivate}
-                    onCheckedChange={(checked) =>
-                      setIsPrivate(checked as boolean)
-                    }
-                    className="border-purple-600 data-[state=checked]:bg-purple-600"
-                  />
-                  <label htmlFor="private" className="text-purple-600">
-                    Private URL
-                  </label>
+                <div className="flex flex-row gap-2">
+                  <div
+                    className={`flex items-center gap-2 justify-center ${
+                      !isValidToken(state.token) ? "opacity-50" : ""
+                    }`}
+                  >
+                    <Checkbox
+                      id="private"
+                      checked={state.isPrivate}
+                      onCheckedChange={(checked) =>
+                        dispatch({
+                          type: "SET_IS_PRIVATE",
+                          payload: checked as boolean,
+                        })
+                      }
+                      className="border-purple-600 data-[state=checked]:bg-purple-600"
+                    />
+                    <label htmlFor="private" className="text-purple-600">
+                      Private URL
+                    </label>
+                  </div>
+                  <div
+                    className={`flex items-center gap-2 justify-center ${
+                      !isValidToken(state.token) ? "opacity-50" : ""
+                    }`}
+                  >
+                    <Checkbox
+                      id="invite"
+                      checked={state.isInvite}
+                      onCheckedChange={(checked) =>
+                        dispatch({
+                          type: "SET_IS_INVITE",
+                          payload: checked as boolean,
+                        })
+                      }
+                      className="border-purple-600 data-[state=checked]:bg-purple-600"
+                    />
+                    <label htmlFor="invite" className="text-purple-600">
+                      Invite
+                    </label>
+                  </div>
                 </div>
-                {isValidToken(token) ? (
+                {isValidToken(state.token) ? (
                   <Link
                     href={`/admin`}
                     className="text-purple-600 hover:text-purple-800"
@@ -404,7 +534,7 @@ function Home() {
                 ) : (
                   <span
                     className={` text-purple-600 hover:text-purple-800 ${
-                      !isValidToken(token) ? "opacity-50" : ""
+                      !isValidToken(state.token) ? "opacity-50" : ""
                     }`}
                   >
                     My URLs
@@ -445,7 +575,12 @@ function Home() {
         GitHub
       </Link>
 
-      <Dialog open={showQrModal} onOpenChange={setShowQrModal}>
+      <Dialog
+        open={state.showQrModal}
+        onOpenChange={(open) =>
+          dispatch({ type: "SET_SHOW_QR_MODAL", payload: open })
+        }
+      >
         <DialogContent className="bg-black border-2 border-purple-600">
           <DialogHeader>
             <DialogTitle className="text-purple-600">QR Code</DialogTitle>
@@ -473,7 +608,9 @@ function Home() {
                 Download QR Code
               </Button>
               <Link
-                href={`/qr/${encodeURIComponent(shortenedUrl?.fullUrl || "")}`}
+                href={`/qr?format=base64&text=${btoa(
+                  getCopyUrl(encodeURIComponent(shortenedUrl?.fullUrl || ""))
+                )}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
