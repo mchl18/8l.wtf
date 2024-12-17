@@ -551,7 +551,7 @@ function Home() {
         alt="uptime"
         unoptimized
         width={150}
-        height={150}
+        height={23}
         className="mt-4"
       />
       <Link
