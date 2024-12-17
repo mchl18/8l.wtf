@@ -178,6 +178,13 @@ function Home() {
   };
 
   useEffect(() => {
+    if (!state.token) {
+      localStorage.removeItem("8lwtf_token");
+      router.push("/");
+    }
+  }, [state.token]);
+
+  useEffect(() => {
     const durationMode = localStorage.getItem("8lwtf_duration_mode");
 
     switch (durationMode) {
@@ -213,7 +220,10 @@ function Home() {
       "8lwtf_dont_show_private_disclaimer"
     );
     if (localStorageDontShowPrivateDisclaimer === "true") {
-      dispatch({ type: "SET_DONT_SHOW_PRIVATE_DISCLAIMER_AGAIN", payload: true });
+      dispatch({
+        type: "SET_DONT_SHOW_PRIVATE_DISCLAIMER_AGAIN",
+        payload: true,
+      });
     }
   }, []);
 
@@ -228,7 +238,10 @@ function Home() {
       "8lwtf_dont_show_invite_disclaimer"
     );
     if (localStorageDontShowInviteDisclaimer === "true") {
-      dispatch({ type: "SET_DONT_SHOW_INVITE_DISCLAIMER_AGAIN", payload: true });
+      dispatch({
+        type: "SET_DONT_SHOW_INVITE_DISCLAIMER_AGAIN",
+        payload: true,
+      });
     }
   }, []);
 
@@ -409,11 +422,7 @@ function Home() {
                       !state.token ? "w-full" : ""
                     }`}
                   >
-                    {state.token ? (
-                      ""
-                    ) : (
-                      <span className="mr-2">Generate Token</span>
-                    )}
+                    {state.token ? "" : <span>Generate Token</span>}
                     <RefreshCcwIcon className="w-4 h-4" />
                   </Button>
                 </div>
@@ -509,10 +518,10 @@ function Home() {
                     type="number"
                     value={state.maxAge}
                     onChange={(e) => {
-                      if (e.target.value === "") {
-                        dispatch({ type: "SET_MAX_AGE", payload: "" });
-                        return;
-                      }
+                      // if (e.target.value === "") {
+                      //   dispatch({ type: "SET_MAX_AGE", payload: "" });
+                      //   return;
+                      // }
                       dispatch({
                         type: "SET_MAX_AGE",
                         payload: Number(e.target.value),
