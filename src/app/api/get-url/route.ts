@@ -52,6 +52,7 @@ export async function POST(request: Request) {
         // Handle non-authenticated URLs
         if (!isAuthenticated) {
           if (!url) {
+            debugger
             await transaction.rollback();
             return NextResponse.json(
               { error: "URL not found" },
@@ -73,11 +74,14 @@ export async function POST(request: Request) {
         }
 
         if (!seed || !validateEncryptedSeedFormat(seed)) {
+          debugger  
+
           await transaction.rollback();
           return NextResponse.json({ error: "Invalid seed" }, { status: 401 });
         }
 
         if (!isUrlOwnedBySeed || !encryptedUrl) {
+          debugger  
           await transaction.rollback();
           return NextResponse.json({ error: "URL not found" }, { status: 404 });
         }

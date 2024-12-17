@@ -162,7 +162,7 @@ function Home() {
           <form onSubmit={handleSubmit}>
             <div className="flex flex-col gap-3">
               <Input
-                type="url"
+                // type="url"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="Enter URL to shorten"

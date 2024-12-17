@@ -14,15 +14,34 @@ const REDIRECT_DELAY = parseInt(
 function RedirectPage({ params }: { params: { shortId: string } }) {
   const { shortId } = params;
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const [token, setToken] = useState<string | undefined>(undefined);
   const [seed, setSeed] = useState<string | undefined>(undefined);
   const [countdown, setCountdown] = useState(REDIRECT_DELAY / 1000);
   const [startTime, setStartTime] = useState(0);
   const { data, error } = useUrlBySeed(shortId, seed);
+  const [redirectError, setRedirectError] = useState<string | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     setStartTime(Date.now());
-  }, []);
+    const storedToken = localStorage.getItem("8lwtf_token");
+    if (storedToken) {
+      setToken(storedToken);
+    }
+    const paramsToken = searchParams.get("token");
+    if (paramsToken) {
+      setToken(paramsToken);
+      if (!storedToken) {
+        localStorage.setItem("8lwtf_token", paramsToken);
+      }
+    }
+
+    const finalToken = storedToken || paramsToken || "";
+    if (finalToken) {
+      setSeed(encrypt(SEED, finalToken));
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!startTime) {
@@ -35,13 +54,24 @@ function RedirectPage({ params }: { params: { shortId: string } }) {
       if (elapsed >= REDIRECT_DELAY) {
         clearInterval(timer);
         console.log("redirecting to", data);
-        if (seed && data?.isEncrypted) {
-          window.location.href = decrypt(data.url, seed);
+        if (token && data?.isEncrypted) {
+          const decryptedToken = decrypt(data.url, token);
+          try {
+            window.location.href = decryptedToken;
+          } catch (e) {
+            console.error(e);
+            setRedirectError(`Redirect error: ${(e as Error).message || e}`);
+          }
         } else {
           if (!data?.url) {
             return;
           }
-          window.location.href = data.url;
+          try {
+            window.location.href = data.url;
+          } catch (e) {
+            console.error(e);
+            setRedirectError(`Redirect error: ${(e as Error).message || e}`);
+          }
         }
         return;
       }
@@ -55,20 +85,7 @@ function RedirectPage({ params }: { params: { shortId: string } }) {
     }, 333);
 
     return () => clearInterval(timer);
-  }, [startTime, shortId, seed, data]);
-
-  useEffect(() => {
-    (async () => {
-      const storedToken = localStorage.getItem("8lwtf_token");
-      if (token && !storedToken) {
-        localStorage.setItem("8lwtf_token", token);
-      }
-      const finalToken = storedToken || token || "";
-      if (finalToken) {
-        setSeed(encrypt(SEED, finalToken));
-      }
-    })();
-  }, [shortId, token]);
+  }, [startTime, shortId, seed, data, token]);
 
   return (
     <>
@@ -93,8 +110,13 @@ function RedirectPage({ params }: { params: { shortId: string } }) {
           )}
 
           {error && (
-            <div className="border-2 border-purple-600 p-4 rounded-md">
+            <div className="border-2 border-purple-600 p-4 rounded-md my-2">
               <p className="text-purple-600">{error.message}</p>
+            </div>
+          )}
+          {redirectError && (
+            <div className="border-2 border-purple-600 p-4 rounded-md my-2">
+              <p className="text-purple-600">{redirectError}</p>
             </div>
           )}
         </CardContent>
