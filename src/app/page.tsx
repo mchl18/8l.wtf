@@ -73,6 +73,9 @@ type Action =
   | { type: "SET_SHOW_INVITE_DISCLAIMER"; payload: boolean }
   | { type: "SET_DONT_SHOW_PRIVATE_DISCLAIMER"; payload: boolean }
   | { type: "SET_DONT_SHOW_INVITE_DISCLAIMER"; payload: boolean }
+  | { type: "SET_DURATION_FOREVER" }
+  | { type: "SET_DURATION_PRESET"; payload: number | string }
+  | { type: "SET_DURATION_CUSTOM"; payload: number | string }
   | { type: "RESET_TOKEN" }
   | {
       type: "INITIALIZE_FROM_PARAMS";
@@ -123,8 +126,31 @@ function reducer(state: State, action: Action): State {
       return { ...state, isInvite: action.payload };
     case "SET_SHOW_QR_MODAL":
       return { ...state, showQrModal: action.payload };
-    case "RESET_TOKEN":
+    case "RESET_TOKEN": {
+      localStorage.removeItem("8lwtf_token");
       return { ...state, token: "", isPrivate: false };
+    }
+    case "SET_DURATION_FOREVER":
+      return {
+        ...state,
+        maxAge: 0,
+        presetValue: "",
+        selectedMode: "forever",
+      };
+    case "SET_DURATION_PRESET":
+      return {
+        ...state,
+        maxAge: action.payload,
+        presetValue: action.payload,
+        selectedMode: "preset",
+      };
+    case "SET_DURATION_CUSTOM":
+      return {
+        ...state,
+        maxAge: action.payload,
+        presetValue: "",
+        selectedMode: "custom",
+      };
     case "SET_DONT_SHOW_PRIVATE_DISCLAIMER":
       return { ...state, dontShowPrivateDisclaimer: action.payload };
     case "SET_DONT_SHOW_INVITE_DISCLAIMER":
@@ -342,10 +368,7 @@ function Home() {
                       type="button"
                       size={"icon"}
                       variant="outline"
-                      onClick={() => {
-                        dispatch({ type: "RESET_TOKEN" });
-                        localStorage.removeItem("8lwtf_token");
-                      }}
+                      onClick={() => dispatch({ type: "RESET_TOKEN" })}
                       className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
                     >
                       <TrashIcon className="w-4 h-4" />
@@ -387,8 +410,7 @@ function Home() {
                   type="button"
                   variant={"outline"}
                   onClick={() => {
-                    setMode("forever");
-                    dispatch({ type: "SET_PRESET_VALUE", payload: "" });
+                    dispatch({ type: "SET_DURATION_FOREVER" });
                   }}
                   className={`text-sm flex-1 ${
                     state.selectedMode === "forever"
@@ -404,8 +426,7 @@ function Home() {
                     if (value === "0" || !value) {
                       return;
                     } else {
-                      dispatch({ type: "SET_PRESET_VALUE", payload: value });
-                      setMode("preset");
+                      dispatch({ type: "SET_DURATION_PRESET", payload: value });
                     }
                   }}
                   onOpenChange={() => {
@@ -415,7 +436,7 @@ function Home() {
                         (preset) => preset.value === Number(state.presetValue)
                       )?.value
                     ) {
-                      setMode("forever");
+                      dispatch({ type: "SET_DURATION_FOREVER" });
                     }
                   }}
                 >
@@ -446,9 +467,7 @@ function Home() {
                   type="button"
                   variant={"outline"}
                   onClick={() => {
-                    setMode("custom");
-                    dispatch({ type: "SET_PRESET_VALUE", payload: "" });
-                    dispatch({ type: "SET_MAX_AGE", payload: "" });
+                    dispatch({ type: "SET_DURATION_CUSTOM", payload: "" });
                   }}
                   className={`text-sm flex-1 ${
                     state.selectedMode === "custom"
