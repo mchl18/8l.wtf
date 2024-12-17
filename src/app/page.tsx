@@ -931,11 +931,19 @@ const SupsenseWrapper = ({ children }: { children: React.ReactNode }) => {
   return <Suspense fallback={<HomeSkeleton />}>{children}</Suspense>;
 };
 
-const SwitchIfQueryParam = ({ children }: { children: React.ReactNode }) => {
+const SwitchIfQueryParam = ({
+  children,
+  switchTo,
+  queryParamName,
+}: {
+  children: React.ReactNode;
+  switchTo: React.ReactNode;
+  queryParamName: string;
+}) => {
   const searchParams = useSearchParams();
-  const shortId = searchParams.get("q");
-  if (shortId) {
-    return <RedirectPage params={{ shortId }} />;
+  const queryParam = searchParams.get(queryParamName);
+  if (queryParam) {
+    return switchTo;
   }
   return <>{children}</>;
 };
@@ -943,7 +951,7 @@ const SwitchIfQueryParam = ({ children }: { children: React.ReactNode }) => {
 export default function Page() {
   return (
     <SupsenseWrapper>
-      <SwitchIfQueryParam>
+      <SwitchIfQueryParam switchTo={<RedirectPage />} queryParamName="q">
         <Home />
       </SwitchIfQueryParam>
     </SupsenseWrapper>

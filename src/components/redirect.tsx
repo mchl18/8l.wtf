@@ -49,13 +49,9 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-export default function RedirectPage({
-  params,
-}: {
-  params: { shortId: string };
-}) {
-  const { shortId } = params;
+export default function RedirectPage() {
   const searchParams = useSearchParams();
+  const shortId = searchParams.get("q")!;
   const [state, dispatch] = useReducer(reducer, initialState);
   const { data, error } = useUrlBySeed(shortId, state.seed);
 
@@ -96,9 +92,9 @@ export default function RedirectPage({
             window.location.href = decryptedToken;
           } catch (e) {
             console.error(e);
-            dispatch({ 
-              type: "SET_REDIRECT_ERROR", 
-              payload: `Redirect error: ${(e as Error).message || e}`
+            dispatch({
+              type: "SET_REDIRECT_ERROR",
+              payload: `Redirect error: ${(e as Error).message || e}`,
             });
           }
         } else {
@@ -111,7 +107,7 @@ export default function RedirectPage({
             console.error(e);
             dispatch({
               type: "SET_REDIRECT_ERROR",
-              payload: `Redirect error: ${(e as Error).message || e}`
+              payload: `Redirect error: ${(e as Error).message || e}`,
             });
           }
         }
@@ -124,7 +120,14 @@ export default function RedirectPage({
     }, 333);
 
     return () => clearInterval(timer);
-  }, [state.startTime, shortId, state.seed, data, state.token, state.countdown]);
+  }, [
+    state.startTime,
+    shortId,
+    state.seed,
+    data,
+    state.token,
+    state.countdown,
+  ]);
 
   return (
     <>
