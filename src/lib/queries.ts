@@ -3,7 +3,7 @@ import { useMutation, useQuery, UseQueryResult } from "@tanstack/react-query";
 import { decrypt, encrypt } from "./crypto";
 import QRCode from "qrcode";
 
-const API_URL = process.env.API_URL;
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const useQrCode = (
   text: string,
