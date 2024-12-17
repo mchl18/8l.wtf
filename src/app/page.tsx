@@ -56,6 +56,8 @@ type State = {
   showInviteDisclaimerAgain: boolean;
   dontShowPrivateDisclaimer: boolean;
   dontShowInviteDisclaimer: boolean;
+  customDuration: number | string;
+  customDurationUnit: string;
 };
 
 type Action =
@@ -75,6 +77,8 @@ type Action =
   | { type: "SET_DURATION_FOREVER" }
   | { type: "SET_DURATION_PRESET"; payload: number | string }
   | { type: "SET_DURATION_CUSTOM"; payload: number | string }
+  | { type: "SET_CUSTOM_DURATION"; payload: number | string }
+  | { type: "SET_CUSTOM_DURATION_UNIT"; payload: string }
   | { type: "RESET_TOKEN" }
   | {
       type: "INITIALIZE_FROM_PARAMS";
@@ -96,6 +100,8 @@ const initialState: State = {
   showInviteDisclaimerAgain: false,
   dontShowPrivateDisclaimer: false,
   dontShowInviteDisclaimer: false,
+  customDuration: "",
+  customDurationUnit: "3600",
 };
 
 function reducer(state: State, action: Action): State {
@@ -122,6 +128,10 @@ function reducer(state: State, action: Action): State {
       localStorage.removeItem("8lwtf_token");
       return { ...state, token: "", isPrivate: false };
     }
+    case "SET_CUSTOM_DURATION":
+      return { ...state, customDuration: action.payload };
+    case "SET_CUSTOM_DURATION_UNIT":
+      return { ...state, customDurationUnit: action.payload };
     case "SET_DURATION_FOREVER":
       localStorage.setItem("8lwtf_duration_mode", "forever");
       return {
@@ -257,6 +267,12 @@ function Home() {
     }
   }, [state.dontShowInviteDisclaimer]);
 
+  const getCustomDuration = useMemo(() => {
+    return (
+      parseInt(`${state.customDuration}`) * parseInt(state.customDurationUnit)
+    );
+  }, [state.customDuration, state.customDurationUnit]);
+
   const {
     mutate: shortenUrl,
     data: shortenedUrl,
@@ -266,7 +282,11 @@ function Home() {
   } = useShortenUrl(
     state.url,
     state.isPrivate ? state.seed : null,
-    state.selectedMode === "preset" ? state.presetValue : state.maxAge,
+    state.selectedMode === "preset"
+      ? state.presetValue
+      : state.selectedMode === "custom"
+      ? getCustomDuration
+      : state.maxAge,
     state.isPrivate,
     state.token
   );
@@ -396,7 +416,7 @@ function Home() {
                       className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
                     />
                   )}
-                  <div className="flex flex-row gap-2">
+                  <div className="flex flex-row gap-2 w-full">
                     {state.token && (
                       <Button
                         type="button"
@@ -442,7 +462,7 @@ function Home() {
                 </div>
               )}
               {state.selectedMode && (
-                <div className="flex md:flex-row flex-col w-full gap-2 md:gap-1 justify-center md:items-center">
+                <div className="flex md:grid grid-cols-3 flex-col w-full gap-2 md:gap-1 justify-center md:items-center">
                   <Button
                     type="button"
                     variant={"outline"}
@@ -481,13 +501,13 @@ function Home() {
                     }}
                   >
                     <SelectTrigger
-                      className={`md:w-[180px] w-full text-sm hover:text-black ${
+                      className={`w-full text-sm hover:text-black ${
                         state.selectedMode === "preset"
                           ? "text-purple-600 bg-purple-600 text-black ring-2 ring-purple-500 active:ring-2 active:ring-purple-500"
                           : "border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
                       }`}
                     >
-                      <SelectValue placeholder="Select duration..." />
+                      <SelectValue placeholder="Duration..." />
                     </SelectTrigger>
                     <SelectContent className="text-purple-600">
                       {presets
@@ -521,24 +541,44 @@ function Home() {
               )}
 
               {state.selectedMode === "custom" && (
-                <div className="flex items-center gap-2 justify-center">
+                <div className="flex flex-row items-center gap-2 justify-center">
                   <Input
                     type="number"
-                    value={state.maxAge}
+                    value={state.customDuration}
                     onChange={(e) => {
-                      // if (e.target.value === "") {
-                      //   dispatch({ type: "SET_MAX_AGE", payload: "" });
-                      //   return;
-                      // }
                       dispatch({
-                        type: "SET_MAX_AGE",
+                        type: "SET_CUSTOM_DURATION",
                         payload: Number(e.target.value),
                       });
                     }}
-                    placeholder="Custom expiry (seconds)"
+                    placeholder="Custom expiry"
                     className="w-48 text-purple-600 ring-2 ring-purple-500 placeholder:text-purple-400 w-full"
                     min="0"
                   />
+                  <Select
+                    value={state.customDurationUnit}
+                    onValueChange={(value) => {
+                      dispatch({
+                        type: "SET_CUSTOM_DURATION_UNIT",
+                        payload: value,
+                      });
+                    }}
+                  >
+                    <SelectTrigger
+                      className={`w-full text-sm hover:text-black ${"border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"}`}
+                    >
+                      <SelectValue placeholder="Duration..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">seconds</SelectItem>
+                      <SelectItem value="60">minutes</SelectItem>
+                      <SelectItem value="3600">hours</SelectItem>
+                      <SelectItem value="86400">days</SelectItem>
+                      <SelectItem value="604800">weeks</SelectItem>
+                      <SelectItem value="2592000">months</SelectItem>
+                      <SelectItem value="31536000">years</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
               <Button
