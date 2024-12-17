@@ -178,6 +178,12 @@ function Home() {
   };
 
   useEffect(() => {
+    if (!state.isPrivate && state.isInvite) {
+      dispatch({ type: "SET_IS_INVITE", payload: false });
+    }
+  }, [state]);
+
+  useEffect(() => {
     if (!state.token) {
       localStorage.removeItem("8lwtf_token");
       router.push("/");
@@ -380,7 +386,7 @@ function Home() {
               />
 
               <div className="flex flex-col gap-2">
-                <div className="flex gap-2">
+                <div className="flex flex-col md:flex-row gap-2">
                   {state.token && (
                     <Input
                       type="text"
@@ -390,41 +396,43 @@ function Home() {
                       className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
                     />
                   )}
-                  {state.token && (
-                    <Button
-                      type="button"
-                      size={"icon"}
-                      variant="outline"
-                      onClick={() => dispatch({ type: "RESET_TOKEN" })}
-                      className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </Button>
-                  )}
-                  {state.token && (
-                    <Button
-                      type="button"
-                      size={"icon"}
-                      variant="outline"
-                      onClick={() => copyToClipboard(state.token)}
-                      className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
-                    >
-                      <CopyIcon className="w-4 h-4" />
-                    </Button>
-                  )}
+                  <div className="flex flex-row gap-2">
+                    {state.token && (
+                      <Button
+                        type="button"
+                        size={"icon"}
+                        variant="outline"
+                        onClick={() => dispatch({ type: "RESET_TOKEN" })}
+                        className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black px-2 flex-1 md:w-auto"
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </Button>
+                    )}
+                    {state.token && (
+                      <Button
+                        type="button"
+                        size={"icon"}
+                        variant="outline"
+                        onClick={() => copyToClipboard(state.token)}
+                        className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black px-2 flex-1 md:w-auto"
+                      >
+                        <CopyIcon className="w-4 h-4" />
+                      </Button>
+                    )}
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size={"icon"}
-                    onClick={makeToken}
-                    className={`border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black ${
-                      !state.token ? "w-full" : ""
-                    }`}
-                  >
-                    {state.token ? "" : <span>Generate Token</span>}
-                    <RefreshCcwIcon className="w-4 h-4" />
-                  </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size={"icon"}
+                      onClick={makeToken}
+                      className={`border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black px-2 flex-1 md:w-auto ${
+                        !state.token ? "w-full" : ""
+                      }`}
+                    >
+                      {state.token ? "" : <span>Generate Token</span>}
+                      <RefreshCcwIcon className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
 
