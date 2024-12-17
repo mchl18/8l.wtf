@@ -649,12 +649,6 @@ const LoadingSkeleton = () => {
               <Skeleton className="h-10 md:w-[180px] w-full bg-purple-600/20" />
               <Skeleton className="h-10 flex-1 bg-purple-600/20" />
             </div>
-            <Skeleton className="h-10 w-full bg-purple-600/20" />
-            <div className="flex gap-2 justify-center">
-              <Skeleton className="h-10 w-32 bg-purple-600/20" />
-              <Skeleton className="h-10 w-32 bg-purple-600/20" />
-              <Skeleton className="h-10 w-32 bg-purple-600/20" />
-            </div>
           </div>
         </CardContent>
       </Card>
