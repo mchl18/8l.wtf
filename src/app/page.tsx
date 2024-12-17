@@ -415,6 +415,15 @@ function Home() {
           </form>
         </CardContent>
       </Card>
+
+      <Image
+        src="https://status.mgerullis.com/api/badge/1/uptime?style=social"
+        alt="uptime"
+        unoptimized
+        width={150}
+        height={150}
+        className="mt-4"
+      />
       <Link
         href="/api"
         className="text-purple-600 ring-1 ring-purple-500 font-medium py-2 px-4 rounded-md shadow transition duration-150 mt-4"
