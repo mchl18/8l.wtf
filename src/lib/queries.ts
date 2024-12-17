@@ -7,7 +7,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const useQrCode = (
   text: string,
-  options: QRCode.QRCodeToDataURLOptions
+  options: QRCode.QRCodeToDataURLOptions = {
+    width: 300,
+    margin: 2,
+  }
 ): UseQueryResult<string, Error> => {
   return useQuery({
     queryKey: ["qr", text],

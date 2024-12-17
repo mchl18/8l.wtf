@@ -40,6 +40,7 @@ import {
 import Image from "next/image";
 import RedirectPage from "@/components/redirect";
 import { HomeSkeleton } from "@/components/home-skeleton";
+import { SwitchIfQueryParam } from "@/components/switch-if-query-param";
 
 type State = {
   url: string;
@@ -298,11 +299,7 @@ function Home() {
   const { data: qrCode, isLoading: isQrLoading } = useQrCode(
     state.isInvite
       ? `${shortenedUrl?.fullUrl}&token=${state.token}`
-      : shortenedUrl?.fullUrl || "",
-    {
-      width: 300,
-      margin: 2,
-    }
+      : shortenedUrl?.fullUrl || ""
   );
 
   const presets = useMemo(
@@ -927,33 +924,12 @@ function Home() {
   );
 }
 
-const SupsenseWrapper = ({ children }: { children: React.ReactNode }) => {
-  return <Suspense fallback={<HomeSkeleton />}>{children}</Suspense>;
-};
-
-const SwitchIfQueryParam = ({
-  children,
-  switchTo,
-  queryParamName,
-}: {
-  children: React.ReactNode;
-  switchTo: React.ReactNode;
-  queryParamName: string;
-}) => {
-  const searchParams = useSearchParams();
-  const queryParam = searchParams.get(queryParamName);
-  if (queryParam) {
-    return switchTo;
-  }
-  return <>{children}</>;
-};
-
 export default function Page() {
   return (
-    <SupsenseWrapper>
+    <Suspense fallback={<HomeSkeleton />}>
       <SwitchIfQueryParam switchTo={<RedirectPage />} queryParamName="q">
         <Home />
       </SwitchIfQueryParam>
-    </SupsenseWrapper>
+    </Suspense>
   );
 }

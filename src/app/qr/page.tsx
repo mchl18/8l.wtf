@@ -14,11 +14,7 @@ function QRPage() {
   const text = decodeURIComponent(searchParams.get("text") as string);
   const format = searchParams.get("format") as string;
   const { data, isLoading, error } = useQrCode(
-    decodeURIComponent(format === "base64" ? atob(text) : text),
-    {
-      width: 300,
-      margin: 2,
-    }
+    decodeURIComponent(format === "base64" ? atob(text) : text)
   );
 
   const downloadQrCode = () => {
