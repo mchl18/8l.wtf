@@ -52,8 +52,8 @@ type State = {
   seed: string | null;
   isInvite: boolean;
   showQrModal: boolean;
-  showPrivateDisclaimer: boolean;
-  showInviteDisclaimer: boolean;
+  showPrivateDisclaimerAgain: boolean;
+  showInviteDisclaimerAgain: boolean;
   dontShowPrivateDisclaimer: boolean;
   dontShowInviteDisclaimer: boolean;
 };
@@ -70,8 +70,8 @@ type Action =
   | { type: "SET_SHOW_QR_MODAL"; payload: boolean }
   | { type: "SET_SHOW_PRIVATE_DISCLAIMER"; payload: boolean }
   | { type: "SET_SHOW_INVITE_DISCLAIMER"; payload: boolean }
-  | { type: "SET_DONT_SHOW_PRIVATE_DISCLAIMER"; payload: boolean }
-  | { type: "SET_DONT_SHOW_INVITE_DISCLAIMER"; payload: boolean }
+  | { type: "SET_DONT_SHOW_PRIVATE_DISCLAIMER_AGAIN"; payload: boolean }
+  | { type: "SET_DONT_SHOW_INVITE_DISCLAIMER_AGAIN"; payload: boolean }
   | { type: "SET_DURATION_FOREVER" }
   | { type: "SET_DURATION_PRESET"; payload: number | string }
   | { type: "SET_DURATION_CUSTOM"; payload: number | string }
@@ -92,8 +92,8 @@ const initialState: State = {
   seed: null,
   isInvite: false,
   showQrModal: false,
-  showPrivateDisclaimer: false,
-  showInviteDisclaimer: false,
+  showPrivateDisclaimerAgain: false,
+  showInviteDisclaimerAgain: false,
   dontShowPrivateDisclaimer: false,
   dontShowInviteDisclaimer: false,
 };
@@ -146,14 +146,18 @@ function reducer(state: State, action: Action): State {
         presetValue: "",
         selectedMode: "custom",
       };
-    case "SET_DONT_SHOW_PRIVATE_DISCLAIMER":
+    case "SET_DONT_SHOW_PRIVATE_DISCLAIMER_AGAIN":
       return { ...state, dontShowPrivateDisclaimer: action.payload };
-    case "SET_DONT_SHOW_INVITE_DISCLAIMER":
+    case "SET_DONT_SHOW_INVITE_DISCLAIMER_AGAIN":
       return { ...state, dontShowInviteDisclaimer: action.payload };
-    case "SET_SHOW_PRIVATE_DISCLAIMER":
-      return { ...state, showPrivateDisclaimer: action.payload };
-    case "SET_SHOW_INVITE_DISCLAIMER":
-      return { ...state, showInviteDisclaimer: action.payload };
+    case "SET_SHOW_PRIVATE_DISCLAIMER": {
+      localStorage.setItem("dontShowPrivateDisclaimer", `${action.payload}`);
+      return { ...state, showPrivateDisclaimerAgain: action.payload };
+    }
+    case "SET_SHOW_INVITE_DISCLAIMER": {
+      localStorage.setItem("dontShowInviteDisclaimer", `${action.payload}`);
+      return { ...state, showInviteDisclaimerAgain: action.payload };
+    }
     case "INITIALIZE_FROM_PARAMS":
       return { ...state, ...action.payload };
     default:
@@ -209,7 +213,7 @@ function Home() {
       "8lwtf_dont_show_private_disclaimer"
     );
     if (localStorageDontShowPrivateDisclaimer === "true") {
-      dispatch({ type: "SET_DONT_SHOW_PRIVATE_DISCLAIMER", payload: true });
+      dispatch({ type: "SET_DONT_SHOW_PRIVATE_DISCLAIMER_AGAIN", payload: true });
     }
   }, []);
 
@@ -224,7 +228,7 @@ function Home() {
       "8lwtf_dont_show_invite_disclaimer"
     );
     if (localStorageDontShowInviteDisclaimer === "true") {
-      dispatch({ type: "SET_DONT_SHOW_INVITE_DISCLAIMER", payload: true });
+      dispatch({ type: "SET_DONT_SHOW_INVITE_DISCLAIMER_AGAIN", payload: true });
     }
   }, []);
 
@@ -633,7 +637,7 @@ function Home() {
                   </Link>
                 ) : (
                   <span
-                    className={` text-purple-600 hover:text-purple-800 ${
+                    className={`text-purple-600 hover:text-purple-800 ${
                       !isValidToken(state.token) ? "opacity-50" : ""
                     }`}
                   >
@@ -677,7 +681,7 @@ function Home() {
       />
 
       <Dialog
-        open={state.showPrivateDisclaimer}
+        open={state.showPrivateDisclaimerAgain}
         onOpenChange={(open) => {
           dispatch({ type: "SET_SHOW_PRIVATE_DISCLAIMER", payload: open });
         }}
@@ -714,7 +718,7 @@ function Home() {
                 checked={state.dontShowPrivateDisclaimer}
                 onCheckedChange={(checked) => {
                   dispatch({
-                    type: "SET_DONT_SHOW_PRIVATE_DISCLAIMER",
+                    type: "SET_DONT_SHOW_PRIVATE_DISCLAIMER_AGAIN",
                     payload: checked as boolean,
                   });
                 }}
@@ -729,9 +733,6 @@ function Home() {
             </div>
             <Button
               onClick={() => {
-                if (state.dontShowPrivateDisclaimer) {
-                  localStorage.setItem("dontShowPrivateDisclaimer", "true");
-                }
                 dispatch({
                   type: "SET_SHOW_PRIVATE_DISCLAIMER",
                   payload: false,
@@ -746,7 +747,7 @@ function Home() {
         </DialogContent>
       </Dialog>
       <Dialog
-        open={state.showInviteDisclaimer}
+        open={state.showInviteDisclaimerAgain}
         onOpenChange={(open) =>
           dispatch({ type: "SET_SHOW_INVITE_DISCLAIMER", payload: open })
         }
@@ -783,7 +784,7 @@ function Home() {
                 checked={state.dontShowInviteDisclaimer}
                 onCheckedChange={(checked) =>
                   dispatch({
-                    type: "SET_DONT_SHOW_INVITE_DISCLAIMER",
+                    type: "SET_DONT_SHOW_INVITE_DISCLAIMER_AGAIN",
                     payload: checked as boolean,
                   })
                 }
@@ -799,9 +800,6 @@ function Home() {
           </div>
           <Button
             onClick={() => {
-              if (state.dontShowInviteDisclaimer) {
-                localStorage.setItem("dontShowInviteDisclaimer", "true");
-              }
               dispatch({
                 type: "SET_SHOW_INVITE_DISCLAIMER",
                 payload: false,
