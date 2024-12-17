@@ -224,7 +224,7 @@ export default function AdminPage() {
 
               {error && <p className="text-red-500">{error.message}</p>}
 
-              {(urls?.length > 0 || isLoading || state.token) && (
+              {(state.token && urls?.length > 0 && isLoading) && (
                 <div className="border-2 border-purple-600 rounded-lg p-2 sm:p-4">
                   <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
                     <h3 className="text-purple-600 text-lg sm:text-xl">
@@ -424,7 +424,7 @@ export default function AdminPage() {
                 </div>
               )}
               {isSuccess && !error && !urls?.length && (
-                <p className="text-purple-600">No URLs found</p>
+                <p className="text-purple-600">No private URLs found</p>
               )}
             </div>
           </CardContent>

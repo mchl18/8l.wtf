@@ -115,8 +115,11 @@ function reducer(state: State, action: Action): State {
       return { ...state, presetValue: action.payload };
     case "SET_ERROR":
       return { ...state, error: action.payload };
-    case "SET_TOKEN":
+    case "SET_TOKEN": {
+      debugger;
+      localStorage.setItem("8lwtf_token", action.payload);
       return { ...state, token: action.payload };
+    }
     case "SET_IS_PRIVATE":
       return { ...state, isPrivate: action.payload };
     case "SET_SEED":
@@ -126,8 +129,9 @@ function reducer(state: State, action: Action): State {
     case "SET_SHOW_QR_MODAL":
       return { ...state, showQrModal: action.payload };
     case "RESET_TOKEN": {
-      localStorage.removeItem("8lwtf_token");
-      return { ...state, token: "", isPrivate: false };
+      debugger;
+      // localStorage.removeItem("8lwtf_token");
+      return { ...state, token: "", isPrivate: false, isInvite: false };
     }
     case "SET_CUSTOM_DURATION":
       return { ...state, customDuration: action.payload };
@@ -193,13 +197,6 @@ function Home() {
       dispatch({ type: "SET_IS_INVITE", payload: false });
     }
   }, [state]);
-
-  useEffect(() => {
-    if (!state.token) {
-      localStorage.removeItem("8lwtf_token");
-      router.push("/");
-    }
-  }, [state.token]);
 
   useEffect(() => {
     const durationMode = localStorage.getItem("8lwtf_duration_mode");
@@ -312,11 +309,19 @@ function Home() {
     []
   );
 
+  useEffect(() => {
+    const localStorageToken = localStorage.getItem("8lwtf_token");
+    debugger;
+    if (localStorageToken) {
+      dispatch({ type: "SET_TOKEN", payload: localStorageToken });
+    }
+  }, []);
+
   const makeToken = async () => {
     dispatch({ type: "SET_ERROR", payload: "" });
     const token = generateToken();
+    debugger;
     dispatch({ type: "SET_TOKEN", payload: token });
-    localStorage.setItem("8lwtf_token", token);
     router.push(`/?token=${token}`);
     const encryptedSeed = encrypt(SEED, token);
     dispatch({ type: "SET_SEED", payload: encryptedSeed });
@@ -344,6 +349,7 @@ function Home() {
       }
     } else {
       const storedToken = localStorage.getItem("8lwtf_token");
+      debugger;
       if (storedToken && isValidToken(storedToken)) {
         const encryptedSeed = encrypt(SEED, storedToken);
         dispatch({
@@ -419,7 +425,11 @@ function Home() {
                         type="button"
                         size={"icon"}
                         variant="outline"
-                        onClick={() => dispatch({ type: "RESET_TOKEN" })}
+                        onClick={() => {
+                          dispatch({ type: "RESET_TOKEN" });
+                          localStorage.removeItem("8lwtf_token");
+                          router.push("/");
+                        }}
                         className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black px-2 flex-1 md:w-auto"
                       >
                         <TrashIcon className="w-4 h-4" />
@@ -685,8 +695,6 @@ function Home() {
                   <Link
                     href={`/admin`}
                     className="text-purple-600 hover:text-purple-800"
-                    target="_blank"
-                    rel="noopener noreferrer"
                   >
                     My URLs
                   </Link>
