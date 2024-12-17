@@ -116,7 +116,6 @@ function reducer(state: State, action: Action): State {
     case "SET_ERROR":
       return { ...state, error: action.payload };
     case "SET_TOKEN": {
-      debugger;
       localStorage.setItem("8lwtf_token", action.payload);
       return { ...state, token: action.payload };
     }
@@ -129,8 +128,6 @@ function reducer(state: State, action: Action): State {
     case "SET_SHOW_QR_MODAL":
       return { ...state, showQrModal: action.payload };
     case "RESET_TOKEN": {
-      debugger;
-      // localStorage.removeItem("8lwtf_token");
       return { ...state, token: "", isPrivate: false, isInvite: false };
     }
     case "SET_CUSTOM_DURATION":
@@ -311,7 +308,6 @@ function Home() {
 
   useEffect(() => {
     const localStorageToken = localStorage.getItem("8lwtf_token");
-    debugger;
     if (localStorageToken) {
       dispatch({ type: "SET_TOKEN", payload: localStorageToken });
     }
@@ -320,7 +316,6 @@ function Home() {
   const makeToken = async () => {
     dispatch({ type: "SET_ERROR", payload: "" });
     const token = generateToken();
-    debugger;
     dispatch({ type: "SET_TOKEN", payload: token });
     router.push(`/?token=${token}`);
     const encryptedSeed = encrypt(SEED, token);
@@ -349,7 +344,6 @@ function Home() {
       }
     } else {
       const storedToken = localStorage.getItem("8lwtf_token");
-      debugger;
       if (storedToken && isValidToken(storedToken)) {
         const encryptedSeed = encrypt(SEED, storedToken);
         dispatch({
