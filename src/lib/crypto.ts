@@ -1,6 +1,4 @@
-import { createCipheriv, createDecipheriv } from "crypto";
-
-import { createHash } from "crypto";
+import { createCipheriv, createDecipheriv, createHash } from "crypto";
 
 export const SEED = process.env.NEXT_PUBLIC_SEED || "8l.wtf";
 
