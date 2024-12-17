@@ -72,3 +72,7 @@ export const validateEncryptedSeedFormat = (encryptedSeed: string) => {
   // Test if the encrypted seed matches the pattern
   return pattern.test(encryptedSeed);
 };
+
+export const shortenToken = (token: string) => {
+  return token.slice(0, 8) + "..." + token.slice(-8);
+};

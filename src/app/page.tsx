@@ -24,6 +24,7 @@ import {
   copyToClipboard,
   generateToken,
   isValidToken,
+  shortenToken,
 } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -173,7 +174,6 @@ function Home() {
     const token = generateToken();
     dispatch({ type: "SET_TOKEN", payload: token });
     localStorage.setItem("8lwtf_token", token);
-    copyToClipboard(token);
     router.push(`/?token=${token}`);
     const encryptedSeed = encrypt(SEED, token);
     dispatch({ type: "SET_SEED", payload: encryptedSeed });
@@ -268,10 +268,7 @@ function Home() {
                   {state.token && (
                     <Input
                       type="text"
-                      value={state.token}
-                      onChange={(e) =>
-                        dispatch({ type: "SET_TOKEN", payload: e.target.value })
-                      }
+                      value={shortenToken(state.token)}
                       readOnly={true}
                       placeholder="Custom token (optional)"
                       className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
