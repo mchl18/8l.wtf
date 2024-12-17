@@ -649,6 +649,7 @@ function Home() {
                     <Checkbox
                       id="private"
                       checked={state.isPrivate}
+                      disabled={!isValidToken(state.token)}
                       onCheckedChange={(checked) =>
                         dispatch({
                           type: "SET_IS_PRIVATE",
