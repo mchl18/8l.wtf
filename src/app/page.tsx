@@ -63,7 +63,6 @@ type Action =
   | { type: "SET_MAX_AGE"; payload: number | string }
   | { type: "SET_PRESET_VALUE"; payload: number | string }
   | { type: "SET_ERROR"; payload: string }
-  | { type: "SET_MODE"; payload: "forever" | "custom" | "preset" }
   | { type: "SET_TOKEN"; payload: string }
   | { type: "SET_IS_PRIVATE"; payload: boolean }
   | { type: "SET_SEED"; payload: string | null }
@@ -109,13 +108,6 @@ function reducer(state: State, action: Action): State {
       return { ...state, presetValue: action.payload };
     case "SET_ERROR":
       return { ...state, error: action.payload };
-    case "SET_MODE":
-      return {
-        ...state,
-        selectedMode: action.payload,
-        maxAge: action.payload === "forever" ? 0 : state.maxAge,
-        presetValue: action.payload === "custom" ? "" : state.presetValue,
-      };
     case "SET_TOKEN":
       return { ...state, token: action.payload };
     case "SET_IS_PRIVATE":
@@ -318,13 +310,9 @@ function Home() {
     }
   };
 
-  const setMode = useCallback((mode: "forever" | "custom" | "preset") => {
-    dispatch({ type: "SET_MODE", payload: mode });
-  }, []);
-
   const downloadQrCode = () => {
     const link = document.createElement("a");
-    link.download = "qrcode.png";
+    link.download = `8l.wtf QR Code - ${new Date().toISOString()}.png`;
     link.href = qrCode || "";
     document.body.appendChild(link);
     link.click();
