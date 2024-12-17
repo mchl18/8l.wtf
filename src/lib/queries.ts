@@ -3,6 +3,8 @@ import { useMutation, useQuery, UseQueryResult } from "@tanstack/react-query";
 import { decrypt, encrypt } from "./crypto";
 import QRCode from "qrcode";
 
+const API_URL = process.env.API_URL;
+
 export const useQrCode = (
   text: string,
   options: QRCode.QRCodeToDataURLOptions
@@ -22,8 +24,11 @@ export const useUrlBySeed = (
   return useQuery({
     queryKey: ["url", seed, shortId],
     queryFn: async () => {
-      const res = await fetch("/api/get-url", {
+      const res = await fetch(`${API_URL}/api/get-url`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ seed, shortId }),
       });
       return (await res.json()) as ShortenedUrl;
@@ -38,7 +43,7 @@ export const useUrlsBySeed = (
   return useQuery({
     queryKey: ["url", seed],
     queryFn: async () => {
-      const response = await fetch("/api/get-urls", {
+      const response = await fetch(`${API_URL}/api/get-urls`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -72,8 +77,11 @@ export const useShortenUrl = (
       if (isPrivate && (!token || !seed)) {
         throw new Error("Seed is required");
       }
-      const response = await fetch("/api/shorten", {
+      const response = await fetch(`${API_URL}/api/shorten`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           url: isPrivate && token ? encrypt(url, token) : url,
           seed,
@@ -89,8 +97,11 @@ export const useShortenUrl = (
 export const useDeleteUrls = (seed: string) => {
   return useMutation({
     mutationFn: async (shortIds: string[]) => {
-      const response = await fetch("/api/shorten", {
+      const response = await fetch(`${API_URL}/api/shorten`, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ shortIds, seed }),
       });
       return (await response.json()) as {
