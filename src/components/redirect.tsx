@@ -1,17 +1,22 @@
-"use client";
-import { Suspense, useEffect } from "react";
-import { useState } from "react";
-import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
-import { useSearchParams } from "next/navigation";
-import { decrypt, encrypt, SEED } from "@/lib/crypto";
+import { useEffect } from "react";
 import { useUrlBySeed } from "@/lib/queries";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { decrypt } from "@/lib/crypto";
+import { SEED } from "@/lib/crypto";
+import { encrypt } from "@/lib/crypto";
+import { Card, CardContent } from "./ui/card";
+import Link from "next/link";
 
 const REDIRECT_DELAY = parseInt(
   process.env.NEXT_PUBLIC_REDIRECT_DELAY || "5000"
 );
 
-function RedirectPage({ params }: { params: { shortId: string } }) {
+export default function RedirectPage({
+  params,
+}: {
+  params: { shortId: string };
+}) {
   const { shortId } = params;
   const searchParams = useSearchParams();
   const [token, setToken] = useState<string | undefined>(undefined);
@@ -122,17 +127,5 @@ function RedirectPage({ params }: { params: { shortId: string } }) {
         </CardContent>
       </Card>
     </>
-  );
-}
-
-const SuspenseWrapper = ({ children }: { children: React.ReactNode }) => {
-  return <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>;
-};
-
-export default function Page({ params }: { params: { shortId: string } }) {
-  return (
-    <SuspenseWrapper>
-      <RedirectPage params={params} />
-    </SuspenseWrapper>
   );
 }

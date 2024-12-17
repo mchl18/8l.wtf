@@ -1,16 +1,17 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DownloadIcon } from "lucide-react";
 import { useQrCode } from "@/lib/queries";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Suspense } from "react";
 
-export default function QRPage() {
-  const params = useParams();
-  const text = decodeURIComponent(params.text as string);
+function QRPage() {
+  const searchParams = useSearchParams();
+  const text = decodeURIComponent(searchParams.get("text") as string);
   const { data, isLoading, error } = useQrCode(text, {
     width: 300,
     margin: 2,
@@ -63,5 +64,23 @@ export default function QRPage() {
         </CardContent>
       </Card>
     </>
+  );
+}
+
+const Wrapper = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <Suspense
+      fallback={<Skeleton className="w-[300px] h-[300px] rounded-lg" />}
+    >
+      {children}
+    </Suspense>
+  );
+};
+
+export default function Page() {
+  return (
+    <Wrapper>
+      <QRPage />
+    </Wrapper>
   );
 }

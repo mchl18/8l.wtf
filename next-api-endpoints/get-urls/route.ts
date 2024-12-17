@@ -28,8 +28,8 @@ export async function POST(request: Request) {
         urls.push({
           shortId,
           url: encryptedUrl,
-          fullUrl: `${hostUrl}/${shortId}`,
-          deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
+          fullUrl: `${hostUrl}?q=${shortId}`,
+          deleteProxyUrl: `${hostUrl}/delete-proxy?q=${shortId}`,
           isEncrypted: true,
           expiresAt: expiresAt
             ? new Date(expiresAt as string).toISOString()

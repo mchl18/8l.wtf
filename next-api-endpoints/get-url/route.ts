@@ -64,7 +64,7 @@ export async function POST(request: Request) {
           return NextResponse.json({
             shortId,
             url,
-            fullUrl: `${hostUrl}/${shortId}`,
+            fullUrl: `${hostUrl}?q=${shortId}`,
             deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
             isEncrypted: false,
             expiresAt: expiresAt
@@ -90,8 +90,8 @@ export async function POST(request: Request) {
         return NextResponse.json({
           shortId,
           url: encryptedUrl,
-          fullUrl: `${hostUrl}/${shortId}`,
-          deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
+          fullUrl: `${hostUrl}?q=${shortId}`,
+          deleteProxyUrl: `${hostUrl}/delete-proxy?q=${shortId}`,
           isEncrypted: true,
           expiresAt: expiresAt
             ? new Date(expiresAt as string).toISOString()

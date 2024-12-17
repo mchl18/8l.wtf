@@ -37,7 +37,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import Image from "next/image";
-
+import RedirectPage from "@/components/redirect";
 function Home() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -525,10 +525,21 @@ const SupsenseWrapper = ({ children }: { children: React.ReactNode }) => {
   return <Suspense fallback={<LoadingSkeleton />}>{children}</Suspense>;
 };
 
+const SwitchIfQueryParam = ({ children }: { children: React.ReactNode }) => {
+  const searchParams = useSearchParams();
+  const shortId = searchParams.get("q");
+  if (shortId) {
+    return <RedirectPage params={{ shortId }} />;
+  }
+  return <>{children}</>;
+};
+
 export default function Page() {
   return (
     <SupsenseWrapper>
-      <Home />
+      <SwitchIfQueryParam>
+        <Home />
+      </SwitchIfQueryParam>
     </SupsenseWrapper>
   );
 }

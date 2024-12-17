@@ -18,8 +18,8 @@ export async function POST(request: Request) {
         const expiresAt = await db.get(`${shortId}:expires`);
         return NextResponse.json({
           shortId,
-          fullUrl: `${hostUrl}/${shortId}`,
-          deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
+          fullUrl: `${hostUrl}?q=${shortId}`,
+          deleteProxyUrl: `${hostUrl}/delete-proxy?q=${shortId}`,
           isEncrypted: false,
           expiresAt: expiresAt
             ? new Date(expiresAt as string).toISOString()
@@ -60,8 +60,8 @@ export async function POST(request: Request) {
   }
   return NextResponse.json({
     shortId,
-    fullUrl: `${hostUrl}/${shortId}`,
-    deleteProxyUrl: `${hostUrl}/delete-proxy?id=${shortId}`,
+    fullUrl: `${hostUrl}?q=${shortId}`,
+    deleteProxyUrl: `${hostUrl}/delete-proxy?q=${shortId}`,
     isEncrypted: !!seed,
     expiresAt,
   });

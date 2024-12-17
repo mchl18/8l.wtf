@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 function DeleteProxyPage() {
   const searchParams = useSearchParams();
-  const idFromSearchParams = searchParams.get("id");
+  const idFromSearchParams = searchParams.get("q");
   const [id, setId] = useState(idFromSearchParams);
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
