@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dialog";
 import Image from "next/image";
 import RedirectPage from "@/components/redirect";
+import { HomeSkeleton } from "@/components/home-skeleton";
 
 type State = {
   url: string;
@@ -51,6 +52,10 @@ type State = {
   seed: string | null;
   isInvite: boolean;
   showQrModal: boolean;
+  showPrivateDisclaimer: boolean;
+  showInviteDisclaimer: boolean;
+  dontShowPrivateDisclaimer: boolean;
+  dontShowInviteDisclaimer: boolean;
 };
 
 type Action =
@@ -64,6 +69,10 @@ type Action =
   | { type: "SET_SEED"; payload: string | null }
   | { type: "SET_IS_INVITE"; payload: boolean }
   | { type: "SET_SHOW_QR_MODAL"; payload: boolean }
+  | { type: "SET_SHOW_PRIVATE_DISCLAIMER"; payload: boolean }
+  | { type: "SET_SHOW_INVITE_DISCLAIMER"; payload: boolean }
+  | { type: "SET_DONT_SHOW_PRIVATE_DISCLAIMER"; payload: boolean }
+  | { type: "SET_DONT_SHOW_INVITE_DISCLAIMER"; payload: boolean }
   | { type: "RESET_TOKEN" }
   | {
       type: "INITIALIZE_FROM_PARAMS";
@@ -81,6 +90,10 @@ const initialState: State = {
   seed: null,
   isInvite: false,
   showQrModal: false,
+  showPrivateDisclaimer: false,
+  showInviteDisclaimer: false,
+  dontShowPrivateDisclaimer: false,
+  dontShowInviteDisclaimer: false,
 };
 
 function reducer(state: State, action: Action): State {
@@ -112,6 +125,14 @@ function reducer(state: State, action: Action): State {
       return { ...state, showQrModal: action.payload };
     case "RESET_TOKEN":
       return { ...state, token: "", isPrivate: false };
+    case "SET_DONT_SHOW_PRIVATE_DISCLAIMER":
+      return { ...state, dontShowPrivateDisclaimer: action.payload };
+    case "SET_DONT_SHOW_INVITE_DISCLAIMER":
+      return { ...state, dontShowInviteDisclaimer: action.payload };
+    case "SET_SHOW_PRIVATE_DISCLAIMER":
+      return { ...state, showPrivateDisclaimer: action.payload };
+    case "SET_SHOW_INVITE_DISCLAIMER":
+      return { ...state, showInviteDisclaimer: action.payload };
     case "INITIALIZE_FROM_PARAMS":
       return { ...state, ...action.payload };
     default:
@@ -130,6 +151,48 @@ function Home() {
     }
     return url;
   };
+
+  useEffect(() => {
+    if (state.isPrivate && !state.dontShowPrivateDisclaimer) {
+      dispatch({ type: "SET_SHOW_PRIVATE_DISCLAIMER", payload: true });
+    }
+  }, [state.isPrivate]);
+
+  useEffect(() => {
+    if (state.isInvite && !state.dontShowInviteDisclaimer) {
+      dispatch({ type: "SET_SHOW_INVITE_DISCLAIMER", payload: true });
+    }
+  }, [state.isInvite]);
+
+  useEffect(() => {
+    const localStorageDontShowPrivateDisclaimer = localStorage.getItem(
+      "8lwtf_dont_show_private_disclaimer"
+    );
+    if (localStorageDontShowPrivateDisclaimer === "true") {
+      dispatch({ type: "SET_DONT_SHOW_PRIVATE_DISCLAIMER", payload: true });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (state.dontShowPrivateDisclaimer) {
+      localStorage.setItem("8lwtf_dont_show_private_disclaimer", "true");
+    }
+  }, [state.dontShowPrivateDisclaimer]);
+
+  useEffect(() => {
+    const localStorageDontShowInviteDisclaimer = localStorage.getItem(
+      "8lwtf_dont_show_invite_disclaimer"
+    );
+    if (localStorageDontShowInviteDisclaimer === "true") {
+      dispatch({ type: "SET_DONT_SHOW_INVITE_DISCLAIMER", payload: true });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (state.dontShowInviteDisclaimer) {
+      localStorage.setItem("8lwtf_dont_show_invite_disclaimer", "true");
+    }
+  }, [state.dontShowInviteDisclaimer]);
 
   const {
     mutate: shortenUrl,
@@ -506,6 +569,7 @@ function Home() {
                     <Checkbox
                       id="invite"
                       checked={state.isInvite}
+                      disabled={!isValidToken(state.token) || !state.isPrivate}
                       onCheckedChange={(checked) =>
                         dispatch({
                           type: "SET_IS_INVITE",
@@ -573,6 +637,144 @@ function Home() {
       </Link>
 
       <Dialog
+        open={state.showPrivateDisclaimer}
+        onOpenChange={(open) => {
+          dispatch({ type: "SET_SHOW_PRIVATE_DISCLAIMER", payload: open });
+        }}
+      >
+        <DialogContent className="bg-black border-2 border-purple-600">
+          <DialogHeader>
+            <DialogTitle className="text-purple-600">
+              Private URL Disclaimer
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4">
+            <p className="text-purple-600">
+              Please make sure you read these instructions carefully.
+              <ul>
+                <li>
+                  Private URLs are only accessible to the user who has access to
+                  the token they were created with.
+                </li>
+                <li>
+                  They will be encrypted with the token, the server cannot read
+                  what you are linking.
+                </li>
+                <li>
+                  If you want to share a private URL, you need to invite the
+                  user to the URL.
+                </li>
+              </ul>
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <div className={`flex items-center gap-2 justify-center`}>
+              <Checkbox
+                id="dont-show-private-again"
+                checked={state.dontShowPrivateDisclaimer}
+                onCheckedChange={(checked) => {
+                  dispatch({
+                    type: "SET_DONT_SHOW_PRIVATE_DISCLAIMER",
+                    payload: checked as boolean,
+                  });
+                }}
+                className="border-purple-600 data-[state=checked]:bg-purple-600"
+              />
+              <label
+                htmlFor="dont-show-private-again"
+                className="text-purple-600"
+              >
+                Don't show this again
+              </label>
+            </div>
+            <Button
+              onClick={() => {
+                if (state.dontShowPrivateDisclaimer) {
+                  localStorage.setItem("dontShowPrivateDisclaimer", "true");
+                }
+                dispatch({
+                  type: "SET_SHOW_PRIVATE_DISCLAIMER",
+                  payload: false,
+                });
+              }}
+              variant="outline"
+              className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black mx-auto"
+            >
+              Accept
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={state.showInviteDisclaimer}
+        onOpenChange={(open) =>
+          dispatch({ type: "SET_SHOW_INVITE_DISCLAIMER", payload: open })
+        }
+      >
+        <DialogContent className="bg-black border-2 border-purple-600">
+          <DialogHeader>
+            <DialogTitle className="text-purple-600 text-center">
+              Invite Disclaimer
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4">
+            <div className="text-purple-600 flex flex-col">
+              <span className="font-bold mb-4">
+                Please make sure you read these instructions carefully.
+              </span>
+              <ul className="list-disc list-inside flex flex-col gap-2">
+                <li>
+                  Whoever you invite to this url will be able to see all urls
+                  that were created with this token.
+                </li>
+                <li>Treat invites like inviting someone to a list of url.</li>
+                <li>
+                  If you realize you accidentally shared a url with someone you
+                  didn't want to share it with, you can delete it under "My
+                  URLs"
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <div className={`flex items-center gap-2 justify-center`}>
+              <Checkbox
+                id="dont-show-invite-again"
+                checked={state.dontShowInviteDisclaimer}
+                onCheckedChange={(checked) =>
+                  dispatch({
+                    type: "SET_DONT_SHOW_INVITE_DISCLAIMER",
+                    payload: checked as boolean,
+                  })
+                }
+                className="border-purple-600 data-[state=checked]:bg-purple-600"
+              />
+              <label
+                htmlFor="dont-show-invite-again"
+                className="text-purple-600"
+              >
+                Don't show this again
+              </label>
+            </div>
+          </div>
+          <Button
+            onClick={() => {
+              if (state.dontShowInviteDisclaimer) {
+                localStorage.setItem("dontShowInviteDisclaimer", "true");
+              }
+              dispatch({
+                type: "SET_SHOW_INVITE_DISCLAIMER",
+                payload: false,
+              });
+            }}
+            variant="outline"
+            className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black mx-auto"
+          >
+            Accept
+          </Button>
+        </DialogContent>
+      </Dialog>
+      <Dialog
         open={state.showQrModal}
         onOpenChange={(open) =>
           dispatch({ type: "SET_SHOW_QR_MODAL", payload: open })
@@ -627,39 +829,8 @@ function Home() {
   );
 }
 
-const LoadingSkeleton = () => {
-  return (
-    <>
-      <h1 className="text-purple-600 text-2xl mt-12 lg:mt-24">8l.wtf</h1>
-      <Card className="bg-black rounded-lg shadow-2xl max-w-md w-full text-center mt-6 border-2 border-purple-600">
-        <CardContent className="pt-6">
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-10 w-full bg-purple-600/20" />
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                <Skeleton className="h-10 flex-1 bg-purple-600/20" />
-                <Skeleton className="h-10 w-10 bg-purple-600/20" />
-              </div>
-            </div>
-            <div className="flex md:flex-row flex-col w-full gap-2 md:gap-1 justify-center md:items-center">
-              <Skeleton className="h-10 flex-1 bg-purple-600/20" />
-              <Skeleton className="h-10 md:w-[180px] w-full bg-purple-600/20" />
-              <Skeleton className="h-10 flex-1 bg-purple-600/20" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      <div className="flex gap-4 mt-4 justify-center">
-        <Skeleton className="h-10 w-32 bg-purple-600/20" />
-        <Skeleton className="h-10 w-32 bg-purple-600/20" />
-        <Skeleton className="h-10 w-32 bg-purple-600/20" />
-      </div>
-    </>
-  );
-};
-
 const SupsenseWrapper = ({ children }: { children: React.ReactNode }) => {
-  return <Suspense fallback={<LoadingSkeleton />}>{children}</Suspense>;
+  return <Suspense fallback={<HomeSkeleton />}>{children}</Suspense>;
 };
 
 const SwitchIfQueryParam = ({ children }: { children: React.ReactNode }) => {
