@@ -684,7 +684,7 @@ function Home() {
       >
         <DialogContent className="bg-black border-2 border-purple-600">
           <DialogHeader>
-            <DialogTitle className="text-purple-600">
+            <DialogTitle className="text-purple-600 text-center">
               Private URL Disclaimer
             </DialogTitle>
           </DialogHeader>
@@ -767,9 +767,7 @@ function Home() {
                   Whoever you invite to this url will be able to see all urls
                   that were created with this token.
                 </li>
-                <li>
-                  Treat invites like inviting someone to a list of urls.
-                </li>
+                <li>Treat invites like inviting someone to a list of urls.</li>
                 <li>
                   If you realize you accidentally shared a url with someone you
                   didn&apos;t want to share it with, you can delete it under
@@ -824,7 +822,9 @@ function Home() {
       >
         <DialogContent className="bg-black border-2 border-purple-600">
           <DialogHeader>
-            <DialogTitle className="text-purple-600">QR Code</DialogTitle>
+            <DialogTitle className="text-purple-600 text-center">
+              QR Code
+            </DialogTitle>
           </DialogHeader>
           {qrCode && (
             <div className="flex flex-col items-center gap-4">
