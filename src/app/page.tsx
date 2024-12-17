@@ -267,7 +267,7 @@ function Home() {
     }
   }, [state.dontShowInviteDisclaimer]);
 
-  const getCustomDuration = useMemo(() => {
+  const finalCustomDuration = useMemo(() => {
     return (
       parseInt(`${state.customDuration}`) * parseInt(state.customDurationUnit)
     );
@@ -285,7 +285,7 @@ function Home() {
     state.selectedMode === "preset"
       ? state.presetValue
       : state.selectedMode === "custom"
-      ? getCustomDuration
+      ? finalCustomDuration
       : state.maxAge,
     state.isPrivate,
     state.token
