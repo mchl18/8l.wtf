@@ -196,13 +196,13 @@ function Home() {
     if (state.isPrivate && !state.dontShowPrivateDisclaimer) {
       dispatch({ type: "SET_SHOW_PRIVATE_DISCLAIMER", payload: true });
     }
-  }, [state.isPrivate]);
+  }, [state.isPrivate, state.dontShowPrivateDisclaimer]);
 
   useEffect(() => {
     if (state.isInvite && !state.dontShowInviteDisclaimer) {
       dispatch({ type: "SET_SHOW_INVITE_DISCLAIMER", payload: true });
     }
-  }, [state.isInvite]);
+  }, [state.isInvite, state.dontShowInviteDisclaimer]);
 
   useEffect(() => {
     const localStorageDontShowPrivateDisclaimer = localStorage.getItem(
@@ -724,7 +724,7 @@ function Home() {
                 htmlFor="dont-show-private-again"
                 className="text-purple-600"
               >
-                Don't show this again
+                Don&apos;t show this again
               </label>
             </div>
             <Button
@@ -770,8 +770,8 @@ function Home() {
                 <li>Treat invites like inviting someone to a list of url.</li>
                 <li>
                   If you realize you accidentally shared a url with someone you
-                  didn't want to share it with, you can delete it under "My
-                  URLs"
+                  didn&apos;t want to share it with, you can delete it under
+                  &ldquo;My URLs&rdquo;
                 </li>
               </ul>
             </div>
@@ -793,7 +793,7 @@ function Home() {
                 htmlFor="dont-show-invite-again"
                 className="text-purple-600"
               >
-                Don't show this again
+                Don&apos;t show this again
               </label>
             </div>
           </div>
