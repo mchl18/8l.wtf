@@ -42,6 +42,7 @@ import RedirectPage from "@/components/redirect";
 import { HomeSkeleton } from "@/components/home-skeleton";
 import { SwitchIfQueryParam } from "@/components/switch-if-query-param";
 import { CONFIG } from "@/config";
+import storage from "@/lib/storage";
 
 type State = {
   url: string;
@@ -117,7 +118,7 @@ function reducer(state: State, action: Action): State {
     case "SET_ERROR":
       return { ...state, error: action.payload };
     case "SET_TOKEN": {
-      localStorage.setItem(CONFIG.tokenStorageKey, action.payload);
+      storage.set(CONFIG.tokenStorageKey, action.payload);
       return { ...state, token: action.payload };
     }
     case "SET_IS_PRIVATE":
@@ -136,7 +137,7 @@ function reducer(state: State, action: Action): State {
     case "SET_CUSTOM_DURATION_UNIT":
       return { ...state, customDurationUnit: action.payload };
     case "SET_DURATION_FOREVER":
-      localStorage.setItem(CONFIG.durationModeStorageKey, "forever");
+      storage.set(CONFIG.durationModeStorageKey, "forever");
       return {
         ...state,
         maxAge: 0,
@@ -144,7 +145,7 @@ function reducer(state: State, action: Action): State {
         selectedMode: "forever",
       };
     case "SET_DURATION_PRESET":
-      localStorage.setItem(CONFIG.durationModeStorageKey, "preset");
+      storage.set(CONFIG.durationModeStorageKey, "preset");
       return {
         ...state,
         maxAge: action.payload,
@@ -152,7 +153,7 @@ function reducer(state: State, action: Action): State {
         selectedMode: "preset",
       };
     case "SET_DURATION_CUSTOM":
-      localStorage.setItem(CONFIG.durationModeStorageKey, "custom");
+      storage.set(CONFIG.durationModeStorageKey, "custom");
       return {
         ...state,
         maxAge: action.payload,
@@ -164,14 +165,14 @@ function reducer(state: State, action: Action): State {
     case "SET_DONT_SHOW_INVITE_DISCLAIMER_AGAIN":
       return { ...state, dontShowInviteDisclaimer: action.payload };
     case "SET_SHOW_PRIVATE_DISCLAIMER": {
-      localStorage.setItem(
+      storage.set(
         CONFIG.dontShowPrivateDisclaimerStorageKey,
         `${action.payload}`
       );
       return { ...state, showPrivateDisclaimerAgain: action.payload };
     }
     case "SET_SHOW_INVITE_DISCLAIMER": {
-      localStorage.setItem(
+      storage.set(
         CONFIG.dontShowInviteDisclaimerStorageKey,
         `${action.payload}`
       );
@@ -203,22 +204,24 @@ function Home() {
   }, [state]);
 
   useEffect(() => {
-    const durationMode = localStorage.getItem(CONFIG.durationModeStorageKey);
-
-    switch (durationMode) {
-      case "forever":
-        dispatch({ type: "SET_DURATION_FOREVER" });
-        break;
-      case "preset":
-        dispatch({ type: "SET_DURATION_PRESET", payload: "86400" });
-        break;
-      case "custom":
-        dispatch({ type: "SET_DURATION_CUSTOM", payload: "" });
-        break;
-      default:
-        dispatch({ type: "SET_DURATION_FOREVER" });
-        break;
-    }
+    (async () => {
+      const durationMode = await storage.get(CONFIG.durationModeStorageKey);
+      debugger;
+      switch (durationMode) {
+        case "forever":
+          dispatch({ type: "SET_DURATION_FOREVER" });
+          break;
+        case "preset":
+          dispatch({ type: "SET_DURATION_PRESET", payload: "86400" });
+          break;
+        case "custom":
+          dispatch({ type: "SET_DURATION_CUSTOM", payload: "" });
+          break;
+        default:
+          dispatch({ type: "SET_DURATION_FOREVER" });
+          break;
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -234,38 +237,42 @@ function Home() {
   }, [state.isInvite, state.dontShowInviteDisclaimer]);
 
   useEffect(() => {
-    const localStorageDontShowPrivateDisclaimer = localStorage.getItem(
-      CONFIG.dontShowPrivateDisclaimerStorageKey
-    );
-    if (localStorageDontShowPrivateDisclaimer === "true") {
-      dispatch({
-        type: "SET_DONT_SHOW_PRIVATE_DISCLAIMER_AGAIN",
-        payload: true,
-      });
-    }
+    (async () => {
+      const localStorageDontShowPrivateDisclaimer = await storage.get(
+        CONFIG.dontShowPrivateDisclaimerStorageKey
+      );
+      if (localStorageDontShowPrivateDisclaimer === true) {
+        dispatch({
+          type: "SET_DONT_SHOW_PRIVATE_DISCLAIMER_AGAIN",
+          payload: true,
+        });
+      }
+    })();
   }, []);
 
   useEffect(() => {
     if (state.dontShowPrivateDisclaimer) {
-      localStorage.setItem(CONFIG.dontShowPrivateDisclaimerStorageKey, "true");
+      storage.set(CONFIG.dontShowPrivateDisclaimerStorageKey, "true");
     }
   }, [state.dontShowPrivateDisclaimer]);
 
   useEffect(() => {
-    const localStorageDontShowInviteDisclaimer = localStorage.getItem(
-      CONFIG.dontShowInviteDisclaimerStorageKey
-    );
-    if (localStorageDontShowInviteDisclaimer === "true") {
-      dispatch({
-        type: "SET_DONT_SHOW_INVITE_DISCLAIMER_AGAIN",
-        payload: true,
-      });
-    }
+    (async () => {
+      const localStorageDontShowInviteDisclaimer = await storage.get(
+        CONFIG.dontShowInviteDisclaimerStorageKey
+      );
+      if (localStorageDontShowInviteDisclaimer === true) {
+        dispatch({
+          type: "SET_DONT_SHOW_INVITE_DISCLAIMER_AGAIN",
+          payload: true,
+        });
+      }
+    })();
   }, []);
 
   useEffect(() => {
     if (state.dontShowInviteDisclaimer) {
-      localStorage.setItem(CONFIG.dontShowInviteDisclaimerStorageKey, "true");
+      storage.set(CONFIG.dontShowInviteDisclaimerStorageKey, "true");
     }
   }, [state.dontShowInviteDisclaimer]);
 
@@ -314,10 +321,12 @@ function Home() {
   );
 
   useEffect(() => {
-    const localStorageToken = localStorage.getItem("8lwtf_token");
-    if (localStorageToken) {
-      dispatch({ type: "SET_TOKEN", payload: localStorageToken });
-    }
+    (async () => {
+      const localStorageToken = await storage.get("8lwtf_token");
+      if (localStorageToken) {
+        dispatch({ type: "SET_TOKEN", payload: localStorageToken });
+      }
+    })();
   }, []);
 
   const makeToken = async () => {
@@ -330,42 +339,44 @@ function Home() {
   };
 
   useEffect(() => {
-    const defaultUrl = process.env.NEXT_PUBLIC_DEFAULT_URL || "";
-    const urlParam = searchParams.get("url") || defaultUrl;
-    const queryToken = searchParams.get("token");
+    (async () => {
+      const defaultUrl = process.env.NEXT_PUBLIC_DEFAULT_URL || "";
+      const urlParam = searchParams.get("url") || defaultUrl;
+      const queryToken = searchParams.get("token");
 
-    if (queryToken) {
-      if (isValidToken(queryToken)) {
-        const encryptedSeed = encrypt(SEED, queryToken);
-        dispatch({
-          type: "INITIALIZE_FROM_PARAMS",
-          payload: {
-            url: urlParam,
-            token: queryToken,
-            seed: encryptedSeed,
-          },
-        });
-        localStorage.setItem(CONFIG.tokenStorageKey, queryToken);
+      if (queryToken) {
+        if (isValidToken(queryToken)) {
+          const encryptedSeed = encrypt(SEED, queryToken);
+          dispatch({
+            type: "INITIALIZE_FROM_PARAMS",
+            payload: {
+              url: urlParam,
+              token: queryToken,
+              seed: encryptedSeed,
+            },
+          });
+          storage.set(CONFIG.tokenStorageKey, queryToken);
+        } else {
+          dispatch({ type: "SET_ERROR", payload: "Invalid token" });
+        }
       } else {
-        dispatch({ type: "SET_ERROR", payload: "Invalid token" });
+        const storedToken = await storage.get(CONFIG.tokenStorageKey);
+        if (storedToken && isValidToken(storedToken)) {
+          const encryptedSeed = encrypt(SEED, storedToken);
+          dispatch({
+            type: "INITIALIZE_FROM_PARAMS",
+            payload: {
+              url: urlParam,
+              token: storedToken,
+              seed: encryptedSeed,
+            },
+          });
+          router.push(`/?token=${storedToken}`);
+        } else {
+          dispatch({ type: "SET_URL", payload: urlParam });
+        }
       }
-    } else {
-      const storedToken = localStorage.getItem(CONFIG.tokenStorageKey);
-      if (storedToken && isValidToken(storedToken)) {
-        const encryptedSeed = encrypt(SEED, storedToken);
-        dispatch({
-          type: "INITIALIZE_FROM_PARAMS",
-          payload: {
-            url: urlParam,
-            token: storedToken,
-            seed: encryptedSeed,
-          },
-        });
-        router.push(`/?token=${storedToken}`);
-      } else {
-        dispatch({ type: "SET_URL", payload: urlParam });
-      }
-    }
+    })();
   }, [searchParams, router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

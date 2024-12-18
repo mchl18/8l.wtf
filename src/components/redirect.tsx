@@ -5,6 +5,7 @@ import { decrypt, encrypt, SEED } from "@/lib/crypto";
 import { Card, CardContent } from "./ui/card";
 import Link from "next/link";
 import { CONFIG } from "@/config";
+import storage from "@/lib/storage";
 
 const REDIRECT_DELAY = parseInt(
   process.env.NEXT_PUBLIC_REDIRECT_DELAY || "5000"
@@ -57,23 +58,25 @@ export default function RedirectPage() {
   const { data, error } = useUrlBySeed(shortId, state.seed);
 
   useEffect(() => {
-    dispatch({ type: "SET_START_TIME", payload: Date.now() });
-    const storedToken = localStorage.getItem(CONFIG.tokenStorageKey);
-    if (storedToken) {
-      dispatch({ type: "SET_TOKEN", payload: storedToken });
-    }
-    const paramsToken = searchParams.get("token");
-    if (paramsToken) {
-      dispatch({ type: "SET_TOKEN", payload: paramsToken });
-      if (!storedToken) {
-        localStorage.setItem(CONFIG.tokenStorageKey, paramsToken);
+    (async () => {
+      dispatch({ type: "SET_START_TIME", payload: Date.now() });
+      const storedToken = await storage.get(CONFIG.tokenStorageKey);
+      if (storedToken) {
+        dispatch({ type: "SET_TOKEN", payload: storedToken });
       }
-    }
+      const paramsToken = searchParams.get("token");
+      if (paramsToken) {
+        dispatch({ type: "SET_TOKEN", payload: paramsToken });
+        if (!storedToken) {
+          storage.set(CONFIG.tokenStorageKey, paramsToken);
+        }
+      }
 
-    const finalToken = storedToken || paramsToken || "";
-    if (finalToken) {
-      dispatch({ type: "SET_SEED", payload: encrypt(SEED, finalToken) });
-    }
+      const finalToken = storedToken || paramsToken || "";
+      if (finalToken) {
+        dispatch({ type: "SET_SEED", payload: encrypt(SEED, finalToken) });
+      }
+    })();
   }, [searchParams]);
 
   useEffect(() => {

@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useDeleteUrls, useUrlsBySeed } from "@/lib/queries";
 import { AdminSkeleton } from "@/components/admin-skeleton";
 import { CONFIG } from "@/config";
+import storage from "@/lib/storage";
 
 type State = {
   token: string;
@@ -97,10 +98,12 @@ export default function AdminPage() {
   } = useDeleteUrls(state.seed);
 
   useEffect(() => {
-    const token = localStorage.getItem(CONFIG.tokenStorageKey);
-    if (token) {
-      dispatch({ type: "SET_TOKEN", payload: token });
-    }
+    (async () => {
+      const token = await storage.get(CONFIG.tokenStorageKey);
+      if (token) {
+        dispatch({ type: "SET_TOKEN", payload: token });
+      }
+    })();
   }, []);
 
   const generateQRCode = async (url: string, isEncrypted: boolean) => {
