@@ -41,6 +41,7 @@ import Image from "next/image";
 import RedirectPage from "@/components/redirect";
 import { HomeSkeleton } from "@/components/home-skeleton";
 import { SwitchIfQueryParam } from "@/components/switch-if-query-param";
+import { CONFIG } from "@/config";
 
 type State = {
   url: string;
@@ -116,7 +117,7 @@ function reducer(state: State, action: Action): State {
     case "SET_ERROR":
       return { ...state, error: action.payload };
     case "SET_TOKEN": {
-      localStorage.setItem("8lwtf_token", action.payload);
+      localStorage.setItem(CONFIG.tokenStorageKey, action.payload);
       return { ...state, token: action.payload };
     }
     case "SET_IS_PRIVATE":
@@ -135,7 +136,7 @@ function reducer(state: State, action: Action): State {
     case "SET_CUSTOM_DURATION_UNIT":
       return { ...state, customDurationUnit: action.payload };
     case "SET_DURATION_FOREVER":
-      localStorage.setItem("8lwtf_duration_mode", "forever");
+      localStorage.setItem(CONFIG.durationModeStorageKey, "forever");
       return {
         ...state,
         maxAge: 0,
@@ -143,7 +144,7 @@ function reducer(state: State, action: Action): State {
         selectedMode: "forever",
       };
     case "SET_DURATION_PRESET":
-      localStorage.setItem("8lwtf_duration_mode", "preset");
+      localStorage.setItem(CONFIG.durationModeStorageKey, "preset");
       return {
         ...state,
         maxAge: action.payload,
@@ -151,7 +152,7 @@ function reducer(state: State, action: Action): State {
         selectedMode: "preset",
       };
     case "SET_DURATION_CUSTOM":
-      localStorage.setItem("8lwtf_duration_mode", "custom");
+      localStorage.setItem(CONFIG.durationModeStorageKey, "custom");
       return {
         ...state,
         maxAge: action.payload,
@@ -163,11 +164,17 @@ function reducer(state: State, action: Action): State {
     case "SET_DONT_SHOW_INVITE_DISCLAIMER_AGAIN":
       return { ...state, dontShowInviteDisclaimer: action.payload };
     case "SET_SHOW_PRIVATE_DISCLAIMER": {
-      localStorage.setItem("dontShowPrivateDisclaimer", `${action.payload}`);
+      localStorage.setItem(
+        CONFIG.dontShowPrivateDisclaimerStorageKey,
+        `${action.payload}`
+      );
       return { ...state, showPrivateDisclaimerAgain: action.payload };
     }
     case "SET_SHOW_INVITE_DISCLAIMER": {
-      localStorage.setItem("dontShowInviteDisclaimer", `${action.payload}`);
+      localStorage.setItem(
+        CONFIG.dontShowInviteDisclaimerStorageKey,
+        `${action.payload}`
+      );
       return { ...state, showInviteDisclaimerAgain: action.payload };
     }
     case "INITIALIZE_FROM_PARAMS":
@@ -196,7 +203,7 @@ function Home() {
   }, [state]);
 
   useEffect(() => {
-    const durationMode = localStorage.getItem("8lwtf_duration_mode");
+    const durationMode = localStorage.getItem(CONFIG.durationModeStorageKey);
 
     switch (durationMode) {
       case "forever":
@@ -228,7 +235,7 @@ function Home() {
 
   useEffect(() => {
     const localStorageDontShowPrivateDisclaimer = localStorage.getItem(
-      "8lwtf_dont_show_private_disclaimer"
+      CONFIG.dontShowPrivateDisclaimerStorageKey
     );
     if (localStorageDontShowPrivateDisclaimer === "true") {
       dispatch({
@@ -240,13 +247,13 @@ function Home() {
 
   useEffect(() => {
     if (state.dontShowPrivateDisclaimer) {
-      localStorage.setItem("8lwtf_dont_show_private_disclaimer", "true");
+      localStorage.setItem(CONFIG.dontShowPrivateDisclaimerStorageKey, "true");
     }
   }, [state.dontShowPrivateDisclaimer]);
 
   useEffect(() => {
     const localStorageDontShowInviteDisclaimer = localStorage.getItem(
-      "8lwtf_dont_show_invite_disclaimer"
+      CONFIG.dontShowInviteDisclaimerStorageKey
     );
     if (localStorageDontShowInviteDisclaimer === "true") {
       dispatch({
@@ -258,7 +265,7 @@ function Home() {
 
   useEffect(() => {
     if (state.dontShowInviteDisclaimer) {
-      localStorage.setItem("8lwtf_dont_show_invite_disclaimer", "true");
+      localStorage.setItem(CONFIG.dontShowInviteDisclaimerStorageKey, "true");
     }
   }, [state.dontShowInviteDisclaimer]);
 
@@ -276,7 +283,7 @@ function Home() {
     reset,
   } = useShortenUrl(
     state.url,
-    state.seed ,
+    state.seed,
     state.selectedMode === "preset"
       ? state.presetValue
       : state.selectedMode === "custom"
@@ -338,12 +345,12 @@ function Home() {
             seed: encryptedSeed,
           },
         });
-        localStorage.setItem("8lwtf_token", queryToken);
+        localStorage.setItem(CONFIG.tokenStorageKey, queryToken);
       } else {
         dispatch({ type: "SET_ERROR", payload: "Invalid token" });
       }
     } else {
-      const storedToken = localStorage.getItem("8lwtf_token");
+      const storedToken = localStorage.getItem(CONFIG.tokenStorageKey);
       if (storedToken && isValidToken(storedToken)) {
         const encryptedSeed = encrypt(SEED, storedToken);
         dispatch({

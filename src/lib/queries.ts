@@ -20,6 +20,7 @@ export const useQrCode = (
     enabled: !!text,
   });
 };
+
 export const useUrlBySeed = (
   shortId: string,
   seed?: string
@@ -59,7 +60,7 @@ export const useUrlsBySeed = (
       }
 
       const json = await response.json();
-      debugger
+
       return json.urls.map((url: ShortenedUrl) => ({
         ...url,
         url: url.isEncrypted ? decrypt(url.url, token) : url.url,

@@ -20,6 +20,7 @@ import QRCode from "qrcode";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDeleteUrls, useUrlsBySeed } from "@/lib/queries";
 import { AdminSkeleton } from "@/components/admin-skeleton";
+import { CONFIG } from "@/config";
 
 type State = {
   token: string;
@@ -96,7 +97,7 @@ export default function AdminPage() {
   } = useDeleteUrls(state.seed);
 
   useEffect(() => {
-    const token = localStorage.getItem("8lwtf_token");
+    const token = localStorage.getItem(CONFIG.tokenStorageKey);
     if (token) {
       dispatch({ type: "SET_TOKEN", payload: token });
     }

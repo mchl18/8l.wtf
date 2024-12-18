@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { decrypt, encrypt, SEED } from "@/lib/crypto";
 import { Card, CardContent } from "./ui/card";
 import Link from "next/link";
+import { CONFIG } from "@/config";
 
 const REDIRECT_DELAY = parseInt(
   process.env.NEXT_PUBLIC_REDIRECT_DELAY || "5000"
@@ -57,7 +58,7 @@ export default function RedirectPage() {
 
   useEffect(() => {
     dispatch({ type: "SET_START_TIME", payload: Date.now() });
-    const storedToken = localStorage.getItem("8lwtf_token");
+    const storedToken = localStorage.getItem(CONFIG.tokenStorageKey);
     if (storedToken) {
       dispatch({ type: "SET_TOKEN", payload: storedToken });
     }
@@ -65,7 +66,7 @@ export default function RedirectPage() {
     if (paramsToken) {
       dispatch({ type: "SET_TOKEN", payload: paramsToken });
       if (!storedToken) {
-        localStorage.setItem("8lwtf_token", paramsToken);
+        localStorage.setItem(CONFIG.tokenStorageKey, paramsToken);
       }
     }
 
