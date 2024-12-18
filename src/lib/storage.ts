@@ -1,19 +1,22 @@
 type StorageAdapter = {
-  get: (key: string) => Promise<any>;
-  set: (key: string, value: any) => Promise<void>;
-  remove: (key: string) => Promise<void>;
+  get: (key: string, storeName?: string) => Promise<any>;
+  set: (key: string, value: any, storeName?: string) => Promise<void>;
+  remove: (key: string, storeName?: string) => Promise<void>;
+  getAll: (storeName?: string) => Promise<any[]> | any[];
+  type: "indexed-db" | "local-storage";
 };
 
 class IndexedDBAdapter implements StorageAdapter {
   private dbName = "8lwtf_storage";
-  private storeName = "keyval";
+  private storeNames = ["keyval", "token"];
   private db: IDBDatabase | null = null;
+  type: "indexed-db" = "indexed-db";
 
   private async getDB(): Promise<IDBDatabase> {
     if (this.db) return this.db;
 
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.dbName, 1);
+      const request = indexedDB.open(this.dbName, 2);
 
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
@@ -22,52 +25,69 @@ class IndexedDBAdapter implements StorageAdapter {
       };
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        db.createObjectStore(this.storeName);
+        this.storeNames.forEach((storeName) => {
+          if (db.objectStoreNames.contains(storeName)) {
+            db.deleteObjectStore(storeName);
+          }
+          db.createObjectStore(storeName);
+        });
       };
     });
   }
 
-  async get(key: string): Promise<any> {
+  async get(key: string, storeName: string = "keyval"): Promise<any> {
     const db = await this.getDB();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.storeName, "readonly");
-      const store = transaction.objectStore(this.storeName);
+      const transaction = db.transaction([storeName], "readonly");
+      const store = transaction.objectStore(storeName);
       const request = store.get(key);
 
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
-        try {
-          if (typeof request.result === "string") {
-            resolve(JSON.parse(request.result));
-          } else {
-            resolve(request.result);
-          }
-        } catch (e) {
-          resolve(request.result);
-        }
+        resolve(request.result);
+        // try {
+        //   if (typeof request.result === "string") {
+        //     resolve(JSON.parse(request.result));
+        //   } else {
+        //   }
+        // } catch (e) {
+        //   resolve(request.result);
+        // }
       };
     });
   }
 
-  async set(key: string, value: any): Promise<void> {
+  async getAll(storeName: string = "keyval"): Promise<any[]> {
     const db = await this.getDB();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.storeName, "readwrite");
-      const store = transaction.objectStore(this.storeName);
-      const valueToStore =
-        typeof value === "string" ? value : JSON.stringify(value);
-      const request = store.put(valueToStore, key);
+      const transaction = db.transaction([storeName], "readonly");
+      const store = transaction.objectStore(storeName);
+      const request = store.getAll();
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+    });
+  }
 
+  async set(
+    key: string,
+    value: any,
+    storeName: string = "keyval"
+  ): Promise<void> {
+    const db = await this.getDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([storeName], "readwrite");
+      const store = transaction.objectStore(storeName);
+      const request = store.put(value, key);
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve();
     });
   }
 
-  async remove(key: string): Promise<void> {
+  async remove(key: string, storeName: string = "keyval"): Promise<void> {
     const db = await this.getDB();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(this.storeName, "readwrite");
-      const store = transaction.objectStore(this.storeName);
+      const transaction = db.transaction([storeName], "readwrite");
+      const store = transaction.objectStore(storeName);
       const request = store.delete(key);
 
       request.onerror = () => reject(request.error);
@@ -77,8 +97,10 @@ class IndexedDBAdapter implements StorageAdapter {
 }
 
 class LocalStorageAdapter implements StorageAdapter {
-  async get(key: string): Promise<any> {
-    const value = localStorage.getItem(key);
+  type: "local-storage" = "local-storage";
+  get(key: string, storeName: string = "keyval") {
+    if (typeof window === "undefined") return null;
+    const value = localStorage.getItem(`${storeName}_${key}`);
     if (value === null) return null;
     try {
       return JSON.parse(value);
@@ -87,20 +109,35 @@ class LocalStorageAdapter implements StorageAdapter {
     }
   }
 
-  async set(key: string, value: any): Promise<void> {
-    const valueToStore =
-      typeof value === "string" ? value : JSON.stringify(value);
-    localStorage.setItem(key, valueToStore);
+  getAll(storeName: string = "keyval"): any[] {
+    if (typeof window === "undefined") return [];
+    const keys = Object.keys(localStorage).filter((key) =>
+      key.startsWith(`${storeName}_`)
+    );
+    debugger;
+    return keys.map((key) => this.get(key.split("_")[1], storeName));
   }
 
-  async remove(key: string): Promise<void> {
-    localStorage.removeItem(key);
+  async set(
+    key: string,
+    value: any,
+    storeName: string = "keyval"
+  ): Promise<void> {
+    if (typeof window === "undefined") return;
+    const valueToStore =
+      typeof value === "string" ? value : JSON.stringify(value);
+    localStorage.setItem(`${storeName}_${key}`, valueToStore);
+  }
+
+  async remove(key: string, storeName: string = "keyval"): Promise<void> {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(`${storeName}_${key}`);
   }
 }
 
 const storage: StorageAdapter = (() => {
   try {
-    if ("indexedDB" in window) {
+    if (typeof window !== "undefined" && "indexedDB" in window) {
       return new IndexedDBAdapter();
     }
   } catch (e) {

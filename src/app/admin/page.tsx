@@ -15,7 +15,7 @@ import {
   QrCodeIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { SEED, encrypt } from "@/lib/crypto";
+import { SEED, encrypt, generateShortIdentifier } from "@/lib/crypto";
 import QRCode from "qrcode";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDeleteUrls, useUrlsBySeed } from "@/lib/queries";
@@ -32,7 +32,7 @@ type State = {
 
 type Action =
   | { type: "SET_TOKEN"; payload: string }
-  | { type: "SET_SEED"; payload: string }
+  // | { type: "SET_SEED"; payload: string }
   | { type: "SET_DELETING"; payload: boolean }
   | { type: "SET_SELECTED_URLS"; payload: Set<string> }
   | { type: "TOGGLE_URL"; payload: string }
@@ -48,10 +48,11 @@ const initialState: State = {
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case "SET_TOKEN":
-      return { ...state, token: action.payload };
-    case "SET_SEED":
-      return { ...state, seed: action.payload };
+    case "SET_TOKEN": {
+      if (state.token === action.payload) return state;
+      const seed = generateShortIdentifier(SEED, action.payload, 8);
+      return { ...state, token: action.payload, seed };
+    }
     case "SET_DELETING":
       return { ...state, deleting: action.payload };
     case "SET_SELECTED_URLS":
@@ -99,9 +100,17 @@ export default function AdminPage() {
 
   useEffect(() => {
     (async () => {
-      const token = await storage.get(CONFIG.tokenStorageKey);
-      if (token) {
-        dispatch({ type: "SET_TOKEN", payload: token });
+      const tokens = await storage.getAll("token");
+      const newestToken = tokens.reduce((newest, current) => {
+        if (!newest || !newest.createdAt) return current;
+        if (!current || !current.createdAt) return newest;
+        return new Date(current.createdAt) > new Date(newest.createdAt)
+          ? current
+          : newest;
+      }, null);
+
+      if (newestToken?.token) {
+        dispatch({ type: "SET_TOKEN", payload: newestToken.token });
       }
     })();
   }, []);
@@ -182,8 +191,6 @@ export default function AdminPage() {
       dispatch({ type: "CLEAR_SELECTED" });
       return;
     }
-    const encryptedSeed = encrypt(SEED, state.token);
-    dispatch({ type: "SET_SEED", payload: encryptedSeed });
   }, [state.token]);
 
   return (

@@ -29,7 +29,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-import { SEED, encrypt } from "@/lib/crypto";
+import { SEED, generateShortIdentifier } from "@/lib/crypto";
 import { useQrCode, useShortenUrl } from "@/lib/queries";
 import {
   Dialog,
@@ -70,7 +70,6 @@ type Action =
   | { type: "SET_ERROR"; payload: string }
   | { type: "SET_TOKEN"; payload: string }
   | { type: "SET_IS_PRIVATE"; payload: boolean }
-  | { type: "SET_SEED"; payload: string | null }
   | { type: "SET_IS_INVITE"; payload: boolean }
   | { type: "SET_SHOW_QR_MODAL"; payload: boolean }
   | { type: "SET_SHOW_PRIVATE_DISCLAIMER"; payload: boolean }
@@ -85,7 +84,7 @@ type Action =
   | { type: "RESET_TOKEN" }
   | {
       type: "INITIALIZE_FROM_PARAMS";
-      payload: { url: string; token: string; seed: string | null };
+      payload: { url: string; token: string };
     };
 
 const initialState: State = {
@@ -107,10 +106,21 @@ const initialState: State = {
   customDurationUnit: "3600",
 };
 
+const updateToken = async (token: string, seed: string) => {
+  const storedToken = await storage.get(seed, "token");
+  if (!storedToken) {
+    storage.set(seed, { token, createdAt: new Date().toISOString() }, "token");
+  }
+};
+
 function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case "SET_URL":
+    case "SET_URL": {
+      if (state.url && state.url === action.payload) {
+        return state;
+      }
       return { ...state, url: action.payload };
+    }
     case "SET_MAX_AGE":
       return { ...state, maxAge: action.payload };
     case "SET_PRESET_VALUE":
@@ -118,25 +128,42 @@ function reducer(state: State, action: Action): State {
     case "SET_ERROR":
       return { ...state, error: action.payload };
     case "SET_TOKEN": {
-      storage.set(CONFIG.tokenStorageKey, action.payload);
-      return { ...state, token: action.payload };
+      if (state.token && state.token === action.payload) {
+        return state;
+      }
+      const seed = generateShortIdentifier(SEED, action.payload, 8);
+      updateToken(action.payload, seed);
+      return { ...state, token: action.payload, seed };
     }
     case "SET_IS_PRIVATE":
       return { ...state, isEncrypted: action.payload };
-    case "SET_SEED":
-      return { ...state, seed: action.payload };
     case "SET_IS_INVITE":
       return { ...state, isInvite: action.payload };
     case "SET_SHOW_QR_MODAL":
       return { ...state, showQrModal: action.payload };
     case "RESET_TOKEN": {
+      if (!state.token) {
+        return state;
+      }
+      storage.remove(CONFIG.tokenStorageKey);
       return { ...state, token: "", isEncrypted: false, isInvite: false };
     }
-    case "SET_CUSTOM_DURATION":
+    case "SET_CUSTOM_DURATION": {
+      if (state.customDuration === action.payload) {
+        return state;
+      }
       return { ...state, customDuration: action.payload };
-    case "SET_CUSTOM_DURATION_UNIT":
+    }
+    case "SET_CUSTOM_DURATION_UNIT": {
+      if (state.customDurationUnit === action.payload) {
+        return state;
+      }
       return { ...state, customDurationUnit: action.payload };
-    case "SET_DURATION_FOREVER":
+    }
+    case "SET_DURATION_FOREVER": {
+      if (state.selectedMode === "forever") {
+        return state;
+      }
       storage.set(CONFIG.durationModeStorageKey, "forever");
       return {
         ...state,
@@ -144,7 +171,11 @@ function reducer(state: State, action: Action): State {
         presetValue: "",
         selectedMode: "forever",
       };
-    case "SET_DURATION_PRESET":
+    }
+    case "SET_DURATION_PRESET": {
+      if (state.selectedMode === "preset") {
+        return state;
+      }
       storage.set(CONFIG.durationModeStorageKey, "preset");
       return {
         ...state,
@@ -152,7 +183,11 @@ function reducer(state: State, action: Action): State {
         presetValue: action.payload,
         selectedMode: "preset",
       };
-    case "SET_DURATION_CUSTOM":
+    }
+    case "SET_DURATION_CUSTOM": {
+      if (state.selectedMode === "custom") {
+        return state;
+      }
       storage.set(CONFIG.durationModeStorageKey, "custom");
       return {
         ...state,
@@ -160,6 +195,7 @@ function reducer(state: State, action: Action): State {
         presetValue: "",
         selectedMode: "custom",
       };
+    }
     case "SET_DONT_SHOW_PRIVATE_DISCLAIMER_AGAIN":
       return { ...state, dontShowPrivateDisclaimer: action.payload };
     case "SET_DONT_SHOW_INVITE_DISCLAIMER_AGAIN":
@@ -178,8 +214,11 @@ function reducer(state: State, action: Action): State {
       );
       return { ...state, showInviteDisclaimerAgain: action.payload };
     }
-    case "INITIALIZE_FROM_PARAMS":
-      return { ...state, ...action.payload };
+    case "INITIALIZE_FROM_PARAMS": {
+      const seed = generateShortIdentifier(SEED, action.payload.token, 8);
+      updateToken(action.payload.token, seed);
+      return { ...state, ...action.payload, seed };
+    }
     default:
       return state;
   }
@@ -206,7 +245,6 @@ function Home() {
   useEffect(() => {
     (async () => {
       const durationMode = await storage.get(CONFIG.durationModeStorageKey);
-      debugger;
       switch (durationMode) {
         case "forever":
           dispatch({ type: "SET_DURATION_FOREVER" });
@@ -320,22 +358,11 @@ function Home() {
     []
   );
 
-  useEffect(() => {
-    (async () => {
-      const localStorageToken = await storage.get("8lwtf_token");
-      if (localStorageToken) {
-        dispatch({ type: "SET_TOKEN", payload: localStorageToken });
-      }
-    })();
-  }, []);
-
   const makeToken = async () => {
     dispatch({ type: "SET_ERROR", payload: "" });
     const token = generateToken();
     dispatch({ type: "SET_TOKEN", payload: token });
     router.push(`/?token=${token}`);
-    const encryptedSeed = encrypt(SEED, token);
-    dispatch({ type: "SET_SEED", payload: encryptedSeed });
   };
 
   useEffect(() => {
@@ -346,33 +373,28 @@ function Home() {
 
       if (queryToken) {
         if (isValidToken(queryToken)) {
-          const encryptedSeed = encrypt(SEED, queryToken);
           dispatch({
             type: "INITIALIZE_FROM_PARAMS",
             payload: {
               url: urlParam,
               token: queryToken,
-              seed: encryptedSeed,
             },
           });
-          storage.set(CONFIG.tokenStorageKey, queryToken);
         } else {
           dispatch({ type: "SET_ERROR", payload: "Invalid token" });
         }
       } else {
-        const storedToken = await storage.get(CONFIG.tokenStorageKey);
-        if (storedToken && isValidToken(storedToken)) {
-          const encryptedSeed = encrypt(SEED, storedToken);
-          dispatch({
-            type: "INITIALIZE_FROM_PARAMS",
-            payload: {
-              url: urlParam,
-              token: storedToken,
-              seed: encryptedSeed,
-            },
-          });
-          router.push(`/?token=${storedToken}`);
-        } else {
+        const tokens = await storage.getAll("token");
+        const newestToken = tokens.reduce((newest, current) => {
+          if (!newest || !newest.createdAt) return current;
+          if (!current || !current.createdAt) return newest;
+          return new Date(current.createdAt) > new Date(newest.createdAt)
+            ? current
+            : newest;
+        }, null);
+        if (newestToken?.token && isValidToken(newestToken.token)) {
+          dispatch({ type: "SET_TOKEN", payload: newestToken.token });
+        } else if (!newestToken?.token) {
           dispatch({ type: "SET_URL", payload: urlParam });
         }
       }
@@ -436,7 +458,7 @@ function Home() {
           });
         }}
         placeholder="Custom expiry"
-        className="w-48 text-purple-600 ring-2 ring-purple-500 placeholder:text-purple-400 w-full"
+        className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
         min="0"
       />
     );
@@ -478,6 +500,12 @@ function Home() {
     );
   }, [state.isEncrypted, isValid]);
 
+  const handleResetToken = async () => {
+    dispatch({ type: "RESET_TOKEN" });
+    await storage.remove(CONFIG.tokenStorageKey);
+    router.push("/");
+  };
+
   return (
     <>
       <h1 className="text-purple-600 text-2xl mt-12 lg:mt-24">8l.wtf</h1>
@@ -500,11 +528,7 @@ function Home() {
                         type="button"
                         size={"icon"}
                         variant="outline"
-                        onClick={async () => {
-                          dispatch({ type: "RESET_TOKEN" });
-                          await storage.remove("8lwtf_token");
-                          router.push("/");
-                        }}
+                        onClick={handleResetToken}
                         className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black px-2 flex-1 md:w-auto"
                       >
                         <TrashIcon className="w-4 h-4" />

@@ -5,7 +5,9 @@
 8 letters is all you need.
 Anonymous, encrypted, and fast.
 
-A secure, fast URL shortener service built with Next.js.
+A secure, fast URL shortener service.
+Built with Next.js but for self-hosting.
+Static exports, separate single server instance.
 
 ## Live Demo
 

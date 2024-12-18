@@ -1,7 +1,7 @@
 import { useEffect, useReducer } from "react";
 import { useUrlBySeed } from "@/lib/queries";
 import { useSearchParams } from "next/navigation";
-import { decrypt, encrypt, SEED } from "@/lib/crypto";
+import { decrypt, generateShortIdentifier, SEED } from "@/lib/crypto";
 import { Card, CardContent } from "./ui/card";
 import Link from "next/link";
 import { CONFIG } from "@/config";
@@ -60,21 +60,23 @@ export default function RedirectPage() {
   useEffect(() => {
     (async () => {
       dispatch({ type: "SET_START_TIME", payload: Date.now() });
-      const storedToken = await storage.get(CONFIG.tokenStorageKey);
-      if (storedToken) {
-        dispatch({ type: "SET_TOKEN", payload: storedToken });
+      const storedTokenArray = await storage.get(CONFIG.tokenStorageKey);
+      if (storedTokenArray) {
+        dispatch({ type: "SET_TOKEN", payload: storedTokenArray[0] });
       }
       const paramsToken = searchParams.get("token");
       if (paramsToken) {
+        const seed = generateShortIdentifier(SEED, paramsToken, 8);
         dispatch({ type: "SET_TOKEN", payload: paramsToken });
-        if (!storedToken) {
-          storage.set(CONFIG.tokenStorageKey, paramsToken);
+        if (!storedTokenArray) {
+          storage.set(CONFIG.tokenStorageKey, [paramsToken, seed]);
         }
       }
 
-      const finalToken = storedToken || paramsToken || "";
+      const finalToken = storedTokenArray?.[0] || paramsToken || "";
       if (finalToken) {
-        dispatch({ type: "SET_SEED", payload: encrypt(SEED, finalToken) });
+        const seed = generateShortIdentifier(SEED, finalToken, 8);
+        dispatch({ type: "SET_SEED", payload: seed });
       }
     })();
   }, [searchParams]);
