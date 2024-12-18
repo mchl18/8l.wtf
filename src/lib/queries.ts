@@ -59,9 +59,10 @@ export const useUrlsBySeed = (
       }
 
       const json = await response.json();
+      debugger
       return json.urls.map((url: ShortenedUrl) => ({
         ...url,
-        url: decrypt(url.url, token),
+        url: url.isEncrypted ? decrypt(url.url, token) : url.url,
       }));
     },
     enabled: !!seed,
@@ -72,12 +73,12 @@ export const useShortenUrl = (
   url: string,
   seed?: string | null,
   maxAge?: number | string,
-  isPrivate?: boolean,
+  isEncrypted?: boolean,
   token?: string
 ) => {
   return useMutation({
     mutationFn: async () => {
-      if (isPrivate && (!token || !seed)) {
+      if (isEncrypted && (!token || !seed)) {
         throw new Error("Seed is required");
       }
       const response = await fetch(`${API_URL}/api/shorten`, {
@@ -86,7 +87,8 @@ export const useShortenUrl = (
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          url: isPrivate && token ? encrypt(url, token) : url,
+          url: isEncrypted && token ? encrypt(url, token) : url,
+          isEncrypted: isEncrypted && !!token,
           seed,
           maxAge: maxAge ? parseInt(maxAge as string) : 0,
         }),

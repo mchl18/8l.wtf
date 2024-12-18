@@ -348,7 +348,7 @@ export default function AdminPage() {
                                 </Button>
                               </p>
 
-                              {state.token && (
+                              {url.isEncrypted && (
                                 <div className="text-sm sm:text-base">
                                   <p className="text-purple-600 flex flex-wrap items-center gap-2">
                                     <span className="font-bold">

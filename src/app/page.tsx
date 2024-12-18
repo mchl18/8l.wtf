@@ -49,7 +49,7 @@ type State = {
   error: string;
   selectedMode: "forever" | "custom" | "preset" | "";
   token: string;
-  isPrivate: boolean;
+  isEncrypted: boolean;
   seed: string | null;
   isInvite: boolean;
   showQrModal: boolean;
@@ -93,7 +93,7 @@ const initialState: State = {
   error: "",
   selectedMode: "",
   token: "",
-  isPrivate: false,
+  isEncrypted: false,
   seed: null,
   isInvite: false,
   showQrModal: false,
@@ -120,7 +120,7 @@ function reducer(state: State, action: Action): State {
       return { ...state, token: action.payload };
     }
     case "SET_IS_PRIVATE":
-      return { ...state, isPrivate: action.payload };
+      return { ...state, isEncrypted: action.payload };
     case "SET_SEED":
       return { ...state, seed: action.payload };
     case "SET_IS_INVITE":
@@ -128,7 +128,7 @@ function reducer(state: State, action: Action): State {
     case "SET_SHOW_QR_MODAL":
       return { ...state, showQrModal: action.payload };
     case "RESET_TOKEN": {
-      return { ...state, token: "", isPrivate: false, isInvite: false };
+      return { ...state, token: "", isEncrypted: false, isInvite: false };
     }
     case "SET_CUSTOM_DURATION":
       return { ...state, customDuration: action.payload };
@@ -190,7 +190,7 @@ function Home() {
   };
 
   useEffect(() => {
-    if (!state.isPrivate && state.isInvite) {
+    if (!state.isEncrypted && state.isInvite) {
       dispatch({ type: "SET_IS_INVITE", payload: false });
     }
   }, [state]);
@@ -215,10 +215,10 @@ function Home() {
   }, []);
 
   useEffect(() => {
-    if (state.isPrivate && !state.dontShowPrivateDisclaimer) {
+    if (state.isEncrypted && !state.dontShowPrivateDisclaimer) {
       dispatch({ type: "SET_SHOW_PRIVATE_DISCLAIMER", payload: true });
     }
-  }, [state.isPrivate, state.dontShowPrivateDisclaimer]);
+  }, [state.isEncrypted, state.dontShowPrivateDisclaimer]);
 
   useEffect(() => {
     if (state.isInvite && !state.dontShowInviteDisclaimer) {
@@ -276,19 +276,19 @@ function Home() {
     reset,
   } = useShortenUrl(
     state.url,
-    state.isPrivate ? state.seed : null,
+    state.seed ,
     state.selectedMode === "preset"
       ? state.presetValue
       : state.selectedMode === "custom"
       ? finalCustomDuration
       : state.maxAge,
-    state.isPrivate,
+    state.isEncrypted,
     state.token
   );
 
   useEffect(() => {
     reset();
-  }, [state.isPrivate, reset]);
+  }, [state.isEncrypted, reset]);
 
   const { data: qrCode, isLoading: isQrLoading } = useQrCode(
     state.isInvite
@@ -396,7 +396,7 @@ function Home() {
   const memoizedTokenInput = useMemo(() => {
     return (
       <Input
-        value={state.token}
+        value={shortenToken(state.token)}
         onChange={(e) =>
           dispatch({ type: "SET_TOKEN", payload: e.target.value })
         }
@@ -429,7 +429,7 @@ function Home() {
       <Checkbox
         id="invite"
         checked={state.isInvite}
-        disabled={!isValidToken(state.token) || !state.isPrivate}
+        disabled={!isValidToken(state.token) || !state.isEncrypted}
         onCheckedChange={(checked) =>
           dispatch({
             type: "SET_IS_INVITE",
@@ -439,13 +439,13 @@ function Home() {
         className="border-purple-600 data-[state=checked]:bg-purple-600"
       />
     );
-  }, [state.isInvite, isValidToken(state.token), state.isPrivate]);
+  }, [state.isInvite, isValidToken(state.token), state.isEncrypted]);
 
   const memoizedPrivateCheckbox = useMemo(() => {
     return (
       <Checkbox
         id="private"
-        checked={state.isPrivate}
+        checked={state.isEncrypted}
         disabled={!isValidToken(state.token)}
         onCheckedChange={(checked) =>
           dispatch({
@@ -456,7 +456,7 @@ function Home() {
         className="border-purple-600 data-[state=checked]:bg-purple-600"
       />
     );
-  }, [state.isPrivate, isValidToken(state.token)]);
+  }, [state.isEncrypted, isValidToken(state.token)]);
 
   return (
     <>
