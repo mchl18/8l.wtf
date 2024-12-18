@@ -15,7 +15,7 @@ export async function POST(request: Request) {
 
   for (const shortId of shortIds) {
     // Check if URL is marked as deleted
-    const metadata = await db.get<{ deleted: boolean }>(`url:${shortId}:meta`);
+    const metadata = await db.get<{ deleted: boolean, isEncrypted: boolean }>(`url:${shortId}:meta`);
     const isDeleted =
       metadata && typeof metadata === "object" && metadata.deleted === true;
 
@@ -30,7 +30,8 @@ export async function POST(request: Request) {
           url: encryptedUrl,
           fullUrl: `${hostUrl}?q=${shortId}`,
           deleteProxyUrl: `${hostUrl}/delete-proxy?q=${shortId}`,
-          isEncrypted: true,
+          isEncrypted: metadata?.isEncrypted || false,
+          seed: seed || "",
           expiresAt: expiresAt
             ? new Date(expiresAt as string).toISOString()
             : undefined,

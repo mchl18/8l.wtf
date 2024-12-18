@@ -4,28 +4,29 @@ import { NextResponse } from "next/server";
 import { getDatabase } from "@/lib/adapters";
 
 export async function POST(request: Request) {
-  const { url, maxAge, seed } = await request.json();
+  const { url, maxAge, seed, isEncrypted } = await request.json();
   const hostUrl = getHostUrl();
   const db = await getDatabase();
 
-  const urlsSet = seed ? "authenticated_urls" : "anonymous_urls";
+  const urlsSet = isEncrypted ? "encrypted_urls" : "anonymous_urls";
 
-  if (!seed) {
-    const existingEntries = await db.smembers("anonymous_urls");
-    for (const entry of existingEntries) {
-      const [shortId, storedUrl] = entry.split("::");
-      if (storedUrl === url) {
-        const expiresAt = await db.get(`${shortId}:expires`);
-        return NextResponse.json({
-          shortId,
-          fullUrl: `${hostUrl}?q=${shortId}`,
-          deleteProxyUrl: `${hostUrl}/delete-proxy?q=${shortId}`,
-          isEncrypted: false,
-          expiresAt: expiresAt
-            ? new Date(expiresAt as string).toISOString()
-            : undefined,
-        });
-      }
+  const existingEntries = await db.smembers("anonymous_urls");
+  for (const entry of existingEntries) {
+    const [shortId, storedUrl] = entry.split("::");
+    if (storedUrl === url) {
+      const expiresAt = await db.get(`${shortId}:expires`);
+      const metadata = await db.get<{ isEncrypted: boolean }>(
+        `url:${shortId}:meta`
+      );
+      return NextResponse.json({
+        shortId,
+        fullUrl: `${hostUrl}?q=${shortId}`,
+        deleteProxyUrl: `${hostUrl}/delete-proxy?q=${shortId}`,
+        isEncrypted: metadata?.isEncrypted || false,
+        expiresAt: expiresAt
+          ? new Date(expiresAt as string).toISOString()
+          : undefined,
+      });
     }
   }
 
@@ -33,17 +34,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid seed" }, { status: 401 });
   }
 
+  const idLength = parseInt(process.env.ID_LENGTH || "8");
   let shortId;
   let existingUrl;
-  const idLength = parseInt(process.env.ID_LENGTH || "8");
 
-  // Generate a shortId until it's not in the database
   do {
     shortId = nanoid(idLength);
     existingUrl = await db.get(shortId);
   } while (existingUrl);
-
-  await db.set(`url:${shortId}:meta`, { authenticated: !!seed });
+  await db.set(`url:${shortId}:meta`, {
+    seed: seed || undefined,
+    isEncrypted,
+  });
   await db.sadd(urlsSet, `${shortId}::${url}`);
 
   if (seed) {
@@ -62,7 +64,8 @@ export async function POST(request: Request) {
     shortId,
     fullUrl: `${hostUrl}?q=${shortId}`,
     deleteProxyUrl: `${hostUrl}/delete-proxy?q=${shortId}`,
-    isEncrypted: !!seed,
+    isEncrypted: isEncrypted,
+    seed: seed,
     expiresAt,
   });
 }
@@ -104,7 +107,7 @@ export async function DELETE(request: Request) {
 
       // 1. Update metadata to mark as deleted
       await db.set(`url:${shortId}:meta`, {
-        authenticated: true,
+        isEncrypted: true,
         deleted: true,
         deletedAt,
       });

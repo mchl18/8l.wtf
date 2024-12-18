@@ -498,9 +498,9 @@ function Home() {
                         type="button"
                         size={"icon"}
                         variant="outline"
-                        onClick={() => {
+                        onClick={async () => {
                           dispatch({ type: "RESET_TOKEN" });
-                          storage.remove("8lwtf_token");
+                          await storage.remove("8lwtf_token");
                           router.push("/");
                         }}
                         className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black px-2 flex-1 md:w-auto"

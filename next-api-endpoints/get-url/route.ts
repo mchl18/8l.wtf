@@ -40,17 +40,17 @@ export async function POST(request: Request) {
         // Parallelize initial DB queries
         const [meta, url, expiresAt, isUrlOwnedBySeed, encryptedUrl] =
           await Promise.all([
-            transaction.get<{ authenticated: boolean }>(`url:${shortId}:meta`),
+            transaction.get<{ isEncrypted: boolean }>(`url:${shortId}:meta`),
             transaction.get(shortId),
             transaction.get(`${shortId}:expires`),
             transaction.sismember(`token:${seed}:urls`, shortId),
             transaction.get(shortId),
           ]);
 
-        const isAuthenticated = meta?.authenticated;
+        const isEncrypted = meta?.isEncrypted;
 
         // Handle non-authenticated URLs
-        if (!isAuthenticated) {
+        if (!isEncrypted) {
           if (!url) {
             await transaction.rollback();
             return NextResponse.json(
