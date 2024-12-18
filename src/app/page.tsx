@@ -728,14 +728,20 @@ function Home() {
         GitHub
       </Link>
 
-      <Image
-        src="https://status.mgerullis.com/api/badge/1/uptime?style=social"
-        alt="uptime"
-        unoptimized
-        width={150}
-        height={23}
-        className="mt-8"
-      />
+      <Link
+        href={`https://status.mgerullis.com/status/8l-wtf`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <Image
+          src="https://status.mgerullis.com/api/badge/1/uptime?style=social"
+          alt="uptime"
+          unoptimized
+          width={150}
+          height={23}
+          className="mt-8"
+        />
+      </Link>
 
       <Dialog
         open={state.showPrivateDisclaimerAgain}
