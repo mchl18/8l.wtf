@@ -73,7 +73,6 @@ export async function POST(request: Request) {
         }
 
         if (!seed || !validateEncryptedSeedFormat(seed)) {
-
           await transaction.rollback();
           return NextResponse.json({ error: "Invalid seed" }, { status: 401 });
         }

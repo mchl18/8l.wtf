@@ -381,6 +381,83 @@ function Home() {
     document.body.removeChild(link);
   };
 
+  const memoizedUrlInput = useMemo(() => {
+    return (
+      <Input
+        value={state.url}
+        onChange={(e) => dispatch({ type: "SET_URL", payload: e.target.value })}
+        placeholder="Enter URL to shorten"
+        required
+        className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
+      />
+    );
+  }, [state.url]);
+
+  const memoizedTokenInput = useMemo(() => {
+    return (
+      <Input
+        value={state.token}
+        onChange={(e) =>
+          dispatch({ type: "SET_TOKEN", payload: e.target.value })
+        }
+        placeholder="Custom token (optional)"
+        className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
+      />
+    );
+  }, [state.token]);
+
+  const memoizedCustomDurationInput = useMemo(() => {
+    return (
+      <Input
+        type="number"
+        value={state.customDuration}
+        onChange={(e) => {
+          dispatch({
+            type: "SET_CUSTOM_DURATION",
+            payload: Number(e.target.value),
+          });
+        }}
+        placeholder="Custom expiry"
+        className="w-48 text-purple-600 ring-2 ring-purple-500 placeholder:text-purple-400 w-full"
+        min="0"
+      />
+    );
+  }, [state.customDuration, state.customDurationUnit]);
+
+  const memoizedInviteCheckbox = useMemo(() => {
+    return (
+      <Checkbox
+        id="invite"
+        checked={state.isInvite}
+        disabled={!isValidToken(state.token) || !state.isPrivate}
+        onCheckedChange={(checked) =>
+          dispatch({
+            type: "SET_IS_INVITE",
+            payload: checked as boolean,
+          })
+        }
+        className="border-purple-600 data-[state=checked]:bg-purple-600"
+      />
+    );
+  }, [state.isInvite, isValidToken(state.token), state.isPrivate]);
+
+  const memoizedPrivateCheckbox = useMemo(() => {
+    return (
+      <Checkbox
+        id="private"
+        checked={state.isPrivate}
+        disabled={!isValidToken(state.token)}
+        onCheckedChange={(checked) =>
+          dispatch({
+            type: "SET_IS_PRIVATE",
+            payload: checked as boolean,
+          })
+        }
+        className="border-purple-600 data-[state=checked]:bg-purple-600"
+      />
+    );
+  }, [state.isPrivate, isValidToken(state.token)]);
+
   return (
     <>
       <h1 className="text-purple-600 text-2xl mt-12 lg:mt-24">8l.wtf</h1>
@@ -392,27 +469,11 @@ function Home() {
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit}>
             <div className="flex flex-col gap-3">
-              <Input
-                value={state.url}
-                onChange={(e) =>
-                  dispatch({ type: "SET_URL", payload: e.target.value })
-                }
-                placeholder="Enter URL to shorten"
-                required
-                className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
-              />
+              {memoizedUrlInput}
 
               <div className="flex flex-col gap-2">
                 <div className="flex flex-col md:flex-row gap-2">
-                  {state.token && (
-                    <Input
-                      type="text"
-                      value={shortenToken(state.token)}
-                      readOnly={true}
-                      placeholder="Custom token (optional)"
-                      className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
-                    />
-                  )}
+                  {memoizedTokenInput}
                   <div className="flex flex-row gap-2 w-full">
                     {state.token && (
                       <Button
@@ -543,19 +604,7 @@ function Home() {
 
               {state.selectedMode === "custom" && (
                 <div className="flex flex-row items-center gap-2 justify-center">
-                  <Input
-                    type="number"
-                    value={state.customDuration}
-                    onChange={(e) => {
-                      dispatch({
-                        type: "SET_CUSTOM_DURATION",
-                        payload: Number(e.target.value),
-                      });
-                    }}
-                    placeholder="Custom expiry"
-                    className="w-48 text-purple-600 ring-2 ring-purple-500 placeholder:text-purple-400 w-full"
-                    min="0"
-                  />
+                  {memoizedCustomDurationInput}
                   <Select
                     value={state.customDurationUnit}
                     onValueChange={(value) => {
@@ -647,18 +696,7 @@ function Home() {
                       !isValidToken(state.token) ? "opacity-50" : ""
                     }`}
                   >
-                    <Checkbox
-                      id="private"
-                      checked={state.isPrivate}
-                      disabled={!isValidToken(state.token)}
-                      onCheckedChange={(checked) =>
-                        dispatch({
-                          type: "SET_IS_PRIVATE",
-                          payload: checked as boolean,
-                        })
-                      }
-                      className="border-purple-600 data-[state=checked]:bg-purple-600"
-                    />
+                    {memoizedPrivateCheckbox}
                     <label htmlFor="private" className="text-purple-600">
                       Private URL
                     </label>
@@ -668,18 +706,7 @@ function Home() {
                       !isValidToken(state.token) ? "opacity-50" : ""
                     }`}
                   >
-                    <Checkbox
-                      id="invite"
-                      checked={state.isInvite}
-                      disabled={!isValidToken(state.token) || !state.isPrivate}
-                      onCheckedChange={(checked) =>
-                        dispatch({
-                          type: "SET_IS_INVITE",
-                          payload: checked as boolean,
-                        })
-                      }
-                      className="border-purple-600 data-[state=checked]:bg-purple-600"
-                    />
+                    {memoizedInviteCheckbox}
                     <label htmlFor="invite" className="text-purple-600">
                       Invite
                     </label>
