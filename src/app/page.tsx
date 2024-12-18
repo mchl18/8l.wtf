@@ -440,14 +440,16 @@ function Home() {
         min="0"
       />
     );
-  }, [state.customDuration, state.customDurationUnit]);
+  }, [state.customDuration]);
+
+  const isValid = isValidToken(state.token);
 
   const memoizedInviteCheckbox = useMemo(() => {
     return (
       <Checkbox
         id="invite"
         checked={state.isInvite}
-        disabled={!isValidToken(state.token) || !state.isEncrypted}
+        disabled={!isValid || !state.isEncrypted}
         onCheckedChange={(checked) =>
           dispatch({
             type: "SET_IS_INVITE",
@@ -457,14 +459,14 @@ function Home() {
         className="border-purple-600 data-[state=checked]:bg-purple-600"
       />
     );
-  }, [state.isInvite, isValidToken(state.token), state.isEncrypted]);
+  }, [state.isInvite, isValid, state.isEncrypted]);
 
   const memoizedPrivateCheckbox = useMemo(() => {
     return (
       <Checkbox
         id="private"
         checked={state.isEncrypted}
-        disabled={!isValidToken(state.token)}
+        disabled={!isValid}
         onCheckedChange={(checked) =>
           dispatch({
             type: "SET_IS_PRIVATE",
@@ -474,7 +476,7 @@ function Home() {
         className="border-purple-600 data-[state=checked]:bg-purple-600"
       />
     );
-  }, [state.isEncrypted, isValidToken(state.token)]);
+  }, [state.isEncrypted, isValid]);
 
   return (
     <>
