@@ -500,7 +500,7 @@ function Home() {
                         variant="outline"
                         onClick={() => {
                           dispatch({ type: "RESET_TOKEN" });
-                          localStorage.removeItem("8lwtf_token");
+                          storage.remove("8lwtf_token");
                           router.push("/");
                         }}
                         className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black px-2 flex-1 md:w-auto"
