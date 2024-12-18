@@ -1,5 +1,7 @@
 # 8l.wtf
 
+![Uptime](https://status.mgerullis.com/api/badge/2/uptime?style=flat-square)
+
 8 letters is all you need.
 Anonymous, encrypted, and fast.
 
