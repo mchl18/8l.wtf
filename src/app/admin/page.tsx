@@ -15,12 +15,11 @@ import {
   QrCodeIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { SEED, encrypt, generateShortIdentifier } from "@/lib/crypto";
+import { SEED, generateShortIdentifier } from "@/lib/crypto";
 import QRCode from "qrcode";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDeleteUrls, useUrlsBySeed } from "@/lib/queries";
 import { AdminSkeleton } from "@/components/admin-skeleton";
-import { CONFIG } from "@/config";
 import storage from "@/lib/storage";
 
 type State = {
@@ -90,6 +89,7 @@ export default function AdminPage() {
     isPending,
     refetch,
     isSuccess,
+    isFetching,
   } = useUrlsBySeed(state.seed, state.token);
 
   const {
@@ -206,7 +206,7 @@ export default function AdminPage() {
           </Button>
         </Link>
         <Card className="bg-black rounded-lg shadow-2xl w-full text-center border-2 border-purple-600 mx-auto">
-          <CardHeader>
+          <CardHeader className="pb-0">
             <CardTitle className="text-purple-600 text-xl sm:text-2xl">
               URL Management Dashboard
             </CardTitle>
@@ -225,11 +225,13 @@ export default function AdminPage() {
                 />
                 <Button
                   onClick={() => refetch()}
-                  disabled={isLoading}
+                  disabled={isLoading || isPending || isFetching}
                   variant="outline"
                   className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black whitespace-nowrap"
                 >
-                  {isLoading ? "Loading..." : "Fetch URLs"}
+                  {isLoading || isPending || isFetching
+                    ? "Loading..."
+                    : "Fetch URLs"}
                 </Button>
               </div>
 
@@ -286,35 +288,39 @@ export default function AdminPage() {
                             key={url.shortId}
                             className="grid grid-cols-[auto,1fr,auto] gap-2 sm:gap-4 items-start border-b border-purple-600 last:border-b-0 pb-4"
                           >
-                            <Checkbox
-                              id={`checkbox-${url.shortId}`}
-                              checked={state.selectedUrls.has(url.shortId)}
-                              onCheckedChange={() =>
-                                dispatch({
-                                  type: "TOGGLE_URL",
-                                  payload: url.shortId,
-                                })
-                              }
-                              className="border-2 border-purple-600 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 mt-1"
-                            />
-                            <div className="text-left space-y-2">
+                            <div className="flex flex-col items-center justify-center h-full">
+                              <Checkbox
+                                id={`checkbox-${url.shortId}`}
+                                checked={state.selectedUrls.has(url.shortId)}
+                                onCheckedChange={() =>
+                                  dispatch({
+                                    type: "TOGGLE_URL",
+                                    payload: url.shortId,
+                                  })
+                                }
+                                className="border-2 border-purple-600 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600 mt-1"
+                              />
+                            </div>
+                            <div className="text-left">
                               <p className="text-purple-600 flex flex-wrap items-center gap-2 text-sm sm:text-base">
                                 <span className="font-bold">Original URL:</span>{" "}
                                 {isPending ? (
                                   <Skeleton className="h-4 w-64" />
                                 ) : (
-                                  <span className="break-all">
+                                  <span className="break-all mr-2">
                                     {cleanUrl(url.url)}
                                   </span>
                                 )}
                                 {url.isEncrypted && (
-                                  <LockIcon className="w-4 h-4 text-purple-600" />
+                                  <LockIcon className="w-4 h-4 text-purple-600 ml-auto" />
                                 )}
                                 <Button
                                   onClick={() => copyToClipboard(url.url)}
                                   variant="ghost"
                                   size="icon"
-                                  className="text-purple-600 hover:text-purple-400"
+                                  className={`text-purple-600 hover:text-purple-400 ${
+                                    !url.isEncrypted ? "ml-auto" : ""
+                                  }`}
                                 >
                                   <LinkIcon className="w-4 h-4" />
                                 </Button>
@@ -328,19 +334,21 @@ export default function AdminPage() {
                                     href={url.fullUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="hover:text-purple-400 break-all"
+                                    className="hover:text-purple-400 mr-2 break-all"
                                   >
                                     {cleanUrl(url.fullUrl)}
                                   </a>
                                 )}
                                 {url.isEncrypted && (
-                                  <LockIcon className="w-4 h-4 text-purple-600" />
+                                  <LockIcon className="w-4 h-4 text-purple-600 ml-auto" />
                                 )}
                                 <Button
                                   onClick={() => copyToClipboard(url.fullUrl)}
                                   variant="ghost"
                                   size="icon"
-                                  className="text-purple-600 hover:text-purple-400"
+                                  className={`text-purple-600 hover:text-purple-400 ${
+                                    !url.isEncrypted ? "ml-auto" : ""
+                                  }`}
                                 >
                                   <LinkIcon className="w-4 h-4" />
                                 </Button>
@@ -369,12 +377,15 @@ export default function AdminPage() {
                                       href={`/?token=${state.token}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="hover:text-purple-400 break-all"
+                                      className="hover:text-purple-400 break-all truncate mr-2 max-w-[200px]"
                                     >
                                       {cleanUrl(
                                         `${url.fullUrl}/?token=${state.token}`
                                       )}
                                     </a>
+                                    {url.isEncrypted && (
+                                      <LockIcon className="w-4 h-4 text-purple-600 ml-auto" />
+                                    )}
                                     <Button
                                       onClick={() =>
                                         copyToClipboard(
@@ -383,7 +394,9 @@ export default function AdminPage() {
                                       }
                                       variant="ghost"
                                       size="icon"
-                                      className="text-purple-600 hover:text-purple-400"
+                                      className={`text-purple-600 hover:text-purple-400 ${
+                                        !url.isEncrypted ? "ml-auto" : ""
+                                      }`}
                                     >
                                       <LinkIcon className="w-4 h-4" />
                                     </Button>
@@ -416,19 +429,21 @@ export default function AdminPage() {
                                 </p>
                               )}
                             </div>
-                            <Button
-                              onClick={() => handleDelete([url.shortId])}
-                              disabled={state.deleting}
-                              variant="destructive"
-                              size="icon"
-                              className="mt-1"
-                            >
-                              {state.deleting ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <TrashIcon className="w-4 h-4" />
-                              )}
-                            </Button>
+                            <div className="flex flex-col items-center justify-center h-full">
+                              <Button
+                                onClick={() => handleDelete([url.shortId])}
+                                disabled={state.deleting}
+                                variant="destructive"
+                                size="icon"
+                                className="mt-1"
+                              >
+                                {state.deleting ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <TrashIcon className="w-4 h-4" />
+                                )}
+                              </Button>
+                            </div>
                           </div>
                         ))}
                   </div>
