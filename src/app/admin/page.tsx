@@ -20,6 +20,7 @@ import { useDeleteUrls, useUrlsBySeed } from "@/lib/queries";
 import { AdminSkeleton } from "@/components/admin-skeleton";
 import storage from "@/lib/storage";
 import { ShortenedUrl } from "@/types";
+import Link from "next/link";
 // import { scan } from "react-scan";
 
 type State = {
@@ -158,7 +159,14 @@ const UrlList = ({
           {isPending ? (
             <Skeleton className="h-4 w-64" />
           ) : (
-            <span className="break-all mr-2">{cleanUrl(url.url)}</span>
+            <Link
+              href={url.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-purple-400 mr-2 break-all"
+            >
+              {cleanUrl(url.url)}
+            </Link>
           )}
           {url.isEncrypted && (
             <LockIcon className="w-4 h-4 text-purple-600 ml-auto" />
@@ -173,20 +181,28 @@ const UrlList = ({
           >
             <LinkIcon className="w-4 h-4" />
           </Button>
+          <Button
+            onClick={() => generateQRCode(url.url, false)}
+            variant="ghost"
+            size="icon"
+            className="text-purple-600 hover:text-purple-400"
+          >
+            <QrCodeIcon className="w-4 h-4" />
+          </Button>
         </p>
         <p className="text-purple-600 flex flex-wrap items-center gap-2 text-sm sm:text-base">
           <span className="font-bold">Short URL:</span>{" "}
           {isPending ? (
             <Skeleton className="h-4 w-48" />
           ) : (
-            <a
+            <Link
               href={url.fullUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-purple-400 mr-2 break-all"
             >
               {cleanUrl(url.fullUrl)}
-            </a>
+            </Link>
           )}
           {url.isEncrypted && (
             <LockIcon className="w-4 h-4 text-purple-600 ml-auto" />
@@ -216,12 +232,12 @@ const UrlList = ({
             <p className="text-purple-600 flex flex-wrap items-center gap-2">
               <span className="font-bold">Invite URL:</span>
               <a
-                href={`/?token=${token}`}
+                href={`${url.fullUrl}&token=${token}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-purple-400 break-all truncate mr-2 max-w-[200px]"
               >
-                {cleanUrl(`${url.fullUrl}/?token=${token}`)}
+                {cleanUrl(`${url.fullUrl}&token=${token}`)}
               </a>
               {url.isEncrypted && (
                 <LockIcon className="w-4 h-4 text-purple-600 ml-auto" />

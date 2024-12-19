@@ -485,7 +485,7 @@ function Home() {
   }, [state.url]);
 
   const memoizedTokenInput = useMemo(() => {
-    return (
+    return state.token ? (
       <Input
         value={shortenToken(state.token)}
         onChange={(e) =>
@@ -494,6 +494,8 @@ function Home() {
         placeholder="Custom token (optional)"
         className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
       />
+    ) : (
+      <></>
     );
   }, [state.token]);
 
