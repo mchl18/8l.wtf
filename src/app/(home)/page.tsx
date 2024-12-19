@@ -2,13 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import {
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-} from "react";
+import { Suspense, useCallback, useEffect, useMemo, useReducer } from "react";
 import {
   Select,
   SelectContent,
@@ -1085,4 +1079,4 @@ export default function Page() {
       </Suspense>
     </>
   );
-};
+}

@@ -20,7 +20,7 @@ import { useDeleteUrls, useUrlsBySeed } from "@/lib/queries";
 import { AdminSkeleton } from "@/components/admin-skeleton";
 import storage from "@/lib/storage";
 import { ShortenedUrl } from "@/types";
-import { scan } from "react-scan";
+// import { scan } from "react-scan";
 
 type State = {
   token: string;
@@ -304,12 +304,12 @@ export default function AdminPage() {
 
   useEffect(() => {
     (async () => {
-      if (typeof window !== "undefined") {
-        scan({
-          enabled: true,
-          log: true, // logs render info to console (default: false)
-        });
-      }
+      // if (typeof window !== "undefined") {
+      //   scan({
+      //     enabled: true,
+      //     log: true, // logs render info to console (default: false)
+      //   });
+      // }
       const tokens = await storage.getAll("token");
       const newestToken = tokens.reduce((newest, current) => {
         if (!newest || !newest.createdAt) return current;

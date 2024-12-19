@@ -1,10 +1,6 @@
-import { Pixelify_Sans } from "next/font/google";
-import "../globals.css";
 import { Metadata } from "next";
 import { getHostUrl } from "@/lib/utils";
 import Providers from "@/lib/providers";
-
-const pixelify = Pixelify_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "8l.wtf",
@@ -33,19 +29,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html className="dark" lang="en">
-      <body className={pixelify.className}>
-        <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
-          <h1 className="text-purple-600 text-2xl mt-12 lg:mt-24">8l.wtf</h1>
-          <p className="text-purple-600 text-center">
-            8 letters is all you need.
-          </p>
-          <p className="text-purple-600 text-center">
-            anonymous, encrypted, and fast.
-          </p>
-          <Providers>{children}</Providers>
-        </div>
-      </body>
-    </html>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
+      <h1 className="text-purple-600 text-2xl mt-12 lg:mt-24">8l.wtf</h1>
+      <p className="text-purple-600 text-center">8 letters is all you need.</p>
+      <p className="text-purple-600 text-center">
+        anonymous, encrypted, and fast.
+      </p>
+      <Providers>{children}</Providers>
+    </div>
   );
 }
