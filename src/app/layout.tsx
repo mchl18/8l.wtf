@@ -35,11 +35,9 @@ export default function RootLayout({
   return (
     <html className="dark" lang="en">
       <body className={pixelify.className}>
-        <Providers>
-          <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
-            {children}
-          </div>
-        </Providers>
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
+          <Providers>{children}</Providers>
+        </div>
       </body>
     </html>
   );
