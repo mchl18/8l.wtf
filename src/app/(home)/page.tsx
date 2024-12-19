@@ -893,7 +893,7 @@ function Home() {
             </DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center gap-4">
-            <p className="text-purple-600">
+            <div className="text-purple-600">
               Please make sure you read these instructions carefully.
               <ul className="list-disc list-inside flex flex-col gap-2">
                 <li>
@@ -909,7 +909,7 @@ function Home() {
                   user to the URL.
                 </li>
               </ul>
-            </p>
+            </div>
           </div>
           <div className="flex flex-col gap-2">
             <div className={`flex items-center gap-2 justify-center`}>
