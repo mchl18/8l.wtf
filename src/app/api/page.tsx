@@ -4,8 +4,6 @@ import { useReducer, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getHostUrl } from "@/lib/utils";
-import { HomeIcon } from "lucide-react";
-import Link from "next/link";
 
 /**
  * Props for the ApiEndpoint component
@@ -147,7 +145,7 @@ function ApiEndpoint({
         <span
           className={`px-2 py-1 rounded text-sm font-mono ml-auto ${getMethodColor(
             method
-        )}`}
+          )}`}
         >
           {method}
         </span>
@@ -484,7 +482,7 @@ export default function ApiPage() {
     },
     {
       title: "6. Generate QR Code",
-      method: "POST", 
+      method: "POST",
       endpoint: "/api/qr",
       requestBody: `{
   "text": "https://example.com",  // Required: text to encode
@@ -496,39 +494,10 @@ export default function ApiPage() {
       responseBody: `{
   "qrCode": "data:image/png;base64,..."  // Base64 encoded PNG image
 }`,
-    }
+    },
   ] as const;
 
-  return (
-    <>
-      <div className="max-w-full mx-auto">
-        <h1 className="text-4xl font-extrabold text-purple-600 text-center mb-4">
-          8l.wtf API
-        </h1>
-
-        <div className="mb-4">
-          <Link href="/">
-            <Button
-              variant="outline"
-              size="icon"
-              className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
-            >
-              <HomeIcon className="w-4 h-4" />
-            </Button>
-          </Link>
-        </div>
-        <div className="bg-black rounded-lg shadow-lg p-8 mb-8 border-2 border-purple-600">
-          <h2 className="text-2xl font-bold text-purple-600 mb-6">
-            API Endpoints
-          </h2>
-
-          <div className="space-y-8">
-            {endpoints.map((endpoint) => (
-              <ApiEndpoint key={endpoint.title} {...endpoint} />
-            ))}
-          </div>
-        </div>
-      </div>
-    </>
-  );
+  return endpoints.map((endpoint) => (
+    <ApiEndpoint key={endpoint.title} {...endpoint} />
+  ));
 }
