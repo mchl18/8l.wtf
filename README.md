@@ -3,7 +3,7 @@
 ![Uptime](https://status.mgerullis.com/api/badge/2/uptime?style=flat-square)
 
 8 letters is all you need.
-Anonymous, encrypted, and fast.
+anonymous, encrypted, and fast.
 
 A secure, fast URL shortener service.
 Built with Next.js but for self-hosting.
