@@ -38,36 +38,32 @@ export default function RootLayout({
   return (
     <html className="dark" lang="en">
       <body className={pixelify.className}>
-        <Providers>
-          <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
-            <div className="flex flex-col gap-4 px-4 sm:px-6 md:px-8">
-              <div className="flex flex-row gap-4 items-end">
-                <Link className="flex-1" href={`/`}>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
-                  >
-                    <HomeIcon className="w-4 h-4" />
-                  </Button>
-                </Link>
-                <div className="flex flex-col">
-                  <h1 className="text-purple-600 text-2xl text-center">
-                    8l.wtf
-                  </h1>
-                  <p className="text-purple-600 text-center">
-                    8 letters is all you need.
-                  </p>
-                  <p className="text-purple-600 text-center">
-                    Anonymous, encrypted, and fast.
-                  </p>
-                </div>
-                <div className="flex-1"></div>
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
+          <div className="flex flex-col gap-4 px-4 sm:px-6 md:px-8">
+            <div className="flex flex-row gap-4 items-end">
+              <Link className="flex-1" href={`/`}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
+                >
+                  <HomeIcon className="w-4 h-4" />
+                </Button>
+              </Link>
+              <div className="flex flex-col">
+                <h1 className="text-purple-600 text-2xl text-center">8l.wtf</h1>
+                <p className="text-purple-600 text-center">
+                  8 letters is all you need.
+                </p>
+                <p className="text-purple-600 text-center">
+                  Anonymous, encrypted, and fast.
+                </p>
               </div>
-              {children}
+              <div className="flex-1"></div>
             </div>
+            <Providers>{children}</Providers>
           </div>
-        </Providers>
+        </div>
       </body>
     </html>
   );
