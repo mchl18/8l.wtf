@@ -195,16 +195,7 @@ export default function AdminPage() {
 
   return (
     <>
-      <div className="flex flex-col gap-4 px-4 sm:px-6 md:px-8">
-        <Link className="mt-8" href={`/`}>
-          <Button
-            variant="outline"
-            size="icon"
-            className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
-          >
-            <HomeIcon className="w-4 h-4" />
-          </Button>
-        </Link>
+        
         <Card className="bg-black rounded-lg shadow-2xl w-full text-center border-2 border-purple-600 mx-auto">
           <CardHeader className="pb-0">
             <CardTitle className="text-purple-600 text-xl sm:text-2xl">
@@ -455,7 +446,7 @@ export default function AdminPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+
     </>
   );
 }

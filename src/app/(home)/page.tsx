@@ -2,7 +2,13 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { Suspense, useEffect, useMemo, useReducer } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+} from "react";
 import {
   Select,
   SelectContent,
@@ -43,6 +49,7 @@ import { HomeSkeleton } from "@/components/home-skeleton";
 import { SwitchIfQueryParam } from "@/components/switch-if-query-param";
 import { CONFIG } from "@/config";
 import storage from "@/lib/storage";
+// import { scan } from "react-scan";
 
 type State = {
   url: string;
@@ -128,6 +135,9 @@ function reducer(state: State, action: Action): State {
     case "SET_ERROR":
       return { ...state, error: action.payload };
     case "SET_TOKEN": {
+      if (state.token && state.token === action.payload && state.error) {
+        return { ...state, error: "" };
+      }
       if (state.token && state.token === action.payload) {
         return state;
       }
@@ -276,6 +286,12 @@ function Home() {
 
   useEffect(() => {
     (async () => {
+      // if (typeof window !== "undefined") {
+      //   scan({
+      //     enabled: true,
+      //     log: true, // logs render info to console (default: false)
+      //   });
+      // }
       const localStorageDontShowPrivateDisclaimer = await storage.get(
         CONFIG.dontShowPrivateDisclaimerStorageKey
       );
@@ -338,6 +354,48 @@ function Home() {
     state.token
   );
 
+  const memoizedFooter = useMemo(() => {
+    return (
+      <>
+        <Link
+          href="/api"
+          className="text-purple-600 ring-1 ring-purple-500 font-medium py-2 px-4 rounded-md shadow transition duration-150 mt-4"
+        >
+          API Documentation
+        </Link>
+        <Link
+          href="/delete-proxy"
+          className="text-purple-600 ring-1 ring-purple-500 font-medium py-2 px-4 rounded-md shadow transition duration-150 mt-4"
+        >
+          Delete Proxy
+        </Link>
+        <Link
+          href="https://github.com/mchl18/8l.wtf"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-purple-600 ring-1 ring-purple-500 font-medium py-2 px-4 rounded-md shadow transition duration-150 mt-4"
+        >
+          GitHub
+        </Link>
+
+        <Link
+          href={`https://status.mgerullis.com/status/8l-wtf`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Image
+            src="https://status.mgerullis.com/api/badge/1/uptime?style=social"
+            alt="uptime"
+            unoptimized
+            width={150}
+            height={23}
+            className="mt-8"
+          />
+        </Link>
+      </>
+    );
+  }, []);
+
   useEffect(() => {
     reset();
   }, [state.isEncrypted, reset]);
@@ -358,12 +416,11 @@ function Home() {
     []
   );
 
-  const makeToken = async () => {
-    dispatch({ type: "SET_ERROR", payload: "" });
+  const makeToken = useCallback(async () => {
+    // dispatch({ type: "SET_ERROR", payload: "" });
     const token = generateToken();
     dispatch({ type: "SET_TOKEN", payload: token });
-    router.push(`/?token=${token}`);
-  };
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -500,19 +557,216 @@ function Home() {
     );
   }, [state.isEncrypted, isValid]);
 
+  const memoizedShortenButton = useMemo(() => {
+    return (
+      <Button
+        type="submit"
+        variant="outline"
+        className="px-4 py-2 text-purple-600 hover:bg-purple-600 hover:text-black rounded-lg transition-colors focus:outline-none ring-2 ring-purple-500 ring-opacity-50 active:ring-2 active:ring-purple-500"
+      >
+        Shorten URL
+      </Button>
+    );
+  }, []);
+
+  const memoizedForeverButton = useMemo(() => {
+    return (
+      <Button
+        type="button"
+        variant={"outline"}
+        onClick={() => {
+          dispatch({ type: "SET_DURATION_FOREVER" });
+        }}
+        className={`text-sm flex-1 ${
+          state.selectedMode === "forever"
+            ? "text-purple-600 bg-purple-600 text-black ring-2 ring-purple-500 active:ring-2 active:ring-purple-500"
+            : "border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
+        }`}
+      >
+        Forever
+      </Button>
+    );
+  }, [state.selectedMode]);
+
+  const isTokenValid = useMemo(() => {
+    if (!state.token) return false;
+    return isValidToken(state.token);
+  }, [state.token]);
+
+  const memoizedMyUrls = useMemo(() => {
+    return isTokenValid ? (
+      <Link href={`/admin`} className="text-purple-600 hover:text-purple-800">
+        My URLs
+      </Link>
+    ) : (
+      <span
+        className={`text-purple-600 hover:text-purple-800 ${
+          !isTokenValid ? "opacity-50" : ""
+        }`}
+      >
+        My URLs
+      </span>
+    );
+  }, [isTokenValid]);
+
+  const copyToken = useCallback(() => {
+    if (state.token) {
+      copyToClipboard(state.token);
+    }
+  }, [state.token]);
+
+  const memoizedCopyTokenButton = useMemo(() => {
+    return isTokenValid ? (
+      <Button
+        type="button"
+        size={"icon"}
+        variant="outline"
+        onClick={copyToken}
+        className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black px-2 flex-1 md:w-auto"
+      >
+        <CopyIcon className="w-4 h-4" />
+      </Button>
+    ) : (
+      <></>
+    );
+  }, [isTokenValid, copyToken]);
+
   const handleResetToken = async () => {
     dispatch({ type: "RESET_TOKEN" });
     await storage.remove(CONFIG.tokenStorageKey);
     router.push("/");
   };
 
+  const memoizedResetTokenButton = useMemo(() => {
+    return (
+      isTokenValid && (
+        <Button
+          type="button"
+          size={"icon"}
+          variant="outline"
+          onClick={handleResetToken}
+          className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black px-2 flex-1 md:w-auto"
+        >
+          <TrashIcon className="w-4 h-4" />
+        </Button>
+      )
+    );
+  }, [isTokenValid]);
+
+  const memoizedCustomButton = useMemo(() => {
+    return (
+      <Button
+        type="button"
+        variant={"outline"}
+        onClick={() => {
+          dispatch({ type: "SET_DURATION_CUSTOM", payload: "" });
+        }}
+        className={`text-sm flex-1 ${
+          state.selectedMode === "custom"
+            ? "text-purple-600 bg-purple-600 text-black ring-2 ring-purple-500 active:ring-2 active:ring-purple-500"
+            : "border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
+        }`}
+      >
+        Custom
+      </Button>
+    );
+  }, [state.selectedMode]);
+
+  const memoizedDurationSelect = useMemo(() => {
+    return (
+      <Select
+        value={`${state.presetValue || ""}`}
+        onValueChange={(value) => {
+          if (value === "0" || !value) {
+            return;
+          } else {
+            dispatch({
+              type: "SET_DURATION_PRESET",
+              payload: value,
+            });
+          }
+        }}
+        onOpenChange={() => {
+          if (
+            state.selectedMode !== "custom" &&
+            !presets.find(
+              (preset) => preset.value === Number(state.presetValue)
+            )?.value
+          ) {
+            dispatch({ type: "SET_DURATION_FOREVER" });
+          }
+        }}
+      >
+        <SelectTrigger
+          className={`w-full text-sm hover:text-black ${
+            state.selectedMode === "preset"
+              ? "text-purple-600 bg-purple-600 text-black ring-2 ring-purple-500 active:ring-2 active:ring-purple-500"
+              : "border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
+          }`}
+        >
+          <SelectValue placeholder="Duration..." />
+        </SelectTrigger>
+        <SelectContent className="text-purple-600">
+          {presets
+            .filter((preset) => preset.value !== 0)
+            .map((preset) => (
+              <SelectItem key={preset.value} value={preset.value.toString()}>
+                {preset.label}
+              </SelectItem>
+            ))}
+        </SelectContent>
+      </Select>
+    );
+  }, [state.presetValue, state.selectedMode, presets]);
+
+  const memoizedCustomDurationUnitSelect = useMemo(() => {
+    return (
+      <Select
+        value={state.customDurationUnit}
+        onValueChange={(value) => {
+          dispatch({
+            type: "SET_CUSTOM_DURATION_UNIT",
+            payload: value,
+          });
+        }}
+      >
+        <SelectTrigger
+          className={`w-full text-sm hover:text-black ${"border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"}`}
+        >
+          <SelectValue placeholder="Duration..." />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="1">seconds</SelectItem>
+          <SelectItem value="60">minutes</SelectItem>
+          <SelectItem value="3600">hours</SelectItem>
+          <SelectItem value="86400">days</SelectItem>
+          <SelectItem value="604800">weeks</SelectItem>
+          <SelectItem value="2592000">months</SelectItem>
+          <SelectItem value="31536000">years</SelectItem>
+        </SelectContent>
+      </Select>
+    );
+  }, [state.customDurationUnit]);
+
+  const memoizedRefreshTokenButton = useMemo(() => {
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        size={"icon"}
+        onClick={makeToken}
+        className={`border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black px-2 flex-1 md:w-auto ${
+          !isTokenValid ? "w-full" : ""
+        }`}
+      >
+        {isTokenValid ? "" : <span>Generate Token</span>}
+        <RefreshCcwIcon className="w-4 h-4" />
+      </Button>
+    );
+  }, [isTokenValid, makeToken]);
+
   return (
     <>
-      <h1 className="text-purple-600 text-2xl mt-12 lg:mt-24">8l.wtf</h1>
-      <p className="text-purple-600 text-center">8 letters is all you need.</p>
-      <p className="text-purple-600 text-center">
-        Anonymous, encrypted, and fast.
-      </p>
       <Card className="bg-black rounded-lg shadow-2xl max-w-md w-full text-center mt-6 border-2 border-purple-600">
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit}>
@@ -523,41 +777,9 @@ function Home() {
                 <div className="flex flex-col md:flex-row gap-2">
                   {memoizedTokenInput}
                   <div className="flex flex-row gap-2 w-full">
-                    {state.token && (
-                      <Button
-                        type="button"
-                        size={"icon"}
-                        variant="outline"
-                        onClick={handleResetToken}
-                        className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black px-2 flex-1 md:w-auto"
-                      >
-                        <TrashIcon className="w-4 h-4" />
-                      </Button>
-                    )}
-                    {state.token && (
-                      <Button
-                        type="button"
-                        size={"icon"}
-                        variant="outline"
-                        onClick={() => copyToClipboard(state.token)}
-                        className="border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black px-2 flex-1 md:w-auto"
-                      >
-                        <CopyIcon className="w-4 h-4" />
-                      </Button>
-                    )}
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size={"icon"}
-                      onClick={makeToken}
-                      className={`border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black px-2 flex-1 md:w-auto ${
-                        !state.token ? "w-full" : ""
-                      }`}
-                    >
-                      {state.token ? "" : <span>Generate Token</span>}
-                      <RefreshCcwIcon className="w-4 h-4" />
-                    </Button>
+                    {memoizedCopyTokenButton}
+                    {memoizedResetTokenButton}
+                    {memoizedRefreshTokenButton}
                   </div>
                 </div>
               </div>
@@ -569,120 +791,19 @@ function Home() {
               )}
               {state.selectedMode && (
                 <div className="flex md:grid grid-cols-3 flex-col w-full gap-2 md:gap-1 justify-center md:items-center">
-                  <Button
-                    type="button"
-                    variant={"outline"}
-                    onClick={() => {
-                      dispatch({ type: "SET_DURATION_FOREVER" });
-                    }}
-                    className={`text-sm flex-1 ${
-                      state.selectedMode === "forever"
-                        ? "text-purple-600 bg-purple-600 text-black ring-2 ring-purple-500 active:ring-2 active:ring-purple-500"
-                        : "border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
-                    }`}
-                  >
-                    Forever
-                  </Button>
-                  <Select
-                    value={`${state.presetValue || ""}`}
-                    onValueChange={(value) => {
-                      if (value === "0" || !value) {
-                        return;
-                      } else {
-                        dispatch({
-                          type: "SET_DURATION_PRESET",
-                          payload: value,
-                        });
-                      }
-                    }}
-                    onOpenChange={() => {
-                      if (
-                        state.selectedMode !== "custom" &&
-                        !presets.find(
-                          (preset) => preset.value === Number(state.presetValue)
-                        )?.value
-                      ) {
-                        dispatch({ type: "SET_DURATION_FOREVER" });
-                      }
-                    }}
-                  >
-                    <SelectTrigger
-                      className={`w-full text-sm hover:text-black ${
-                        state.selectedMode === "preset"
-                          ? "text-purple-600 bg-purple-600 text-black ring-2 ring-purple-500 active:ring-2 active:ring-purple-500"
-                          : "border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
-                      }`}
-                    >
-                      <SelectValue placeholder="Duration..." />
-                    </SelectTrigger>
-                    <SelectContent className="text-purple-600">
-                      {presets
-                        .filter((preset) => preset.value !== 0)
-                        .map((preset) => (
-                          <SelectItem
-                            key={preset.value}
-                            value={preset.value.toString()}
-                          >
-                            {preset.label}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Button
-                    type="button"
-                    variant={"outline"}
-                    onClick={() => {
-                      dispatch({ type: "SET_DURATION_CUSTOM", payload: "" });
-                    }}
-                    className={`text-sm flex-1 ${
-                      state.selectedMode === "custom"
-                        ? "text-purple-600 bg-purple-600 text-black ring-2 ring-purple-500 active:ring-2 active:ring-purple-500"
-                        : "border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"
-                    }`}
-                  >
-                    Custom
-                  </Button>
+                  {memoizedForeverButton}
+                  {memoizedDurationSelect}
+                  {memoizedCustomButton}
                 </div>
               )}
 
               {state.selectedMode === "custom" && (
                 <div className="flex flex-row items-center gap-2 justify-center">
                   {memoizedCustomDurationInput}
-                  <Select
-                    value={state.customDurationUnit}
-                    onValueChange={(value) => {
-                      dispatch({
-                        type: "SET_CUSTOM_DURATION_UNIT",
-                        payload: value,
-                      });
-                    }}
-                  >
-                    <SelectTrigger
-                      className={`w-full text-sm hover:text-black ${"border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-black"}`}
-                    >
-                      <SelectValue placeholder="Duration..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">seconds</SelectItem>
-                      <SelectItem value="60">minutes</SelectItem>
-                      <SelectItem value="3600">hours</SelectItem>
-                      <SelectItem value="86400">days</SelectItem>
-                      <SelectItem value="604800">weeks</SelectItem>
-                      <SelectItem value="2592000">months</SelectItem>
-                      <SelectItem value="31536000">years</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {memoizedCustomDurationUnitSelect}
                 </div>
               )}
-              <Button
-                type="submit"
-                variant="outline"
-                className="px-4 py-2 text-purple-600 hover:bg-purple-600 hover:text-black rounded-lg transition-colors focus:outline-none ring-2 ring-purple-500 ring-opacity-50 active:ring-2 active:ring-purple-500"
-              >
-                Shorten URL
-              </Button>
-
+              {memoizedShortenButton}
               {state.error && <p className="text-red-500">{state.error}</p>}
               {shortenedUrl && isSuccess && (
                 <div className="bg-transparent rounded-lg p-4 border-2 border-purple-600">
@@ -756,63 +877,14 @@ function Home() {
                     </label>
                   </div>
                 </div>
-                {isValidToken(state.token) ? (
-                  <Link
-                    href={`/admin`}
-                    className="text-purple-600 hover:text-purple-800"
-                  >
-                    My URLs
-                  </Link>
-                ) : (
-                  <span
-                    className={`text-purple-600 hover:text-purple-800 ${
-                      !isValidToken(state.token) ? "opacity-50" : ""
-                    }`}
-                  >
-                    My URLs
-                  </span>
-                )}
+                {memoizedMyUrls}
               </div>
             </div>
           </form>
         </CardContent>
       </Card>
 
-      <Link
-        href="/api"
-        className="text-purple-600 ring-1 ring-purple-500 font-medium py-2 px-4 rounded-md shadow transition duration-150 mt-4"
-      >
-        API Documentation
-      </Link>
-      <Link
-        href="/delete-proxy"
-        className="text-purple-600 ring-1 ring-purple-500 font-medium py-2 px-4 rounded-md shadow transition duration-150 mt-4"
-      >
-        Delete Proxy
-      </Link>
-      <Link
-        href="https://github.com/mchl18/8l.wtf"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-purple-600 ring-1 ring-purple-500 font-medium py-2 px-4 rounded-md shadow transition duration-150 mt-4"
-      >
-        GitHub
-      </Link>
-
-      <Link
-        href={`https://status.mgerullis.com/status/8l-wtf`}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <Image
-          src="https://status.mgerullis.com/api/badge/1/uptime?style=social"
-          alt="uptime"
-          unoptimized
-          width={150}
-          height={23}
-          className="mt-8"
-        />
-      </Link>
+      {memoizedFooter}
 
       <Dialog
         open={state.showPrivateDisclaimerAgain}
@@ -1005,10 +1077,12 @@ function Home() {
 
 export default function Page() {
   return (
-    <Suspense fallback={<HomeSkeleton />}>
-      <SwitchIfQueryParam switchTo={<RedirectPage />} queryParamName="q">
-        <Home />
-      </SwitchIfQueryParam>
-    </Suspense>
+    <>
+      <Suspense fallback={<HomeSkeleton />}>
+        <SwitchIfQueryParam switchTo={<RedirectPage />} queryParamName="q">
+          <Home />
+        </SwitchIfQueryParam>
+      </Suspense>
+    </>
   );
-}
+};

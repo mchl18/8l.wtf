@@ -28,7 +28,6 @@ function QRPage() {
 
   return (
     <>
-      <h1 className="text-purple-600 text-2xl mt-12 lg:mt-24">8l.wtf</h1>
       <Card className="bg-black rounded-lg shadow-2xl max-w-md w-full text-center mt-6 border-2 border-purple-600">
         <CardContent className="pt-6">
           <div className="flex flex-col items-center gap-4">
@@ -67,20 +66,12 @@ function QRPage() {
   );
 }
 
-const Wrapper = ({ children }: { children: React.ReactNode }) => {
+export default function Page() {
   return (
     <Suspense
       fallback={<Skeleton className="w-[300px] h-[300px] rounded-lg" />}
     >
-      {children}
-    </Suspense>
-  );
-};
-
-export default function Page() {
-  return (
-    <Wrapper>
       <QRPage />
-    </Wrapper>
+    </Suspense>
   );
 }
