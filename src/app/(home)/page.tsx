@@ -43,6 +43,9 @@ import { HomeSkeleton } from "@/components/home-skeleton";
 import { SwitchIfQueryParam } from "@/components/switch-if-query-param";
 import { CONFIG } from "@/config";
 import storage from "@/lib/storage";
+import { PasteButton } from "@/components/paste-button";
+import { toast } from "sonner";
+import { urlRegex } from "@/lib/validation";
 // import { scan } from "react-scan";
 
 type State = {
@@ -471,16 +474,31 @@ function Home() {
     link.click();
     document.body.removeChild(link);
   };
+  const handlePaste = (text: string) => {
+    if (urlRegex.test(text)) {
+      dispatch({ type: "SET_URL", payload: text });
+    } else {
+      toast.error("Invalid URL");
+    }
+  };
 
+  const handleError = (error: string) => {
+    toast.error(`Could not paste from clipboard: ${error}`);
+  };
   const memoizedUrlInput = useMemo(() => {
     return (
-      <Input
-        value={state.url}
-        onChange={(e) => dispatch({ type: "SET_URL", payload: e.target.value })}
-        placeholder="Enter URL to shorten"
-        required
-        className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
-      />
+      <div className="flex flex-row gap-2">
+        <Input
+          value={state.url}
+          onChange={(e) =>
+            dispatch({ type: "SET_URL", payload: e.target.value })
+          }
+          placeholder="Enter URL to shorten"
+          required
+          className="text-purple-600 border-purple-600 focus:ring-2 focus:ring-purple-500 focus-visible:ring-2 focus-visible:ring-purple-500 text-center"
+        />
+        <PasteButton onPaste={handlePaste} onError={handleError} />
+      </div>
     );
   }, [state.url]);
 
