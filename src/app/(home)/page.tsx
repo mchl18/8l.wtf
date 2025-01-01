@@ -351,47 +351,7 @@ function Home() {
     state.token
   );
 
-  const memoizedFooter = useMemo(() => {
-    return (
-      <>
-        <Link
-          href="/api"
-          className="text-purple-600 ring-1 ring-purple-500 font-medium py-2 px-4 rounded-md shadow transition duration-150 mt-4"
-        >
-          API Documentation
-        </Link>
-        <Link
-          href="/delete-proxy"
-          className="text-purple-600 ring-1 ring-purple-500 font-medium py-2 px-4 rounded-md shadow transition duration-150 mt-4"
-        >
-          Delete Proxy
-        </Link>
-        <Link
-          href="https://github.com/mchl18/8l.wtf"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-purple-600 ring-1 ring-purple-500 font-medium py-2 px-4 rounded-md shadow transition duration-150 mt-4"
-        >
-          GitHub
-        </Link>
-
-        <Link
-          href={`https://status.mgerullis.com/status/8l-wtf`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            src="https://status.mgerullis.com/api/badge/1/uptime?style=social"
-            alt="uptime"
-            unoptimized
-            width={150}
-            height={23}
-            className="mt-8"
-          />
-        </Link>
-      </>
-    );
-  }, []);
+  
 
   useEffect(() => {
     reset();
@@ -665,7 +625,7 @@ function Home() {
         </Button>
       )
     );
-  }, [isTokenValid]);
+  }, [handleResetToken, isTokenValid]);
 
   const memoizedCustomButton = useMemo(() => {
     return (
@@ -897,8 +857,6 @@ function Home() {
           </form>
         </CardContent>
       </Card>
-
-      {memoizedFooter}
 
       <Dialog
         open={state.showPrivateDisclaimerAgain}
